@@ -1,3 +1,5 @@
+import java.lang.System.lineSeparator
+
 package object replpp {
   def compilerArgs(config: Config): Array[String] = {
     val compilerArgs = Array.newBuilder[String]
@@ -17,13 +19,19 @@ package object replpp {
     val entriesForDeps = dependencies.mkString(separator)
     s"$inheritedClasspath$separator$entriesForDeps"
   }
+  
+  def allPredefCode(config: Config): String = {
+    val lines = readPredefFiles(config.predefFiles) :+ config.predefCode.getOrElse("")
+    lines.mkString(lineSeparator)
+  }
 
-  def readPredefFiles(files: Seq[os.Path]): Seq[String] =
+  def readPredefFiles(files: Seq[os.Path]): Seq[String] = {
     files.flatMap { file =>
       assert(os.exists(file), s"$file does not exist")
       val lines = os.read.lines(file)
       println(s"importing $file (${lines.size} lines) from $file")
       lines
     }
+  }
 
 }

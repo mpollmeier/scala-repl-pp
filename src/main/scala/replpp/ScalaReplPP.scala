@@ -36,34 +36,6 @@ object ScalaReplPP {
 //     config.copy(dependencies = config.dependencies ++ dependenciesFromUsingClauses)
 //   }
 
-//   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
-//     val mainImpl =
-//       if (scriptCode.contains("@main")) {
-//         scriptCode
-//       } else {
-//         s"""@main def _execMain(): Unit = {
-//            |  $scriptCode
-//            |}
-//            |""".stripMargin
-//       }
-
-//     s"""
-//        |import mainargs.main // intentionally shadow any potentially given @main
-//        |
-//        |// dotty's ScriptingDriver expects an object with a `main(Array[String]): Unit`
-//        |object Main {
-//        |
-//        |$predefCode
-//        |
-//        |$mainImpl
-//        |
-//        |  def main(args: Array[String]): Unit = {
-//        |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
-//        |  }
-//        |}
-//        |""".stripMargin
-//   }
-
 //   /** For the given config, generate a list of commands to import the CPG
 //     */
 //   private def importCpgCode(config: Config): List[String] = {

@@ -5,7 +5,8 @@ import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
 import dotty.tools.repl.State
 import dotty.tools.scripting.{ScriptingDriver, Util}
-import System.lineSeparator
+
+import java.lang.System.lineSeparator
 
 object InteractiveShell {
   def run(config: Config): Unit = {
@@ -18,10 +19,7 @@ object InteractiveShell {
     )
 
     val initialState: State = replDriver.initialState
-    val predefCode = {
-      val lines = readPredefFiles(config.predefFiles) :+ config.predefCode.getOrElse("")
-      lines.mkString(lineSeparator)
-    }
+    val predefCode = allPredefCode(config)
     val state: State =
       if (config.verbose) {
         println(predefCode)
