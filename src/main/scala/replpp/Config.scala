@@ -2,21 +2,20 @@ package replpp
 
 // TODO split into repl|script|server config - with some options shared...
 case class Config(
-  // repl only
-  prompt: Option[String] = None,
-  greeting: Option[String] = None,
-  onExitCode: Option[String] = None,
-
-  // script only
-  scriptFile: Option[os.Path] = None, // script only
-  params: Map[String, String] = Map.empty, // script only
-
-  // shared
   predefCode: Option[String] = None,
   predefFiles: List[os.Path] = Nil,
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
+
+  // repl only
+  prompt: Option[String] = None,
+  greeting: String = "Welcome to the scala-repl-pp!",
+  onExitCode: Option[String] = None,
+
+  // script only
+  scriptFile: Option[os.Path] = None, // script only
+  params: Map[String, String] = Map.empty, // script only
 
   // server only
   server: Boolean = false,
@@ -34,15 +33,44 @@ object Config {
     val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
       override def errorOnUnknownArgument = false
 
-      opt[Seq[String]]("dependency")
-        .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
-        .action((x, c) => c.copy(dependencies = x.toList))
-        .text("resolve dependency (and it's transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+      opt[String]("predefCode")
+        .valueName("def foo = 42")
+        .action((x, c) => c.copy(predefCode = Option(x)))
+        .text("code to execute (quietly) on startup")
 
       opt[Seq[os.Path]]("predefFiles")
         .valueName("script1.sc,script2.sc,...")
         .action((x, c) => c.copy(predefFiles = x.toList))
         .text("import (and run) additional script(s) on startup")
+      
+      opt[Unit]("nocolors")
+        .action((_, c) => c.copy(nocolors = true))
+        .text("turn off colors")
+
+      opt[Unit]("verbose")
+        .action((_, c) => c.copy(verbose = true))
+        .text("enable verbose output (predef, resolved dependency jars, ...)")
+
+      opt[Seq[String]]("dependency")
+        .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
+        .action((x, c) => c.copy(dependencies = x.toList))
+        .text("resolve dependency (and it's transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+      
+      note("REPL options")
+
+      opt[String]("prompt")
+        .valueName("scala")
+        .action((x, c) => c.copy(prompt = Option(x)))
+        .text("specify a custom prompt")
+
+      opt[String]("greeting")
+        .valueName("Welcome to the scala-repl-pp!")
+        .action((x, c) => c.copy(greeting = x))
+        .text("specify a custom greeting")
+      
+      opt[String]("onExitCode")
+        .valueName("""println("bye!")""")
+        .action((x, c) => c.copy(onExitCode = Option(x)))
 
       note("Script execution")
 
@@ -76,16 +104,6 @@ object Config {
       opt[String]("server-auth-password")
         .action((x, c) => c.copy(serverAuthPassword = x))
         .text("Basic auth password for the REPL server")
-
-      note("Misc")
-
-      opt[Unit]("nocolors")
-        .action((_, c) => c.copy(nocolors = true))
-        .text("turn off colors")
-
-      opt[Unit]("verbose")
-        .action((_, c) => c.copy(verbose = true))
-        .text("enable verbose output (predef, resolved dependency jars, ...)")
 
       help("help")
         .text("Print this help text")

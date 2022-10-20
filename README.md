@@ -1,7 +1,10 @@
 ## scala-repl-pp
-
+Scala 3 Repl PlusPlus ;) 
 A (slightly) better Scala3 / dotty repl.
-This fills a gap between the standard Scala3 REPL, Ammonite and scala-cli:
+
+Note: currently this depends on a [slightly patched](https://github.com/mpollmeier/dotty/tree/michael/extensible-repl-minified) version of dotty. I'll try to get those merged upstream.
+
+scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-cli:
 
 ### Why use scala-repl-pp over the regular Scala REPL?
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
