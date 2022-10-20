@@ -1,16 +1,16 @@
 package replpp.server
 
 import org.slf4j.{Logger, LoggerFactory}
+
 import java.io.{BufferedReader, PrintWriter}
+import java.lang.System.lineSeparator
 import java.util.UUID
 import java.util.concurrent.BlockingQueue
 import scala.util.Try
 
 class UserRunnable(queue: BlockingQueue[Job], writer: PrintWriter, reader: BufferedReader, verbose: Boolean = false)
   extends Runnable {
-
   private val logger: Logger = LoggerFactory.getLogger(classOf[UserRunnable])
-  private val magicEchoSeq: String = new String(Array(27, 91, 57, 57, 57, 57, 68, 27, 91, 48, 74, 64, 32).map(_.toChar))
   private val endMarker               = """.*END: ([0-9a-f\-]+)""".r
 
   override def run(): Unit = {
@@ -51,10 +51,10 @@ class UserRunnable(queue: BlockingQueue[Job], writer: PrintWriter, reader: Buffe
     var currentOutput: String = ""
     var line                  = reader.readLine()
     while (line != null) {
-      if (!line.startsWith(magicEchoSeq) && line.nonEmpty) {
+      if (line.nonEmpty) {
         val uuid = uuidFromLine(line)
         if (uuid.isEmpty) {
-          currentOutput += line + "\n"
+          currentOutput += line + lineSeparator
         } else {
           return Some(currentOutput)
         }
