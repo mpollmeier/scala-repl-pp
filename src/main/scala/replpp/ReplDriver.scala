@@ -23,7 +23,7 @@ import scala.jdk.CollectionConverters.*
 class ReplDriver(args: Array[String],
                  out: PrintStream = scala.Console.out,
                  onExitCode: Option[String] = None,
-                 greeting: String,
+                 greeting: Option[String],
                  prompt: String,
                  maxPrintElements: Int,
                  classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
@@ -37,7 +37,7 @@ class ReplDriver(args: Array[String],
     }
     initializeRenderer()
 
-    out.println(greeting)
+    greeting.foreach(out.println)
 
     /** Blockingly read a line, getting back a parse result */
     def readLine(state: State): ParseResult = {
