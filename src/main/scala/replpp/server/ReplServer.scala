@@ -13,15 +13,15 @@ object ReplServer {
 
   def startHttpServer(config: Config): Unit = {
     val predef = allPredefCode(config)
-    val ammonite = new EmbeddedRepl(predef, config.verbose)
-    ammonite.start()
+    val embeddedRepl = new EmbeddedRepl(predef, config.verbose)
+    embeddedRepl.start()
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       println("Shutting down server...")
-      ammonite.shutdown()
+      embeddedRepl.shutdown()
     }))
 
     val server = new ReplServer(
-      ammonite,
+      embeddedRepl,
       config.serverHost,
       config.serverPort,
       config.serverAuthUsername,
@@ -33,14 +33,14 @@ object ReplServer {
     } catch {
       case _: java.net.BindException =>
         println(s"Could not bind socket on port ${config.serverPort} - exiting.")
-        ammonite.shutdown()
+        embeddedRepl.shutdown()
         System.exit(1)
       case e: Throwable =>
         println("Unhandled exception thrown while attempting to start server: ")
         println(e.getMessage)
         println("Exiting.")
 
-        ammonite.shutdown()
+        embeddedRepl.shutdown()
         System.exit(1)
     }
   }

@@ -61,8 +61,6 @@ class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
     (in, out)
   }
 
-  /** Start the embedded ammonite shell
-    */
   def start(): Unit = {
     shellThread.start()
     userThread.start()
@@ -89,7 +87,7 @@ class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
     result
   }
 
-  /** Shutdown the embedded ammonite shell and associated threads.
+  /** Shutdown the embedded shell and associated threads.
     */
   def shutdown(): Unit = {
     logger.info("Trying to shutdown shell and writer thread")

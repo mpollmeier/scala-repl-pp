@@ -1,17 +1,16 @@
 package replpp.server
 
-import org.slf4j.{Logger, LoggerFactory}
-
 import java.io.{BufferedReader, PrintWriter}
 import java.lang.System.lineSeparator
 import java.util.UUID
 import java.util.concurrent.BlockingQueue
+import org.slf4j.{Logger, LoggerFactory}
 import scala.util.Try
 
 class UserRunnable(queue: BlockingQueue[Job], writer: PrintWriter, reader: BufferedReader, verbose: Boolean = false)
   extends Runnable {
-  private val logger: Logger = LoggerFactory.getLogger(classOf[UserRunnable])
-  private val endMarker               = """.*END: ([0-9a-f\-]+)""".r
+  private val logger    = LoggerFactory.getLogger(classOf[UserRunnable])
+  private val endMarker = """.*END: ([0-9a-f\-]+)""".r
 
   override def run(): Unit = {
     try {
@@ -22,7 +21,7 @@ class UserRunnable(queue: BlockingQueue[Job], writer: PrintWriter, reader: Buffe
           terminate = true
         } else {
           if (verbose) println(s"executing: $job")
-          sendQueryToAmmonite(job)
+          sendQueryToEmbeddedRepl(job)
           val stdoutPair = stdOutUpToMarker()
           val stdOutput  = stdoutPair.get
           val result = QueryResult(stdOutput, job.uuid)
@@ -41,7 +40,7 @@ class UserRunnable(queue: BlockingQueue[Job], writer: PrintWriter, reader: Buffe
     job.uuid == null && job.query == null
   }
 
-  private def sendQueryToAmmonite(job: Job): Unit = {
+  private def sendQueryToEmbeddedRepl(job: Job): Unit = {
     writer.println(job.query.trim)
     writer.println(s""""END: ${job.uuid}"""")
     writer.flush()
