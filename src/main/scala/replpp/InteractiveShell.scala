@@ -1,10 +1,8 @@
 package replpp
 
 import dotty.tools.Settings
-import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
 import dotty.tools.repl.State
-import dotty.tools.scripting.{ScriptingDriver, Util}
 
 import java.lang.System.lineSeparator
 

@@ -1,5 +1,9 @@
 package replpp
 
+import dotty.tools.scripting.ScriptingDriver
+import java.util.stream.Collectors
+import scala.jdk.CollectionConverters._
+
 object ScriptRunner {
   def exec(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
@@ -9,6 +13,7 @@ object ScriptRunner {
 
     System.err.println(s"executing $scriptFile with params=${config.params}")
     val scriptArgs: Seq[String] = {
+      // TODO add command for multiple @main?
 //      val commandArgs = config.command.toList
       val parameterArgs = config.params.flatMap { case (key, value) => Seq(s"--$key", value) }
 //      commandArgs ++ parameterArgs
@@ -28,14 +33,28 @@ object ScriptRunner {
 
     new ScriptingDriver(
       compilerArgs = compilerArgs(maybeAddDependencies(scriptCode, config)) :+ "-nowarn",
-      scriptFile = predefPlusScriptFileTmp.toFile,
+      scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()
-
-    // if the script failed: don't delete the temporary file which includes the predef,
-    // so that the line numbers are accurate and the user can properly debug
-    predefPlusScriptFileTmp.toFile.delete()
     System.err.println(s"script finished successfully")
+
+    // if the script failed, the ScriptingDriver would have thrown an exception, in which case we
+    // don't delete the temporary file which includes the predef,
+    // so that the line numbers are accurate and the user can properly debug
+    os.remove(predefPlusScriptFileTmp)
+  }
+
+  private def maybeAddDependencies(scriptCode: String, config: Config): Config = {
+    val usingClausePrefix = "//> using "
+    val dependenciesFromUsingClauses =
+      scriptCode.lines()
+        .map(_.trim)
+        .filter(_.startsWith(usingClausePrefix))
+        .map(_.drop(usingClausePrefix.length))
+        .collect(Collectors.toList)
+        .asScala
+
+    config.copy(dependencies = config.dependencies ++ dependenciesFromUsingClauses)
   }
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
     val mainImpl =
