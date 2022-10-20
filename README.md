@@ -8,6 +8,7 @@ This fills a gap between the standard Scala3 REPL, Ammonite and scala-cli:
 * pretty printing via [pprint](https://com-lihaoyi.github.io/PPrint/)
 * define your own greeting and prompt
 * @main with named arguments (regular Scala REPL only allows an argument list)
+* supports predef scripts, i.e. run custom code before starting the REPL
 * server mode: REPL runs embedded
 
 ### Why use scala-repl-pp over [Ammonite](http://ammonite.io/)?
