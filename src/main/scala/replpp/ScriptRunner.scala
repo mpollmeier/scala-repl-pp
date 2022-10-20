@@ -25,7 +25,7 @@ object ScriptRunner {
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
     val predefCode = allPredefCode(config)
-    val predefPlusScriptFileTmp = os.temp(prefix = "joern-script-with-predef", suffix = ".sc")
+    val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc")
     val scriptCode = os.read(scriptFile)
     val scriptContent = wrapForMainargs(predefCode, scriptCode)
     if (config.verbose) println(scriptContent)
