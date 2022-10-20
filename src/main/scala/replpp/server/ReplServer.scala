@@ -13,7 +13,7 @@ object ReplServer {
 
   def startHttpServer(config: Config): Unit = {
     val predef = allPredefCode(config)
-    val ammonite = new EmbeddedAmmonite(predef, config.verbose)
+    val ammonite = new EmbeddedRepl(predef, config.verbose)
     ammonite.start()
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       println("Shutting down server...")
@@ -47,12 +47,11 @@ object ReplServer {
 
 }
 
-class ReplServer(
-  ammonite: EmbeddedAmmonite,
-  serverHost: String,
-  serverPort: Int,
-  serverAuthUsername: String = "",
-  serverAuthPassword: String = ""
+class ReplServer(repl: EmbeddedRepl,
+                 serverHost: String,
+                 serverPort: Int,
+                 serverAuthUsername: String = "",
+                 serverAuthPassword: String = ""
 ) extends WebServiceWithWebSocket[QueryResult](serverHost, serverPort, serverAuthUsername, serverAuthPassword) {
 
   @cask.websocket("/connect")
@@ -68,7 +67,7 @@ class ReplServer(
   def postQuery(query: String)(isAuthorized: Boolean): Response[Obj] = {
     if (!isAuthorized) unauthorizedResponse
     else {
-      val uuid = ammonite.queryAsync(query) { result =>
+      val uuid = repl.queryAsync(query) { result =>
         returnResult(result)
       }
       Response(ujson.Obj("success" -> true, "uuid" -> uuid.toString), 200)

@@ -16,7 +16,7 @@ trait HasUUID {
 
 private[server] case class Job(uuid: UUID, query: String, observer: QueryResult => Unit)
 
-class EmbeddedAmmonite(predefCode: String = "", verbose: Boolean = false) {
+class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   val jobQueue: BlockingQueue[Job] = new LinkedBlockingQueue[Job]()

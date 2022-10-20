@@ -1,7 +1,5 @@
 package replpp
 
-import os.{Path, pwd}
-
 // TODO split into repl|script|server config - with some options shared...
 case class Config(
   // repl only
