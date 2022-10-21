@@ -112,3 +112,19 @@ multiple @main entrypoints: test-main-multiple.sc
 
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}' -H "Content-Type: application/json"
 ```
+
+
+### Embed into your own project
+Try out the working [string calculator example](src/test/resources/demo-project) in this repo:
+```bash
+cd src/test/resources/demo-project
+sbt stage
+target/universal/stage/bin/stringcalc
+
+
+Welcome to the magical world of string calculation!
+Type `help` for help
+
+stringcalc> add(One, Two)
+val res0: stringcalc.Number = Number(3)
+```
