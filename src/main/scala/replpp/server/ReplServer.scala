@@ -74,6 +74,16 @@ class ReplServer(repl: EmbeddedRepl,
     }
   }
 
+  @basicAuth()
+  @cask.postJson("/query-sync")
+  def postQuerySimple(query: String)(isAuthorized: Boolean): Response[Obj] = {
+    if (!isAuthorized) unauthorizedResponse
+    else {
+      val result = repl.query(query)
+      Response(ujson.Obj("success" -> true, "out" -> result.out, "uuid" -> result.uuid.toString), 200)
+    }
+  }
+
   override def resultToJson(result: QueryResult, success: Boolean): Obj = {
     ujson.Obj("success" -> success, "uuid" -> result.uuid.toString, "stdout" -> result.out)
   }
