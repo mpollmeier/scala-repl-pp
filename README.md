@@ -106,3 +106,9 @@ multiple @main entrypoints: test-main-multiple.sc
 ```
 
 
+### Server
+```bash
+./scala-repl-pp --server
+
+curl TODO
+```
