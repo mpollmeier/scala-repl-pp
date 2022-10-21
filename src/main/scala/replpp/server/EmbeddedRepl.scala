@@ -50,7 +50,7 @@ class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
             replDriver.runQuietly(predefCode)(using initialState)
           }
 
-        replDriver.runUntilQuit(using state)()
+        replDriver.runUntilQuit(state)
       }
     })
 
