@@ -25,3 +25,11 @@ resolvers += Resolver.mavenLocal
 enablePlugins(JavaAppPackaging)
 Global/onChangedBuildSource := ReloadOnSourceChanges
 
+publishTo := sonatypePublishToBundle.value
+scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
+                            "scm:git@github.com:mpollmeier/scala-repl-pp.git"))
+homepage := Some(url("https://github.com/mpollmeier/scala-repl-pp/"))
+licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+developers := List(
+  Developer("mpollmeier", "Michael Pollmeier", "michael@michaelpollmeier.com", url("http://www.michaelpollmeier.com/"))
+)

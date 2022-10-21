@@ -1,0 +1,28 @@
+name: release
+concurrency: release
+on:
+  push:
+    branches: [master, main]
+    tags: ["*"]
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: olafurpg/setup-scala@v10
+      - run: sudo apt update && sudo apt install -y gnupg
+      - run: echo $PGP_SECRET | base64 --decode | gpg --batch --import
+        env:
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ hashfiles('**/build.sbt') }}
+      - run: sbt +test ciReleaseTagNextVersion ciReleaseSonatype
+        env:
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
