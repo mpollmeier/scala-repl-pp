@@ -2,6 +2,7 @@ name := "scala-repl-pp"
 organization := "com.michaelpollmeier"
 
 scalaVersion := "3.2.0"
+
 libraryDependencies ++= Seq(
   "com.michaelpollmeier" %% "scala3-compiler" % scalaVersion.value,
   "com.lihaoyi"      %% "mainargs"  % "0.3.0",
