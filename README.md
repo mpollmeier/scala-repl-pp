@@ -1,6 +1,5 @@
 ## scala-repl-pp
-Scala 3 Repl PlusPlus ;) 
-A (slightly) better Scala3 / dotty repl.
+Scala REPL PlusPlus - a (slightly) better Scala 3 / dotty REPL.
 
 Note: currently this depends on a [slightly patched](https://github.com/mpollmeier/dotty/tree/michael/extensible-repl-minified) version of dotty. I'll try to get those merged upstream.
 
@@ -25,7 +24,7 @@ scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-c
   * does it support @main named arguments?
   * can one add a dependency on it?
 
-## use cases
+## Use Cases
 
 Prerequisite (for now):
 ```bash
@@ -58,6 +57,7 @@ println("Hello!")
 ./scala-repl-pp --script test-simple.sc
 ```
 
+
 Dependencies can be added via `//> using` syntax as in scala-cli: test-dependencies.sc
 ```scala
 //> using com.michaelpollmeier:versionsort:1.0.7
@@ -74,13 +74,35 @@ assert(compareResult == 1,
 
 @main entrypoints: test-main.sc
 ```scala
-@main def main() = {
-  println("Hello, world!")
-}
+@main def main() = println("Hello, world!")
 ```
 
 ```bash
 ./scala-repl-pp --script test-main.sc
+```
+
+
+@main entrypoint with named parameters: test-main-withargs.sc
+```scala
+@main def main(name: String) = {
+  println(s"Hello, $name!")
+}
+```
+
+```bash
+./scala-repl-pp --script test-main-withargs.sc --params name=Michael
+```
+
+
+
+multiple @main entrypoints: test-main-multiple.sc
+```scala
+@main def foo() = println("foo!")
+@main def bar() = println("bar!")
+```
+
+```bash
+./scala-repl-pp --script test-main-multiple.sc --command=foo
 ```
 
 
