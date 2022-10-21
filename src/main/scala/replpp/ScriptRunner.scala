@@ -13,11 +13,9 @@ object ScriptRunner {
 
     System.err.println(s"executing $scriptFile with params=${config.params}")
     val scriptArgs: Seq[String] = {
-      // TODO add command for multiple @main?
-//      val commandArgs = config.command.toList
+      val commandArgs = config.command.toList
       val parameterArgs = config.params.flatMap { case (key, value) => Seq(s"--$key", value) }
-//      commandArgs ++ parameterArgs
-      parameterArgs.toSeq
+      commandArgs ++ parameterArgs
     }
 
     // Our predef code includes import statements... I didn't find a nice way to add them to the context of the
@@ -29,7 +27,7 @@ object ScriptRunner {
     val scriptCode = os.read(scriptFile)
     val scriptContent = wrapForMainargs(predefCode, scriptCode)
     if (config.verbose) println(scriptContent)
-    os.write(predefPlusScriptFileTmp, scriptContent)
+    os.write.over(predefPlusScriptFileTmp, scriptContent)
 
     new ScriptingDriver(
       compilerArgs = compilerArgs(maybeAddDependencies(scriptCode, config)) :+ "-nowarn",

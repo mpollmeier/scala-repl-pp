@@ -14,8 +14,9 @@ case class Config(
   onExitCode: Option[String] = None,
 
   // script only
-  scriptFile: Option[os.Path] = None, // script only
-  params: Map[String, String] = Map.empty, // script only
+  scriptFile: Option[os.Path] = None,
+  command: Option[String] = None,
+  params: Map[String, String] = Map.empty,
 
   // server only
   server: Boolean = false,
@@ -42,7 +43,7 @@ object Config {
         .valueName("script1.sc,script2.sc,...")
         .action((x, c) => c.copy(predefFiles = x.toList))
         .text("import (and run) additional script(s) on startup")
-      
+
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
         .text("turn off colors")
@@ -55,7 +56,7 @@ object Config {
         .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
         .action((x, c) => c.copy(dependencies = x.toList))
         .text("resolve dependency (and it's transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
-      
+
       note("REPL options")
 
       opt[String]("prompt")
@@ -67,7 +68,7 @@ object Config {
         .valueName("Welcome to the scala-repl-pp!")
         .action((x, c) => c.copy(greeting = x))
         .text("specify a custom greeting")
-      
+
       opt[String]("onExitCode")
         .valueName("""println("bye!")""")
         .action((x, c) => c.copy(onExitCode = Option(x)))
@@ -77,6 +78,10 @@ object Config {
       opt[os.Path]("script")
         .action((x, c) => c.copy(scriptFile = Some(x)))
         .text("path to script file: will execute and exit")
+
+      opt[String]("command")
+        .action((x, c) => c.copy(command = Some(x)))
+        .text("command to execute, in case there are multiple @main entrypoints")
 
       opt[Map[String, String]]('p', "params")
         .valueName("k1=v1,k2=v2")

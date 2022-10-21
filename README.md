@@ -46,3 +46,41 @@ val res0: Int = 42
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
+
+### Scripting
+
+Simple "Hello world" script: test-simple.sc
+```scala
+println("Hello!")
+```
+
+```bash
+./scala-repl-pp --script test-simple.sc
+```
+
+Dependencies can be added via `//> using` syntax as in scala-cli: test-dependencies.sc
+```scala
+//> using com.michaelpollmeier:versionsort:1.0.7
+
+val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
+assert(compareResult == 1,
+       s"result of comparison should be `1`, but was `$compareResult`")
+```
+
+```bash
+./scala-repl-pp --script test-dependencies.sc
+```
+
+
+@main entrypoints: test-main.sc
+```scala
+@main def main() = {
+  println("Hello, world!")
+}
+```
+
+```bash
+./scala-repl-pp --script test-main.sc
+```
+
+
