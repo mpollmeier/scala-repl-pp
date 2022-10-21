@@ -25,3 +25,24 @@ scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-c
   * does it support @main named arguments?
   * can one add a dependency on it?
 
+## use cases
+
+Prerequisite (for now):
+```bash
+sbt stage
+cd target/universal/stage/bin/
+```
+
+### REPL
+```
+./scala-repl-pp --help
+./scala-repl-pp --prompt=myprompt --greeting='hey there!' --onExitCode='println("see ya!")'
+
+./scala-repl-pp --predefCode='def foo = 42'
+scala> foo
+val res0: Int = 42
+
+./scala-repl-pp --dependency com.michaelpollmeier:versionsort:1.0.7
+scala> versionsort.VersionHelper.compare("1.0", "0.9")
+val res0: Int = 1
+```

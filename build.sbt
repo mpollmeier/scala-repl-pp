@@ -13,6 +13,8 @@ libraryDependencies ++= Seq(
   ("io.get-coursier" %% "coursier" % "2.0.13").cross(CrossVersion.for3Use2_13)
     .exclude("org.scala-lang.modules", "scala-xml_2.13")
     .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
+  "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
+  "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
 
   "org.slf4j"        %  "slf4j-simple" % "1.7.36" % Test,
   "org.scalatest"    %% "scalatest"    % "3.2.12" % Test,
