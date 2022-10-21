@@ -19,10 +19,7 @@ Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite
 * Note: Ammonite allows to add dependencies dynamically even in the middle of the REPL session - that's not supported by scala-repl-pp yet. You need to know which dependencies you want on startup. 
 
 ### Why use scala-repl-pp over [scala-cli](https://scala-cli.virtuslab.org/)?
-* for context: scala-cli is mostly a wrapper around the regular Scala REPL and Ammonite, along with 
-* TODO complete analysis
-  * does it support @main named arguments?
-  * can one add a dependency on it?
+scala-cli is mostly a wrapper around the regular Scala REPL and Ammonite, so depending on which one you choose, you essentially end up with the same differences as above. 
 
 ## Use Cases
 
