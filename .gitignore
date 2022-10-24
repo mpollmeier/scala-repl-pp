@@ -1,1 +1,4 @@
-/target/gnupg-*
+target/
+
+/.bsp
+/gnupg-*
