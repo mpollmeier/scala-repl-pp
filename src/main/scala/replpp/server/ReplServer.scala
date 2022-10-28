@@ -27,7 +27,7 @@ object ReplServer {
       config.serverAuthUsername,
       config.serverAuthPassword
     )
-    println("Starting CPGQL server ...")
+    println("Starting REPL server ...")
     try {
       server.main(Array.empty)
     } catch {
