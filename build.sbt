@@ -4,7 +4,7 @@ organization := "com.michaelpollmeier"
 scalaVersion := "3.2.0"
 
 libraryDependencies ++= Seq(
-  "com.michaelpollmeier" %% "scala3-compiler" % "3.2.0+1-extensible-repl",
+  "com.michaelpollmeier" %% "scala3-compiler" % "3.2.0+3-extensible-repl",
   "com.lihaoyi"      %% "mainargs"  % "0.3.0",
   "com.lihaoyi"      %% "os-lib"    % "0.8.1",
   "com.lihaoyi"      %% "pprint"    % "0.7.3",
