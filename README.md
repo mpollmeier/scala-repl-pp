@@ -107,7 +107,7 @@ multiple @main entrypoints: test-main-multiple.sc
 ```bash
 ./scala-repl-pp --server
 
-curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}' -H "Content-Type: application/json"
+curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
 ```
 
 
