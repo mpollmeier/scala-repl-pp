@@ -21,7 +21,7 @@ package object replpp {
   }
   
   def allPredefCode(config: Config): String = {
-    val lines = readPredefFiles(config.predefFiles) :+ config.predefCode.getOrElse("")
+    val lines = config.predefCode.getOrElse("") +: readPredefFiles(config.predefFiles)
     lines.mkString(lineSeparator)
   }
 
