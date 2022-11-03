@@ -26,6 +26,6 @@ object InteractiveShell {
         replDriver.runQuietly(predefCode)(using initialState)
       }
 
-    replDriver.runUntilQuit(state)
+    replDriver.runUntilQuit(using state)()
   }
 }

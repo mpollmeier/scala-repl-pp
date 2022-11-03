@@ -108,6 +108,7 @@ multiple @main entrypoints: test-main-multiple.sc
 ./scala-repl-pp --server
 
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
+curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}'
 ```
 
 
