@@ -18,12 +18,15 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
 
   "org.slf4j"        %  "slf4j-simple" % "1.7.36" % Optional,
+  "com.lihaoyi"      %% "requests"  % "0.7.1" % Test,
   "org.scalatest"    %% "scalatest"    % "3.2.12" % Test,
 )
 
 resolvers += Resolver.mavenLocal
 enablePlugins(JavaAppPackaging)
 Global/onChangedBuildSource := ReloadOnSourceChanges
+
+Test/fork := true
 
 publishTo := sonatypePublishToBundle.value
 scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
