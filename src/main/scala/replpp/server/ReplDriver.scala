@@ -26,8 +26,8 @@ class ReplDriver(compilerArgs: Array[String],
       } catch {
         case e =>
           e.printStackTrace()
-          println(s"caught exception $e with msg=${e.getMessage} ^ - continuing anyway...")
-          Newline
+          println(s"caught exception `$e` with msg=`${e.getMessage}` -> exiting")
+          Quit
       }
     }
 
