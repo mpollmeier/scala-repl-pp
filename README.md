@@ -4,6 +4,8 @@ Note: this currently depends on a [slightly patched](https://github.com/mpollmei
 
 Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-cli.
 
+Note: this currently depends on a dotty fork, which has since been [merged](https://github.com/lampepfl/dotty/pull/16276) into dotty upstream, i.e. we'll be able to depend on the regular dotty release from 3.2.2 on :tada:
+
 ### Why use scala-repl-pp over the regular Scala REPL?
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
 * pretty printing via [pprint](https://com-lihaoyi.github.io/PPrint/)
@@ -29,9 +31,13 @@ sbt stage
 cd target/universal/stage/bin/
 ```
 
-### REPL
+Generally speaking, `--help` is your friend!
 ```
 ./scala-repl-pp --help
+```
+
+### REPL
+```
 ./scala-repl-pp --prompt=myprompt --greeting='hey there!' --onExitCode='println("see ya!")'
 
 ./scala-repl-pp --predefCode='def foo = 42'
@@ -45,7 +51,8 @@ val res0: Int = 1
 
 ### Scripting
 
-Simple "Hello world" script: test-simple.sc
+#### Simple "Hello world" script
+test-simple.sc
 ```scala
 println("Hello!")
 ```
@@ -54,8 +61,36 @@ println("Hello!")
 ./scala-repl-pp --script test-simple.sc
 ```
 
+#### Predef code
+test-predef.sc
+```scala
+println(foo)
+```
 
-Dependencies can be added via `//> using lib` syntax as in scala-cli: test-dependencies.sc
+```bash
+./scala-repl-pp --script test-predef.sc --predefCode 'val foo = "Hello, predef!"'
+```
+
+
+#### Predef file(s)
+test-predef.sc
+```scala
+println(foo)
+```
+
+test-predef-file.sc
+```scala
+val foo = "Hello, predef file"
+```
+
+```bash
+./scala-repl-pp --script test-predef.sc --timesiles test-predef-file.sc
+```
+
+#### Dependencies
+Dependencies can be added via `//> using lib` syntax as in scala-cli: 
+
+test-dependencies.sc:
 ```scala
 //> using lib com.michaelpollmeier:versionsort:1.0.7
 
@@ -68,8 +103,10 @@ assert(compareResult == 1,
 ./scala-repl-pp --script test-dependencies.sc
 ```
 
+Note: this also works with `using` directives in your predef code
 
-@main entrypoints: test-main.sc
+#### @main entrypoints
+test-main.sc
 ```scala
 @main def main() = println("Hello, world!")
 ```
@@ -78,8 +115,19 @@ assert(compareResult == 1,
 ./scala-repl-pp --script test-main.sc
 ```
 
+#### multiple @main entrypoints: test-main-multiple.sc
+```scala
+@main def foo() = println("foo!")
+@main def bar() = println("bar!")
+```
 
-@main entrypoint with named parameters: test-main-withargs.sc
+```bash
+./scala-repl-pp --script test-main-multiple.sc --command=foo
+```
+
+
+#### named parameters
+test-main-withargs.sc
 ```scala
 @main def main(name: String) = {
   println(s"Hello, $name!")
@@ -88,18 +136,6 @@ assert(compareResult == 1,
 
 ```bash
 ./scala-repl-pp --script test-main-withargs.sc --params name=Michael
-```
-
-
-
-multiple @main entrypoints: test-main-multiple.sc
-```scala
-@main def foo() = println("foo!")
-@main def bar() = println("bar!")
-```
-
-```bash
-./scala-repl-pp --script test-main-multiple.sc --command=foo
 ```
 
 
