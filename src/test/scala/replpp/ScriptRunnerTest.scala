@@ -50,9 +50,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
   "--predefCode" in {
     execTest { testOutputPath =>
       TestSetup(
-        s"""@main def foo() = {
-           |  os.write.over(os.Path("$testOutputPath"), bar)
-           |}""".stripMargin,
+        s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
         adaptConfig = _.copy(predefCode = Some("val bar = \"iwashere-predefCode\""))
       )
     } shouldBe "iwashere-predefCode"
@@ -63,23 +61,10 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
       val predefFile = os.temp()
       os.write.over(predefFile, "val bar = \"iwashere-predefFile\"")
       TestSetup(
-        s"""@main def foo() = {
-           |  os.write.over(os.Path("$testOutputPath"), bar)
-           |}""".stripMargin,
+        s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
     } shouldBe "iwashere-predefFile"
-  }
-
-  "additional dependencies via --dependency" in {
-    execTest { testOutputPath =>
-      TestSetup(
-        s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency0:" + compareResult)
-           |""".stripMargin,
-        adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
-      )
-    } shouldBe "iwashere-dependency0:1"
   }
 
   "additional dependencies via --dependency 2" in {
