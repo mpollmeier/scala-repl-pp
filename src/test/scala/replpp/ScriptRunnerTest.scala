@@ -6,15 +6,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class ScriptRunnerTest extends AnyWordSpec with Matchers {
 
   "execute simple single-statement script" in {
-    val scriptFile = os.temp()
     val testOutputFile = os.temp()
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
-    os.write.over(
-      scriptFile,
-      s"""os.write.over(os.Path("$testOutputPath"), "iwashere")"""
-    )
 
-    ScriptRunner.exec(Config(scriptFile = Some(scriptFile)))
+    exec(s"""os.write.over(os.Path("$testOutputPath"), "iwashere")""")
+
     os.read(testOutputFile) shouldBe "iwashere"
   }
 
@@ -24,5 +20,12 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
 //  "--predefCode" in {
 //    ???
 //  }
+
+  private def exec(scriptSrc: String): Unit = {
+    val scriptFile = os.temp()
+    os.write.over(scriptFile, scriptSrc)
+    ScriptRunner.exec(Config(scriptFile = Some(scriptFile)))
+  }
+
 
 }
