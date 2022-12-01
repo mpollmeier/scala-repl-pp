@@ -75,6 +75,18 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     os.read(testOutputFile) shouldBe "iwashere-predefFile"
   }
 
+  "additional dependencies via --dependency" in {
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
+    exec(
+      s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
+         |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency0:" + compareResult)
+         |""".stripMargin,
+        adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
+    )
+
+    os.read(testOutputFile) shouldBe "iwashere-dependency0:1"
+  }
+
   private def exec(scriptSrc: String, adaptConfig: Config => Config = identity): Unit = {
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
