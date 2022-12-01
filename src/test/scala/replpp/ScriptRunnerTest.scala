@@ -21,16 +21,46 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     os.read(testOutputFile) shouldBe "iwashere-@main"
   }
 
+  "multiple main entry point" in {
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
+    exec(
+      s"""@main def foo() = {
+         |  os.write.append(os.Path("$testOutputPath"), "iwashere-@main-foo")
+         |}
+         |
+         |@main def bar() = {
+         |  os.write.append(os.Path("$testOutputPath"), "iwashere-@main-bar")
+         |}""".stripMargin,
+      adaptConfig = _.copy(command = Some("bar"))
+    )
+
+    os.read(testOutputFile) shouldBe "iwashere-@main-bar"
+  }
+
   "--predefCode" in {
     val (testOutputFile, testOutputPath) = newTempFileWithPath
     exec(
       s"""@main def foo() = {
          |  os.write.over(os.Path("$testOutputPath"), bar)
          |}""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("val bar = \"iwashere-predefCode\""))
+      adaptConfig = _.copy(predefCode = Some("val bar = \"iwashere-predefCode\""))
     )
 
     os.read(testOutputFile) shouldBe "iwashere-predefCode"
+  }
+
+  "--predefFiles" in {
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
+    val predefFile = os.temp()
+    os.write.over(predefFile, "val bar = \"iwashere-predefFile\"")
+    exec(
+      s"""@main def foo() = {
+         |  os.write.over(os.Path("$testOutputPath"), bar)
+         |}""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+    )
+
+    os.read(testOutputFile) shouldBe "iwashere-predefFile"
   }
 
   private def exec(scriptSrc: String, adaptConfig: Config => Config = identity): Unit = {
