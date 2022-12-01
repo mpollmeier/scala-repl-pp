@@ -90,7 +90,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-dependency-using-script:1"
   }
 
-  "additional dependencies via `//> using lib` in predefCode" in {
+  "additional dependencies via `//> using lib` in --predefCode" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""
@@ -100,6 +100,20 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         adaptConfig = _.copy(predefCode = Some("//> using lib com.michaelpollmeier:versionsort:1.0.7"))
       )
     } shouldBe "iwashere-dependency-using-predefCode:1"
+  }
+
+  "additional dependencies via `//> using lib` in --predefFiles" in {
+    execTest { testOutputPath =>
+      val predefFile = os.temp()
+      os.write.over(predefFile, "//> using lib com.michaelpollmeier:versionsort:1.0.7")
+      TestSetup(
+        s"""
+           |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-predefFiles:" + compareResult)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+      )
+    } shouldBe "iwashere-dependency-using-predefFiles:1"
   }
 
   type TestOutputPath = String
