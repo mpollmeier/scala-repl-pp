@@ -21,7 +21,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     os.read(testOutputFile) shouldBe "iwashere-@main"
   }
 
-  "multiple main entry point" in {
+  "multiple main entry points" in {
     val (testOutputFile, testOutputPath) = newTempFileWithPath
     exec(
       s"""@main def foo() = {
@@ -35,6 +35,18 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     )
 
     os.read(testOutputFile) shouldBe "iwashere-@main-bar"
+  }
+
+  "parameters" in {
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
+    exec(
+      s"""@main def foo(value: String) = {
+         |  os.write.over(os.Path("$testOutputPath"), value)
+         |}""".stripMargin,
+      adaptConfig = _.copy(params = Map("value" -> "iwashere-parameter"))
+    )
+
+    os.read(testOutputFile) shouldBe "iwashere-parameter"
   }
 
   "--predefCode" in {
