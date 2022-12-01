@@ -23,14 +23,24 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     os.read(testOutputFile) shouldBe "iwashere-@main"
   }
 
-//  "--predefCode" in {
-//    ???
-//  }
+  "--predefCode" in {
+    val testOutputFile = os.temp()
+    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    exec(
+      s"""@main def foo() = {
+         |  os.write.over(os.Path("$testOutputPath"), bar)
+         |}""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some("val bar = \"iwashere-predefCode\""))
+    )
 
-  private def exec(scriptSrc: String): Unit = {
+    os.read(testOutputFile) shouldBe "iwashere-predefCode"
+  }
+
+  private def exec(scriptSrc: String, adaptConfig: Config => Config = identity): Unit = {
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
-    ScriptRunner.exec(Config(scriptFile = Some(scriptFile)))
+    val config = adaptConfig(Config(scriptFile = Some(scriptFile)))
+    ScriptRunner.exec(config)
   }
 
 
