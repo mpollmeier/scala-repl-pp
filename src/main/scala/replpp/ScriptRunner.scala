@@ -43,7 +43,7 @@ object ScriptRunner {
   }
 
   private def maybeAddDependencies(scriptCode: String, config: Config): Config = {
-    val usingClausePrefix = "//> using "
+    val usingClausePrefix = "//> using lib"
     val dependenciesFromUsingClauses =
       scriptCode.lines()
         .map(_.trim)
@@ -54,6 +54,7 @@ object ScriptRunner {
 
     config.copy(dependencies = config.dependencies ++ dependenciesFromUsingClauses)
   }
+
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
     val mainImpl =
       if (scriptCode.contains("@main")) {
