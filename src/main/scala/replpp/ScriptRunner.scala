@@ -33,12 +33,8 @@ object ScriptRunner {
     if (config.verbose) println(scriptContent)
     os.write.over(predefPlusScriptFileTmp, scriptContent)
 
-    val configWithAdditionalDependencies = config.copy(dependencies = config.dependencies ++
-      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-    )
-
     new ScriptingDriver(
-      compilerArgs = compilerArgs(configWithAdditionalDependencies) :+ "-nowarn",
+      compilerArgs = compilerArgs(config) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()

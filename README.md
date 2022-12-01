@@ -103,7 +103,7 @@ assert(compareResult == 1,
 ./scala-repl-pp --script test-dependencies.sc
 ```
 
-Note: this also works with `using` directives in your predef code
+Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
 #### @main entrypoints
 test-main.sc

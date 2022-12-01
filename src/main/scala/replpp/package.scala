@@ -1,10 +1,16 @@
 import java.lang.System.lineSeparator
 
 package object replpp {
+  
   def compilerArgs(config: Config): Array[String] = {
+    val predefCode = allPredefCode(config)
+    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
+    val allDependencies = config.dependencies ++
+      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
+
     val compilerArgs = Array.newBuilder[String]
 
-    val dependencyFiles = Dependencies.resolveOptimistically(config.dependencies, config.verbose)
+    val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, config.verbose)
     compilerArgs ++= Array("-classpath", replClasspath(dependencyFiles))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
