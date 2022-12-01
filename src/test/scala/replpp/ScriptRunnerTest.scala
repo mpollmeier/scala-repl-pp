@@ -6,15 +6,13 @@ import org.scalatest.wordspec.AnyWordSpec
 class ScriptRunnerTest extends AnyWordSpec with Matchers {
 
   "execute simple single-statement script" in {
-    val testOutputFile = os.temp()
-    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
     exec(s"""os.write.over(os.Path("$testOutputPath"), "iwashere-simple")""")
     os.read(testOutputFile) shouldBe "iwashere-simple"
   }
 
   "main entry point" in {
-    val testOutputFile = os.temp()
-    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
     exec(
       s"""@main def foo() = {
          |  os.write.over(os.Path("$testOutputPath"), "iwashere-@main")
@@ -24,8 +22,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
   }
 
   "--predefCode" in {
-    val testOutputFile = os.temp()
-    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    val (testOutputFile, testOutputPath) = newTempFileWithPath
     exec(
       s"""@main def foo() = {
          |  os.write.over(os.Path("$testOutputPath"), bar)
@@ -43,5 +40,9 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     ScriptRunner.exec(config)
   }
 
+  private def newTempFileWithPath: (os.Path, String) = {
+    val tmpFile = os.temp()
+    (tmpFile, tmpFile.toNIO.toAbsolutePath.toString)
+  }
 
 }
