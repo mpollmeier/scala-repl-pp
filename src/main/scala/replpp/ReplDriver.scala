@@ -48,7 +48,7 @@ class ReplDriver(args: Array[String],
       given Context = state.context
       try {
         val line = terminal.readLine(completer)
-        if (line.trim.startsWith(ScriptRunner.UsingLibDirective))
+        if (line.trim.startsWith(UsingDirectives.LibDirective))
           out.println(s"warning: `using lib` directive does not work as input in interactive REPL - please pass it via predef code or `--dependency` list instead")
         ParseResult(line)(using state)
       } catch {
