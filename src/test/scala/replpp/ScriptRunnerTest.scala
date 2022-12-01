@@ -8,14 +8,20 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
   "execute simple single-statement script" in {
     val testOutputFile = os.temp()
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
-
-    exec(s"""os.write.over(os.Path("$testOutputPath"), "iwashere")""")
-
-    os.read(testOutputFile) shouldBe "iwashere"
+    exec(s"""os.write.over(os.Path("$testOutputPath"), "iwashere-simple")""")
+    os.read(testOutputFile) shouldBe "iwashere-simple"
   }
 
-//  "@main entry point" in {
-//  }
+  "main entry point" in {
+    val testOutputFile = os.temp()
+    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    exec(
+      s"""@main def foo() = {
+         |  os.write.over(os.Path("$testOutputPath"), "iwashere-@main")
+         |}""".stripMargin)
+
+    os.read(testOutputFile) shouldBe "iwashere-@main"
+  }
 
 //  "--predefCode" in {
 //    ???
