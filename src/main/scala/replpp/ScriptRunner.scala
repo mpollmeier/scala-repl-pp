@@ -30,7 +30,7 @@ object ScriptRunner {
     os.write.over(predefPlusScriptFileTmp, scriptContent)
 
     new ScriptingDriver(
-      compilerArgs = compilerArgs(maybeAddDependencies(scriptCode, config)) :+ "-nowarn",
+      compilerArgs = compilerArgs(maybeAddDependencies(predefCode, scriptCode, config)) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()
@@ -42,10 +42,15 @@ object ScriptRunner {
     os.remove(predefPlusScriptFileTmp)
   }
 
-  private def maybeAddDependencies(scriptCode: String, config: Config): Config = {
+  private def maybeAddDependencies(predefCode: String, scriptCode: String, config: Config): Config = {
     val usingClausePrefix = "//> using lib "
     val dependenciesFromUsingClauses =
-      scriptCode.lines()
+      s"""
+         |$predefCode
+         |$scriptCode
+         |"""
+        .stripMargin
+        .lines()
         .map(_.trim)
         .filter(_.startsWith(usingClausePrefix))
         .map(_.drop(usingClausePrefix.length).trim)

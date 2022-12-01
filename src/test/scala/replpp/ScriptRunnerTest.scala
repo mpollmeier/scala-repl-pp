@@ -71,11 +71,11 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       TestSetup(
         s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency0:" + compareResult)
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-param:" + compareResult)
            |""".stripMargin,
         adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
       )
-    } shouldBe "iwashere-dependency0:1"
+    } shouldBe "iwashere-dependency-param:1"
   }
 
   "additional dependencies via `//> using lib` in script" in {
@@ -84,10 +84,22 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         s"""
            |//> using lib com.michaelpollmeier:versionsort:1.0.7
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency1:" + compareResult)
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-script:" + compareResult)
            |""".stripMargin
       )
-    } shouldBe "iwashere-dependency1:1"
+    } shouldBe "iwashere-dependency-using-script:1"
+  }
+
+  "additional dependencies via `//> using lib` in predefCode" in {
+    execTest { testOutputPath =>
+      TestSetup(
+        s"""
+           |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-predefCode:" + compareResult)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some("//> using lib com.michaelpollmeier:versionsort:1.0.7"))
+      )
+    } shouldBe "iwashere-dependency-using-predefCode:1"
   }
 
   type TestOutputPath = String
