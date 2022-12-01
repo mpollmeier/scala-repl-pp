@@ -67,7 +67,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-predefFile"
   }
 
-  "additional dependencies via --dependency 2" in {
+  "additional dependencies via --dependency" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
@@ -76,6 +76,18 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
       )
     } shouldBe "iwashere-dependency0:1"
+  }
+
+  "additional dependencies via `//> using lib` in script" in {
+    execTest { testOutputPath =>
+      TestSetup(
+        s"""
+           |//> using lib com.michaelpollmeier:versionsort:1.0.7
+           |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency1:" + compareResult)
+           |""".stripMargin
+      )
+    } shouldBe "iwashere-dependency1:1"
   }
 
   type TestOutputPath = String

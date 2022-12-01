@@ -43,12 +43,12 @@ object ScriptRunner {
   }
 
   private def maybeAddDependencies(scriptCode: String, config: Config): Config = {
-    val usingClausePrefix = "//> using lib"
+    val usingClausePrefix = "//> using lib "
     val dependenciesFromUsingClauses =
       scriptCode.lines()
         .map(_.trim)
         .filter(_.startsWith(usingClausePrefix))
-        .map(_.drop(usingClausePrefix.length))
+        .map(_.drop(usingClausePrefix.length).trim)
         .collect(Collectors.toList)
         .asScala
 
