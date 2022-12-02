@@ -5,6 +5,8 @@ import java.util.stream.Collectors
 import scala.jdk.CollectionConverters._
 
 object ScriptRunner {
+  val UsingLibDirective = "//> using lib "
+  
   def exec(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
     if (!os.exists(scriptFile)) {
@@ -30,7 +32,7 @@ object ScriptRunner {
     os.write.over(predefPlusScriptFileTmp, scriptContent)
 
     new ScriptingDriver(
-      compilerArgs = compilerArgs(maybeAddDependencies(scriptCode, config)) :+ "-nowarn",
+      compilerArgs = compilerArgs(parseUsingLibDirectives(predefCode, scriptCode, config)) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()
@@ -42,18 +44,23 @@ object ScriptRunner {
     os.remove(predefPlusScriptFileTmp)
   }
 
-  private def maybeAddDependencies(scriptCode: String, config: Config): Config = {
-    val usingClausePrefix = "//> using "
+  private def parseUsingLibDirectives(predefCode: String, scriptCode: String, config: Config): Config = {
     val dependenciesFromUsingClauses =
-      scriptCode.lines()
+      s"""
+         |$predefCode
+         |$scriptCode
+         |"""
+        .stripMargin
+        .lines()
         .map(_.trim)
-        .filter(_.startsWith(usingClausePrefix))
-        .map(_.drop(usingClausePrefix.length))
+        .filter(_.startsWith(UsingLibDirective))
+        .map(_.drop(UsingLibDirective.length).trim)
         .collect(Collectors.toList)
         .asScala
 
     config.copy(dependencies = config.dependencies ++ dependenciesFromUsingClauses)
   }
+
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
     val mainImpl =
       if (scriptCode.contains("@main")) {
