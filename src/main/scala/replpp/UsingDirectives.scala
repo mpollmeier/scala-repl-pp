@@ -1,5 +1,6 @@
 package replpp
 
+import java.nio.file.Path
 import scala.collection.mutable
 
 object UsingDirectives {
@@ -7,7 +8,10 @@ object UsingDirectives {
   val FileDirective = "//> using file "
 
   def findImportedFilesRecursively(lines: IterableOnce[String], visited: Set[os.Path] = Set.empty): Set[os.Path] = {
-    val files = scanFor(FileDirective, lines).iterator.map(os.Path(_)).toSet
+    val files = scanFor(FileDirective, lines).iterator.map { pathStr =>
+      if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
+      else os.pwd / os.RelPath(pathStr)
+    }.toSet
     files ++ files.filterNot(visited.contains).map(os.read.lines).flatMap { lines =>
       findImportedFilesRecursively(lines, visited ++ files)
     }
