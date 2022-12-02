@@ -8,21 +8,24 @@ import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
 
 object ScriptRunner {
-  
+
   def exec(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
     if (!os.exists(scriptFile)) {
       throw new AssertionError(s"given script file $scriptFile does not exist")
     }
 
-    System.err.println(s"executing $scriptFile with params=${config.params}")
+    val paramsInfoMaybe =
+      if (config.params.nonEmpty) s" with params=${config.params}"
+      else ""
+    System.err.println(s"executing $scriptFile$paramsInfoMaybe")
     val scriptArgs: Seq[String] = {
       val commandArgs = config.command.toList
       val parameterArgs = config.params.flatMap { case (key, value) => Seq(s"--$key", value) }
       commandArgs ++ parameterArgs
     }
 
-    // Our predef code includes import statements... I didn't find a nice way to add them to the context of the
+    // Predef code may include import statements... I didn't find a nice way to add them to the context of the
     // script file, so instead we'll just write it to the beginning of the script file.
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
