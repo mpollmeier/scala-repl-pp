@@ -1,11 +1,13 @@
 package replpp
 
 import dotty.tools.scripting.ScriptingDriver
+
 import java.util.stream.Collectors
-import scala.jdk.CollectionConverters._
+import scala.collection.immutable.{AbstractSeq, LinearSeq}
+import scala.jdk.CollectionConverters.*
+import scala.xml.NodeSeq
 
 object ScriptRunner {
-  val UsingLibDirective = "//> using lib "
   
   def exec(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
@@ -32,7 +34,7 @@ object ScriptRunner {
     os.write.over(predefPlusScriptFileTmp, scriptContent)
 
     new ScriptingDriver(
-      compilerArgs = compilerArgs(parseUsingLibDirectives(predefCode, scriptCode, config)) :+ "-nowarn",
+      compilerArgs = compilerArgs(config) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()
@@ -42,23 +44,6 @@ object ScriptRunner {
     // don't delete the temporary file which includes the predef,
     // so that the line numbers are accurate and the user can properly debug
     os.remove(predefPlusScriptFileTmp)
-  }
-
-  private def parseUsingLibDirectives(predefCode: String, scriptCode: String, config: Config): Config = {
-    val dependenciesFromUsingClauses =
-      s"""
-         |$predefCode
-         |$scriptCode
-         |"""
-        .stripMargin
-        .lines()
-        .map(_.trim)
-        .filter(_.startsWith(UsingLibDirective))
-        .map(_.drop(UsingLibDirective.length).trim)
-        .collect(Collectors.toList)
-        .asScala
-
-    config.copy(dependencies = config.dependencies ++ dependenciesFromUsingClauses)
   }
 
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
