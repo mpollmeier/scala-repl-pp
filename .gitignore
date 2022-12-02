@@ -2,3 +2,4 @@ target/
 
 /.bsp
 /gnupg-*
+/src/test/resources/demo-project/.bsp/
