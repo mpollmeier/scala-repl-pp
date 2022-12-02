@@ -128,6 +128,34 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-using-file-test1:99"
   }
 
+  "import additional files via `//> using file` via --predefCode" in {
+    execTest { testOutputPath =>
+      val additionalScript = os.temp()
+      os.write.over(additionalScript, "def foo = 99")
+      TestSetup(
+        s"""
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test2:" + foo)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some(s"//> using file $additionalScript"))
+      )
+    } shouldBe "iwashere-using-file-test2:99"
+  }
+
+  "import additional files via `//> using file` via --predefFiles" in {
+    execTest { testOutputPath =>
+      val additionalScript = os.temp()
+      val predefFile = os.temp()
+      os.write.over(additionalScript, "def foo = 99")
+      os.write.over(predefFile, s"//> using file $additionalScript")
+      TestSetup(
+        s"""
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test3:" + foo)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+      )
+    } shouldBe "iwashere-using-file-test3:99"
+  }
+
   type TestOutputPath = String
   type TestOutput = String
   case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)
