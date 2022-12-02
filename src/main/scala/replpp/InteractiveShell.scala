@@ -8,8 +8,9 @@ import java.lang.System.lineSeparator
 
 object InteractiveShell {
   def run(config: Config): Unit = {
+    val predefCode = allPredefCode(config)
     val replDriver = new ReplDriver(
-      compilerArgs(config),
+      compilerArgs(config, predefCode),
       onExitCode = config.onExitCode,
       greeting = Option(config.greeting),
       prompt = config.prompt.getOrElse("scala"),
@@ -17,7 +18,6 @@ object InteractiveShell {
     )
 
     val initialState: State = replDriver.initialState
-    val predefCode = allPredefCode(config)
     val state: State =
       if (config.verbose) {
         println(predefCode)

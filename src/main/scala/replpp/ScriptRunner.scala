@@ -37,7 +37,7 @@ object ScriptRunner {
     os.write.over(predefPlusScriptFileTmp, scriptContent)
 
     new ScriptingDriver(
-      compilerArgs = compilerArgs(config) :+ "-nowarn",
+      compilerArgs = compilerArgs(config, predefCode) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun()

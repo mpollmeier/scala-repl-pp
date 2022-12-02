@@ -2,8 +2,7 @@ import java.lang.System.lineSeparator
 
 package object replpp {
 
-  def compilerArgs(config: Config): Array[String] = {
-    val predefCode = allPredefCode(config)
+  def compilerArgs(config: Config, predefCode: String): Array[String] = {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
     val allDependencies = config.dependencies ++
       UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
