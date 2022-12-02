@@ -29,7 +29,7 @@ package object replpp {
   def allPredefCode(config: Config): String = {
     val predefLines: Seq[String] = config.predefCode.getOrElse("") +: readAdditionalFiles(config.predefFiles)
     val scriptLines = config.scriptFile.map(os.read.lines(_)).getOrElse(Seq.empty)
-    val importedFiles = UsingDirectives.findImportedFiles(predefLines ++ scriptLines)
+    val importedFiles = UsingDirectives.findImportedFilesRecursively(predefLines ++ scriptLines)
     val linesViaUsingDirective = readAdditionalFiles(importedFiles)
     (predefLines ++ linesViaUsingDirective).mkString(lineSeparator)
   }

@@ -156,6 +156,26 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-using-file-test3:99"
   }
 
+  "import additional files via `//> using file` recursively" in {
+    execTest { testOutputPath =>
+      val additionalScript0 = os.temp()
+      val additionalScript1 = os.temp()
+      // should handle recursive loop as well
+      os.write.over(additionalScript0,
+        s"""//> using file $additionalScript1
+           |def foo = 99""".stripMargin)
+      os.write.over(additionalScript1,
+        s"""//> using file $additionalScript0
+           |def bar = foo""".stripMargin)
+      TestSetup(
+        s"""//> using file $additionalScript1
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test4:" + bar)
+           |""".stripMargin
+      )
+    } shouldBe "iwashere-using-file-test4:99"
+  }
+
+
   type TestOutputPath = String
   type TestOutput = String
   case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)
