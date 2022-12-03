@@ -28,6 +28,8 @@ class ReplDriver(args: Array[String],
                  maxPrintElements: Int,
                  classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
 
+  lazy val lineSeparator = System.getProperty("line.separator")
+
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
    */
@@ -48,9 +50,9 @@ class ReplDriver(args: Array[String],
       given Context = state.context
       try {
         val line = terminal.readLine(completer)
-        if (line.trim.startsWith(UsingDirectives.LibDirective))
-          out.println(s"warning: `using lib` directive does not work as input in interactive REPL - please pass it via predef code or `--dependency` list instead")
-        ParseResult(line)(using state)
+        val linesFinal = sourcesFromUsingDirective(line) :+ line
+
+        ParseResult(linesFinal.mkString(lineSeparator))(using state)
       } catch {
         case _: EndOfFileException => // Ctrl+D
           onExitCode.foreach(code => run(code)(using state))
@@ -81,5 +83,23 @@ class ReplDriver(args: Array[String],
       (value: Object) => renderer.invoke(null, value).asInstanceOf[String]
     }
   }
+
+  private def sourcesFromUsingDirective(line: String): Seq[String] = {
+    val trimmed = line.trim
+    if (trimmed.startsWith(UsingDirectives.LibDirective)) {
+      out.println(s"warning: `using lib` directive does not work as input in interactive REPL - please pass it via predef code or `--dependency` list instead")
+      Nil
+    } else if (trimmed.startsWith(UsingDirectives.FileDirective)) {
+      val files = UsingDirectives.findImportedFilesRecursively(line.split(lineSeparator))
+      files.toSeq.flatMap { file =>
+        val ret = os.read.lines(file)
+        out.println(s"read $file (${ret.size} lines)")
+        ret
+      }
+    } else {
+      Nil
+    }
+  }
+
 
 }

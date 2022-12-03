@@ -4,8 +4,9 @@ import java.nio.file.Path
 import scala.collection.mutable
 
 object UsingDirectives {
-  val LibDirective = "//> using lib "
-  val FileDirective = "//> using file "
+  val Prefix = "//> using"
+  val LibDirective = s"$Prefix lib "
+  val FileDirective = s"$Prefix file "
 
   def findImportedFilesRecursively(lines: IterableOnce[String], visited: Set[os.Path] = Set.empty): Set[os.Path] = {
     val files = scanFor(FileDirective, lines).iterator.map { pathStr =>
