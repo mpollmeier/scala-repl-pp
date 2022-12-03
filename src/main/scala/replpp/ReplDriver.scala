@@ -49,8 +49,8 @@ class ReplDriver(args: Array[String],
       }
       given Context = state.context
       try {
-        val line = terminal.readLine(completer)
-        val linesFinal = sourcesFromUsingDirective(line) :+ line
+        val lines = terminal.readLine(completer).split(lineSeparator)
+        val linesFinal = lines.flatMap(sourcesFromUsingDirective) ++ lines
 
         ParseResult(linesFinal.mkString(lineSeparator))(using state)
       } catch {
