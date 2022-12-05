@@ -8,13 +8,13 @@ object UsingDirectives {
   val LibDirective = s"$Prefix lib "
   val FileDirective = s"$Prefix file "
 
-  def findImportedFilesRecursively(lines: IterableOnce[String], visited: Set[os.Path] = Set.empty): Set[os.Path] = {
-    val files = scanFor(FileDirective, lines).iterator.map { pathStr =>
+  def findImportedFilesRecursively(file: os.Path, visited: Set[os.Path] = Set.empty): Set[os.Path] = {
+    val files = scanFor(FileDirective, os.read.lines(file)).iterator.map { pathStr =>
       if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
-      else os.pwd / os.RelPath(pathStr)
+      else file / os.RelPath(pathStr)
     }.toSet
-    files ++ files.filterNot(visited.contains).map(os.read.lines).flatMap { lines =>
-      findImportedFilesRecursively(lines, visited ++ files)
+    files ++ files.filterNot(visited.contains).flatMap { file =>
+      findImportedFilesRecursively(file, visited + file)
     }
   }
 

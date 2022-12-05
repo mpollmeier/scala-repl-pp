@@ -50,7 +50,7 @@ class ReplDriver(args: Array[String],
       given Context = state.context
       try {
         val lines = terminal.readLine(completer).split(lineSeparator)
-        val linesFinal = lines.flatMap(sourcesFromUsingDirective) ++ lines
+        val linesFinal = substituteFileImportsWithContents(lines)
 
         ParseResult(linesFinal.mkString(lineSeparator))(using state)
       } catch {
@@ -84,13 +84,17 @@ class ReplDriver(args: Array[String],
     }
   }
 
-  private def sourcesFromUsingDirective(line: String): Seq[String] = {
-    val trimmed = line.trim
+  /**
+    * for each `//> using file abc.sc` in the given `lines`, substitute it with the referenced file
+    * this works recursively, i.e. if the referenced file references further files, those will be read as well
+    */
+  private def substituteFileImportsWithContents(lines: IterableOnce[String]): Seq[String] = {
+    val trimmed = inputLine.trim
     if (trimmed.startsWith(UsingDirectives.LibDirective)) {
       out.println(s"warning: `using lib` directive does not work as input in interactive REPL - please pass it via predef code or `--dependency` list instead")
       Nil
     } else if (trimmed.startsWith(UsingDirectives.FileDirective)) {
-      val files = UsingDirectives.findImportedFilesRecursively(line.split(lineSeparator))
+      val files = UsingDirectives.findImportedFilesRecursively(inputLine.split(lineSeparator))
       files.toSeq.flatMap { file =>
         val ret = os.read.lines(file)
         out.println(s"read $file (${ret.size} lines)")

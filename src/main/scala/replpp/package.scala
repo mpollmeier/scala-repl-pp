@@ -24,22 +24,17 @@ package object replpp {
     val entriesForDeps = dependencies.mkString(separator)
     s"$inheritedClasspath$separator$entriesForDeps"
   }
-  
-  def allPredefCode(config: Config): String = {
-    val predefLines: Seq[String] = config.predefCode.getOrElse("") +: readAdditionalFiles(config.predefFiles)
-    val scriptLines = config.scriptFile.map(os.read.lines(_)).getOrElse(Seq.empty)
-    val importedFiles = UsingDirectives.findImportedFilesRecursively(predefLines ++ scriptLines)
-    val linesViaUsingDirective = readAdditionalFiles(importedFiles)
-    (predefLines ++ linesViaUsingDirective).mkString(lineSeparator)
+
+  def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
+    val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq
+    val additionalFiles = config.scriptFile.toSeq ++ config.predefFiles
+    val importedFiles = additionalFiles.flatMap(UsingDirectives.findImportedFilesRecursively(_))
+    (additionalFiles ++ importedFiles).map { file =>
+      (file, os.read.lines(file).mkString(lineSeparator))
+    } ++ fromPredefCodeParam
   }
 
-  def readAdditionalFiles(files: IterableOnce[os.Path]): Seq[String] = {
-    files.iterator.distinct.flatMap { file =>
-      assert(os.exists(file), s"$file does not exist")
-      val lines = os.read.lines(file)
-      println(s"importing $file (${lines.size} lines) from $file")
-      lines
-    }.toSeq
-  }
+  def allPredefCode(config: Config): String =
+    predefCodeByFile(config).map(_._2).mkString(lineSeparator)
 
 }

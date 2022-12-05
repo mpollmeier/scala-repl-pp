@@ -175,6 +175,27 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-using-file-test4:99"
   }
 
+  "import additional files: use relative path of dependent script, and import in correct order" in {
+    execTest { testOutputPath =>
+      val scriptRootDir = os.temp.dir()
+      val scriptSubDir = scriptRootDir / "subdir"
+      os.makeDir(scriptSubDir)
+      val additionalScript0 = os.temp()
+      val additionalScript1 =  scriptSubDir / "additional-script1.sc"
+      os.write.over(additionalScript0,
+        // specifying path relative from the additionalScript0
+        s"""//> using file subdir/additional-script1.sc
+           |val bar = foo""".stripMargin)
+      os.write.over(additionalScript1,
+        s"""val foo = 99""".stripMargin)
+      TestSetup(
+        s"""//> using file $additionalScript0
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
+           |""".stripMargin
+      )
+    } shouldBe "iwashere-using-file-test5:99"
+  }
+
 
   type TestOutputPath = String
   type TestOutput = String
