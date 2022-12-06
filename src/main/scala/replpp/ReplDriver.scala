@@ -40,42 +40,76 @@ class ReplDriver(args: Array[String],
     initializeRenderer()
     greeting.foreach(out.println)
 
-    @tailrec def loop(using state: State)(): State = {
-      val (parseResult, remainder) = readLine(terminal, state)
+    @tailrec
+    def loop(using state: State)(): State = {
+      val parseResult = readLine(terminal, state)
       if (parseResult == Quit) state
       else loop(using interpret(parseResult))()
+//      else {
+//        val state0 = interpret(parseResult)
+//        if (usingFileDirectiveAndRemainder.isEmpty) loop(using state0)()
+//        else {
+//          val usingDirective = usingFileDirectiveAndRemainder.next()
+//           TODO recursive...
+//          ???
+//        }
+//      }
     }
 
     try runBody { loop(using initialState)() }
     finally terminal.close()
   }
 
-  private val completer: Completer = { (_, line, candidates) =>
-    val comps = completions(line.cursor, line.line, state)
-    candidates.addAll(comps.asJava)
+  /** Blockingly read a line, getting back a parse result.
+    * The input may be multi-line.
+    * If the input contains a using file directive (e.g. `//> using file abc.sc`), then we interpret everything up
+    * until the directive, then interpret the directive (i.e. import that file) and continue with the remainder of
+    * our input. That way, we import the file in-place, while preserving line numbers for user feedback.  */
+  private def readLine(terminal: JLineTerminal, state: State): ParseResult = {
+    given Context = state.context
+    val completer: Completer = { (_, line, candidates) =>
+      val comps = completions(line.cursor, line.line, state)
+      candidates.addAll(comps.asJava)
+    }
+    parseLines(terminal.readLine(completer).split(lineSeparator).iterator, state, os.pwd)
+    // TODO reduce Seq[ParseResult] => ParseResult? or rather handle multiple parseResults..!
+    ???
+    // TODO: if there's a remainder iter, we may have encountered a file directive - interpret it and call ourselves recursively, updating the state
   }
 
-  /** Blockingly read a line, getting back a parse result */
-  def readLine(terminal: JLineTerminal, state: State): (ParseResult, Iterator[String]) = {
-    given Context = state.context
-    try {
-      val linesIter = terminal.readLine(completer).split(lineSeparator).iterator
-      val linesBeforeUsingFileDirectiveBuilder = Seq.newBuilder[String]
-      while (linesIter.hasNext) {
-        val line = linesIter.next()
-        if (line.trim.startsWith(UsingDirectives.FileDirective)) {
-          val linesBeforeUsingFileDirective = linesBeforeUsingFileDirectiveBuilder.result()
-          linesBeforeUsingFileDirectiveBuilder.clear()
-          // TODO interpret everything until here, then recursively call parseLine with content of file, then continue with the remainder of the linerIterator
-          ???
-        }
-
+  private def parseLines(lines: IterableOnce[String], state: State, currentFile: os.Path): Seq[ParseResult] = {
+    val linesIter = lines.iterator
+    val linesBeforeUsingFileDirectiveBuilder = Seq.newBuilder[String]
+    while (linesIter.hasNext) {
+      val line = linesIter.next()
+      if (!line.trim.startsWith(UsingDirectives.FileDirective)) {
+        // TODO extract
+        val linesBeforeUsingFileDirective = linesBeforeUsingFileDirectiveBuilder.result()
+        linesBeforeUsingFileDirectiveBuilder.clear()
+        val state0 = 
+          if (linesBeforeUsingFileDirective.isEmpty) state
+          else {
+            // interpret everything until here, then interpret the given file (recursively call parseLine?) with content of file, then continue with the remainder of the linerIterator
+            val parseResult0 = parseLine(linesBeforeUsingFileDirective.mkString(lineSeparator), state)
+            interpret(parseResult0)(using state)
+          }
+        val file = line.trim.drop(UsingDirectives.FileDirective.length)
+        println(s"> importing $file...")
+        val linesFromFile = os.read.lines(file)
+        // now read the file and recursively call `parseLines`
+        val parseResult0 = parseLines(linesFromFile, state0, file)
+        // TODO handle remainder of call above, and remainder of current lineIter
+        ???
+      } else {
+        linesBeforeUsingFileDirectiveBuilder.addOne(line)
       }
-//      val linesBeforeUsingFileDirective = linesIter.takeWhile(!_.trim.startsWith(UsingDirectives.FileDirective)).toArray
-      //        val linesFinal = substituteFileImportsWithContents(lines)
-      //
-      //        ParseResult(linesFinal.mkString(lineSeparator))(using state)
-      ???
+    }
+    
+  }
+
+  private def parseLine(line: String, state: State): ParseResult = {
+    try {
+      ParseResult(line)(using state)
     } catch {
       case _: EndOfFileException => // Ctrl+D
         onExitCode.foreach(code => run(code)(using state))
