@@ -28,9 +28,11 @@ package object replpp {
 
   def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
     val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq
-    val additionalFiles = config.scriptFile.toSeq ++ config.predefFiles
-    val importedFiles = additionalFiles.flatMap(UsingDirectives.findImportedFilesRecursively(_))
-    (additionalFiles ++ importedFiles).map { file =>
+    val importedFiles = {
+      val filesToSearch = config.scriptFile.toSeq ++ config.predefFiles
+      filesToSearch.flatMap(UsingDirectives.findImportedFilesRecursively)
+    }
+    (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read.lines(file).mkString(lineSeparator))
     } ++ fromPredefCodeParam
   }
