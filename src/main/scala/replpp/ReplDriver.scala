@@ -41,11 +41,11 @@ class ReplDriver(args: Array[String],
 
     @tailrec
     def loop(using state: State)(): State = {
+      // TODO use util.Try?
       val newStateMaybe: Option[State] = {
         try {
           val inputLines = readLine(terminal, state)
-          val interpretResult = interpretInput(inputLines, state, os.pwd)
-          Some(interpretResult.state)
+          Some(interpretInput(inputLines, state, os.pwd))
         } catch {
           case _: EndOfFileException => // Ctrl+D
             onExitCode.foreach(code => run(code)(using state))
@@ -79,37 +79,27 @@ class ReplDriver(args: Array[String],
     terminal.readLine(completer).split(lineSeparator).iterator
   }
 
-  // TODO handle as sealed trait: either an intermediate interpretresult, or stop
-  private class InterpretResult(var state: State, var shouldStop: Boolean = false)
-  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): InterpretResult = {
+  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
     val parsedLines = Seq.newBuilder[String]
-    val interpretResult = new InterpretResult(state)
+    var resultingState = state
 
-    val lineIterator = lines.iterator
-    while (lineIterator.hasNext && !interpretResult.shouldStop) {
-      val line = lineIterator.next()
+    for (line <- lines.iterator) {
       if (line.trim.startsWith(UsingDirectives.FileDirective)) {
         // TODO extract method for readability of surrounding condition
         val linesBeforeUsingFileDirective = parsedLines.result()
         parsedLines.clear()
         if (linesBeforeUsingFileDirective.nonEmpty)  {
           // interpret everything until here
-          parseInput(linesBeforeUsingFileDirective, interpretResult.state) match {
-            case Quit =>
-              interpretResult.shouldStop = true
-            case parseResult =>
-              interpretResult.state = interpret(parseResult)(using interpretResult.state)
-          }
+          val parseResult = parseInput(linesBeforeUsingFileDirective, resultingState)
+          resultingState = interpret(parseResult)(using resultingState)
         }
 
         // now read and interpret the given file
         val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
         val file = resolveFile(currentFile, pathStr)
-        println(s"> importing $file...")
+        println(s"> importing $file")
         val linesFromFile = os.read.lines(file)
-        val interpretResult1 = interpretInput(linesFromFile, interpretResult.state, file)
-        interpretResult.state = interpretResult1.state
-        if (interpretResult1.shouldStop) interpretResult.shouldStop = true
+        resultingState = interpretInput(linesFromFile, resultingState, file)
 
         // finally, continue with the remainder of the current lines interator
       } else {
@@ -117,14 +107,9 @@ class ReplDriver(args: Array[String],
       }
     }
 
-    // TODO refactor for reuse
-    parseInput(parsedLines.result(), interpretResult.state) match {
-      case Quit =>
-        interpretResult.shouldStop = true
-      case parseResult =>
-        interpretResult.state = interpret(parseResult)(using interpretResult.state)
-    }
-    interpretResult
+    val parseResult = parseInput(parsedLines.result(), resultingState)
+    resultingState = interpret(parseResult)(using resultingState)
+    resultingState
   }
 
   private def parseInput(lines: IterableOnce[String], state: State): ParseResult =
