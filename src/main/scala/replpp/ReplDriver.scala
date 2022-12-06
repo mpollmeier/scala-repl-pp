@@ -41,18 +41,12 @@ class ReplDriver(args: Array[String],
 
     @tailrec
     def loop(using state: State)(): State = {
-      val parseResult = readLine(terminal, state)
-      if (parseResult == Quit) state
-      else loop(using interpret(parseResult))()
-//      else {
-//        val state0 = interpret(parseResult)
-//        if (usingFileDirectiveAndRemainder.isEmpty) loop(using state0)()
-//        else {
-//          val usingDirective = usingFileDirectiveAndRemainder.next()
-//           TODO recursive...
-//          ???
-//        }
-//      }
+      val inputLines = readLine(terminal, state)
+      val interpretResult = interpretInput(inputLines, state, os.pwd)
+      if (interpretResult.shouldStop)
+        interpretResult.state
+      else
+        loop(using interpretResult.state)()
     }
 
     try runBody { loop(using initialState)() }
@@ -64,47 +58,48 @@ class ReplDriver(args: Array[String],
     * If the input contains a using file directive (e.g. `//> using file abc.sc`), then we interpret everything up
     * until the directive, then interpret the directive (i.e. import that file) and continue with the remainder of
     * our input. That way, we import the file in-place, while preserving line numbers for user feedback.  */
-  private def readLine(terminal: JLineTerminal, state: State): ParseResult = {
+  private def readLine(terminal: JLineTerminal, state: State): IterableOnce[String] = {
     given Context = state.context
     val completer: Completer = { (_, line, candidates) =>
       val comps = completions(line.cursor, line.line, state)
       candidates.addAll(comps.asJava)
     }
-    val inputLines = terminal.readLine(completer).split(lineSeparator).iterator
-    interpretInput(inputLines, state, os.pwd)
-    // TODO reduce Seq[ParseResult] => ParseResult? or rather handle multiple parseResults..!
-    ???
-    // TODO: if there's a remainder iter, we may have encountered a file directive - interpret it and call ourselves recursively, updating the state
+    terminal.readLine(completer).split(lineSeparator).iterator
   }
 
-  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
-    val linesIter = lines.iterator
+  private class InterpretResult(var state: State, var shouldStop: Boolean = false)
+  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): InterpretResult = {
     val parsedLines = Seq.newBuilder[String]
-    var resultState = state
+    var interpretResult = new InterpretResult(state)
 
-    for (line <- linesIter) {
+    for (line <- lines.iterator) {
       if (line.trim.startsWith(UsingDirectives.FileDirective)) {
+        // TODO extract method for readability of surrounding condition
         val linesBeforeUsingFileDirective = parsedLines.result()
         parsedLines.clear()
         if (linesBeforeUsingFileDirective.nonEmpty)  {
-          // interpret everything until here, then interpret the given file (recursively call parseLine?) with content of file, then continue with the remainder of the linerIterator
-          val parseResult = parseInput(linesBeforeUsingFileDirective, state)
-          resultState = interpret(parseResult)(using state)
+          // interpret everything until here, then interpret the given file, then continue with the remainder of the lines.iterator
+          val parseResult = parseInput(linesBeforeUsingFileDirective, interpretResult.state)
+          interpretResult.state = interpret(parseResult)(using interpretResult.state)
+          if (interpretResult.state == Quit)
+            interpretResult.shouldStop = true
         }
 
         val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
         val file = resolveFile(currentFile, pathStr)
         println(s"> importing $file...")
         val linesFromFile = os.read.lines(file)
-        resultState = interpretInput(linesFromFile, resultState, file)
+        val interpretResult1 = interpretInput(linesFromFile, interpretResult, file)
+        interpretResult.state = interpretResult1.state
+        if (interpretResult1.shouldStop) interpretResult.shouldStop = true
       } else {
         parsedLines.addOne(line)
       }
     }
 
     val parseResult = parseInput(parsedLines.result(), state)
-    resultState = interpret(parseResult)(using state)
-    resultState
+    interpretResult = interpret(parseResult)(using state)
+    interpretResult
   }
 
   private def parseInput(lines: IterableOnce[String], state: State): ParseResult =
