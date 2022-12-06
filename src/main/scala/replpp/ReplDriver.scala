@@ -70,18 +70,19 @@ class ReplDriver(args: Array[String],
       val comps = completions(line.cursor, line.line, state)
       candidates.addAll(comps.asJava)
     }
-    parseLines(terminal.readLine(completer).split(lineSeparator).iterator, state, os.pwd)
+    val inputLines = terminal.readLine(completer).split(lineSeparator).iterator
+    interpretInput(inputLines, state, os.pwd)
     // TODO reduce Seq[ParseResult] => ParseResult? or rather handle multiple parseResults..!
     ???
     // TODO: if there's a remainder iter, we may have encountered a file directive - interpret it and call ourselves recursively, updating the state
   }
 
-  private def parseLines(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
+  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
     val linesIter = lines.iterator
     val parsedLines = Seq.newBuilder[String]
     var resultState = state
-    while (linesIter.hasNext) {
-      val line = linesIter.next()
+
+    for (line <- linesIter) {
       if (line.trim.startsWith(UsingDirectives.FileDirective)) {
         val linesBeforeUsingFileDirective = parsedLines.result()
         parsedLines.clear()
@@ -95,7 +96,7 @@ class ReplDriver(args: Array[String],
         val file = resolveFile(currentFile, pathStr)
         println(s"> importing $file...")
         val linesFromFile = os.read.lines(file)
-        resultState = parseLines(linesFromFile, resultState, file)
+        resultState = interpretInput(linesFromFile, resultState, file)
       } else {
         parsedLines.addOne(line)
       }
