@@ -2,18 +2,17 @@ package replpp
 
 import dotty.tools.MainGenericCompiler.classpathSeparator
 import dotty.tools.dotc.Run
-import dotty.tools.dotc.core.Comments.{ContextDoc, ContextDocstrings}
-import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx}
 import dotty.tools.dotc.ast.{Positioned, tpd, untpd}
 import dotty.tools.dotc.classpath.{AggregateClassPath, ClassPathFactory}
 import dotty.tools.dotc.config.{Feature, JavaPlatform, Platform}
+import dotty.tools.dotc.core.Comments.{ContextDoc, ContextDocstrings}
+import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx}
 import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
-import dotty.tools.repl.{AbstractFileClassLoader, CollectTopLevelImports, JLineTerminal, Newline, ParseResult, Parsed, Quit, State}
-
-import java.io.PrintStream
+import dotty.tools.repl.*
 import org.jline.reader.*
 
+import java.io.PrintStream
 import java.net.URL
 import javax.naming.InitialContext
 import scala.annotation.tailrec
@@ -80,31 +79,34 @@ class ReplDriver(args: Array[String],
   private def parseLines(lines: IterableOnce[String], state: State, currentFile: os.Path): Seq[ParseResult] = {
     val linesIter = lines.iterator
     val linesBeforeUsingFileDirectiveBuilder = Seq.newBuilder[String]
+    val parseResults = Seq.newBuilder[ParseResult]
     while (linesIter.hasNext) {
       val line = linesIter.next()
       if (!line.trim.startsWith(UsingDirectives.FileDirective)) {
         // TODO extract
         val linesBeforeUsingFileDirective = linesBeforeUsingFileDirectiveBuilder.result()
         linesBeforeUsingFileDirectiveBuilder.clear()
-        val state0 = 
+        val state0 =
           if (linesBeforeUsingFileDirective.isEmpty) state
           else {
             // interpret everything until here, then interpret the given file (recursively call parseLine?) with content of file, then continue with the remainder of the linerIterator
             val parseResult0 = parseLine(linesBeforeUsingFileDirective.mkString(lineSeparator), state)
             interpret(parseResult0)(using state)
           }
-        val file = line.trim.drop(UsingDirectives.FileDirective.length)
+
+        val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
+        val file = resolveFile(currentFile, pathStr)
         println(s"> importing $file...")
         val linesFromFile = os.read.lines(file)
-        // now read the file and recursively call `parseLines`
-        val parseResult0 = parseLines(linesFromFile, state0, file)
+        parseResults.addAll(parseLines(linesFromFile, state0, file))
         // TODO handle remainder of call above, and remainder of current lineIter
         ???
       } else {
         linesBeforeUsingFileDirectiveBuilder.addOne(line)
       }
     }
-    
+
+    parseResults.result()
   }
 
   private def parseLine(line: String, state: State): ParseResult = {

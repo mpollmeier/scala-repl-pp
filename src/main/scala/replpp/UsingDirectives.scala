@@ -1,6 +1,5 @@
 package replpp
 
-import java.nio.file.Path
 import scala.collection.mutable
 
 object UsingDirectives {
@@ -17,16 +16,6 @@ object UsingDirectives {
     }
 
     findImportedFilesRecursively0(file, visited = Set.empty)
-  }
-
-  /**
-    * resolve absolute or relative paths to an absolute path
-    * - if given pathStr is an absolute path, just take that
-    * - if it's a relative path, use given base path to resolve it to an absolute path
-    */
-  def resolveFile(base: os.Path, pathStr: String): os.Path = {
-    if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
-    else base / os.RelPath(pathStr)
   }
 
   def findDeclaredDependencies(source: String): IterableOnce[String] =

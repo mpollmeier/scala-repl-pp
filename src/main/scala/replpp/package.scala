@@ -1,4 +1,5 @@
 import java.lang.System.lineSeparator
+import java.nio.file.Path
 
 package object replpp {
 
@@ -37,4 +38,13 @@ package object replpp {
   def allPredefCode(config: Config): String =
     predefCodeByFile(config).map(_._2).mkString(lineSeparator)
 
+  /**
+    * resolve absolute or relative paths to an absolute path
+    * - if given pathStr is an absolute path, just take that
+    * - if it's a relative path, use given base path to resolve it to an absolute path
+    */
+  def resolveFile(base: os.Path, pathStr: String): os.Path = {
+    if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
+    else base / os.RelPath(pathStr)
+  }
 }
