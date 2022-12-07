@@ -82,28 +82,28 @@ class ReplDriver(args: Array[String],
     val parsedLines = Seq.newBuilder[String]
     var resultingState = state
 
-    for (line <- lines.iterator) {
-      if (line.trim.startsWith(UsingDirectives.FileDirective)) {
-        // TODO extract method for readability of surrounding condition
-        val linesBeforeUsingFileDirective = parsedLines.result()
-        parsedLines.clear()
-        if (linesBeforeUsingFileDirective.nonEmpty)  {
-          // interpret everything until here
-          val parseResult = parseInput(linesBeforeUsingFileDirective, resultingState)
-          resultingState = interpret(parseResult)(using resultingState)
-        }
-
-        // now read and interpret the given file
-        val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
-        val file = resolveFile(currentFile, pathStr)
-        println(s"> importing $file")
-        val linesFromFile = os.read.lines(file)
-        resultingState = interpretInput(linesFromFile, resultingState, file)
-
-        // finally, continue with the remainder of the current lines interator
-      } else {
-        parsedLines.addOne(line)
+    def handleImportFileDirective(line: String) = {
+      val linesBeforeUsingFileDirective = parsedLines.result()
+      parsedLines.clear()
+      if (linesBeforeUsingFileDirective.nonEmpty) {
+        // interpret everything until here
+        val parseResult = parseInput(linesBeforeUsingFileDirective, resultingState)
+        resultingState = interpret(parseResult)(using resultingState)
       }
+
+      // now read and interpret the given file
+      val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
+      val file = resolveFile(currentFile, pathStr)
+      println(s"> importing $file")
+      val linesFromFile = os.read.lines(file)
+      resultingState = interpretInput(linesFromFile, resultingState, file)
+    }
+
+    for (line <- lines.iterator) {
+      if (line.trim.startsWith(UsingDirectives.FileDirective))
+        handleImportFileDirective(line)
+      else
+        parsedLines.addOne(line)
     }
 
     val parseResult = parseInput(parsedLines.result(), resultingState)
