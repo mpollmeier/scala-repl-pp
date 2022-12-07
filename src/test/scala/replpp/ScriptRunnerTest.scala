@@ -180,12 +180,12 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
       val scriptRootDir = os.temp.dir()
       val scriptSubDir = scriptRootDir / "subdir"
       os.makeDir(scriptSubDir)
-      val additionalScript0 = os.temp()
-      val additionalScript1 =  scriptSubDir / "additional-script1.sc"
+      val additionalScript0 = scriptRootDir / "additional-script0.sc"
+      val additionalScript1 = scriptSubDir / "additional-script1.sc"
       os.write.over(additionalScript0,
         // specifying path relative from the additionalScript0
         s"""//> using file subdir/additional-script1.sc
-           |val bar = foo""".stripMargin)
+           |def bar = foo""".stripMargin)
       os.write.over(additionalScript1,
         s"""val foo = 99""".stripMargin)
       TestSetup(

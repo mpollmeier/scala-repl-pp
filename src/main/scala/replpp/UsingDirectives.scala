@@ -9,7 +9,11 @@ object UsingDirectives {
 
   def findImportedFilesRecursively(file: os.Path): Seq[os.Path] = {
     def findImportedFilesRecursively0(file: os.Path, visited: Set[os.Path]): Seq[os.Path] = {
-      val importedFiles = findImportedFiles(os.read.lines(file), file)
+      val rootDir: os.Path =
+        if (os.isDir(file)) file
+        else os.Path(file.toNIO.getParent)
+
+      val importedFiles = findImportedFiles(os.read.lines(file), rootDir)
       val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
         findImportedFilesRecursively0(file, visited + file)
       }

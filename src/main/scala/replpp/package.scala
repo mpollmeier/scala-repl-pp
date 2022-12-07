@@ -41,7 +41,7 @@ package object replpp {
     val results = (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read.lines(file).mkString(lineSeparator))
     } ++ fromPredefCodeParam
-    
+
     results.distinct
   }
 
