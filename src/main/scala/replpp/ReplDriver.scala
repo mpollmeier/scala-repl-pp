@@ -6,7 +6,7 @@ import dotty.tools.dotc.ast.{Positioned, tpd, untpd}
 import dotty.tools.dotc.classpath.{AggregateClassPath, ClassPathFactory}
 import dotty.tools.dotc.config.{Feature, JavaPlatform, Platform}
 import dotty.tools.dotc.core.Comments.{ContextDoc, ContextDocstrings}
-import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx}
+import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx, explore}
 import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
@@ -18,6 +18,7 @@ import javax.naming.InitialContext
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+import scala.util.{Failure, Success, Try}
 
 class ReplDriver(args: Array[String],
                  out: PrintStream = scala.Console.out,
@@ -41,23 +42,21 @@ class ReplDriver(args: Array[String],
 
     @tailrec
     def loop(using state: State)(): State = {
-      // TODO use util.Try?
-      val newStateMaybe: Option[State] = {
-        try {
-          val inputLines = readLine(terminal, state)
-          Some(interpretInput(inputLines, state, os.pwd))
-        } catch {
-          case _: EndOfFileException => // Ctrl+D
-            onExitCode.foreach(code => run(code)(using state))
-            None
-          case _: UserInterruptException => // Ctrl+C
-            None
-        }
-      }
-
-      newStateMaybe match {
-        case Some(newState) => loop(using newState)()
-        case None => state
+      Try {
+        val inputLines = readLine(terminal, state)
+        interpretInput(inputLines, state, os.pwd)
+      } match {
+        case Success(newState) =>
+          loop(using newState)()
+        case Failure(_: EndOfFileException) =>
+          // Ctrl+D -> user wants to quit
+          onExitCode.foreach(code => run(code)(using state))
+          state
+        case Failure(_: UserInterruptException) =>
+          // Ctrl+C -> swallow, do nothing
+          state
+        case Failure(exception) =>
+          throw exception
       }
     }
 
