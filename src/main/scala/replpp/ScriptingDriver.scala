@@ -3,7 +3,7 @@ package replpp
 import scala.language.unsafeNulls
 import java.nio.file.{Files, Path, Paths}
 import java.io.File
-import java.net.{URLClassLoader}
+import java.net.URLClassLoader
 import java.lang.reflect.{Method, Modifier}
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
@@ -32,13 +32,11 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
             // TODO use replpp namespace to avoid clashes
             val mainClass = "Main"
             val mainMethod = detectMainClassAndMethod(outDir.toNIO, classpathEntries)
-//              case Right((mainClass, mainMethod)) =>
-                println(s"XXX0 $mainClass; $mainMethod")
-                val invokeMain: Boolean = Option(pack).map { func =>
-                  func(outDir.toNIO, classpathEntries, mainClass)
-                }.getOrElse(true)
-                if invokeMain then mainMethod.invoke(null, scriptArgs)
-                None
+            val invokeMain: Boolean = Option(pack).map { func =>
+              func(outDir.toNIO, classpathEntries, mainClass)
+            }.getOrElse(true)
+            if invokeMain then mainMethod.invoke(null, scriptArgs)
+            None
           } catch {
             case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
           } finally os.remove.all(outDir)
@@ -49,15 +47,13 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
 
 
   def detectMainClassAndMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
-    val classpathUrls = (classpathEntries :+ outDir).map {
-      _.toUri.toURL
-    }
+    val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
     val cl = URLClassLoader(classpathUrls.toArray)
 
-    def collectMainMethods(target: File, path: String): List[(String, Method)] =
+    def collectMainMethods(target: File, path: String): List[Method] =
       val nameWithoutExtension = target.getName.takeWhile(_ != '.')
       val targetPath =
-        if path.nonEmpty then s"${path}.${nameWithoutExtension}"
+        if path.nonEmpty then s"$path.$nameWithoutExtension"
         else nameWithoutExtension
 
       if target.isDirectory then
@@ -69,7 +65,7 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
         val cls = cl.loadClass(targetPath)
         try
           val method = cls.getMethod("main", classOf[Array[String]])
-          if Modifier.isStatic(method.getModifiers) then List((cls.getName, method)) else Nil
+          if Modifier.isStatic(method.getModifiers) then List(method) else Nil
         catch
           case _: java.lang.NoSuchMethodException => Nil
       else Nil
@@ -80,7 +76,7 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
       method <- collectMainMethods(file, "")
     yield method
 
-    mains.head._2
+    mains.head
   }
 
   def pathsep = sys.props("path.separator")
