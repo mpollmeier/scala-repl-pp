@@ -40,7 +40,7 @@ package object replpp {
     val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq
 
     val results = (config.predefFiles ++ importedFiles).map { file =>
-      (file, os.read.lines(file).mkString(lineSeparator))
+      (file, os.read(file))
     } ++ fromPredefCodeParam
 
     results.distinct
