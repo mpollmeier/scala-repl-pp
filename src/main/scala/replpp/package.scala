@@ -31,9 +31,10 @@ package object replpp {
       val fromPredefCode = config.predefCode.map { code =>
         UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
       }.getOrElse(Seq.empty)
-      val filesToSearch = config.scriptFile.toSeq ++ config.predefFiles
-      val fromFiles = filesToSearch.flatMap(UsingDirectives.findImportedFilesRecursively)
-      fromFiles ++ fromPredefCode
+      val fromFiles = (config.scriptFile.toSeq ++ config.predefFiles)
+        .flatMap(UsingDirectives.findImportedFilesRecursively)
+        .reverse // dependencies should get evaluated before dependents
+      fromPredefCode ++ fromFiles
     }
 
     val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq

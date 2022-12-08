@@ -185,13 +185,14 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
       os.write.over(additionalScript0,
         // specifying path relative from the additionalScript0
         s"""//> using file subdir/additional-script1.sc
-           |def bar = foo""".stripMargin)
+           |val bar = foo""".stripMargin)
       os.write.over(additionalScript1,
         s"""val foo = 99""".stripMargin)
       TestSetup(
         s"""//> using file $additionalScript0
            |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
-           |""".stripMargin
+           |""".stripMargin,
+        adaptConfig = _.copy(verbose = true)
       )
     } shouldBe "iwashere-using-file-test5:99"
   }
