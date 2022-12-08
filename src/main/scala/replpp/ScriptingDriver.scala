@@ -17,27 +17,23 @@ import scala.language.unsafeNulls
 class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs: Array[String]) extends Driver {
 
   def compileAndRun(): Option[Throwable] = {
-    val outDir = os.temp.dir(prefix = "scala3-scripting")
+    setup(compilerArgs :+ scriptFile.getAbsolutePath, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
+      val outDir = os.temp.dir(prefix = "scala3-scripting", deleteOnExit = false)
+      given Context = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
 
-    setup(compilerArgs :+ scriptFile.getAbsolutePath, initCtx.fresh) match {
-      case Some((toCompile, rootCtx)) =>
-        given Context = rootCtx.fresh.setSetting(rootCtx.settings.outputDir,
-          new PlainDirectory(Directory(outDir.toNIO)))
-
-        if doCompile(newCompiler, toCompile).hasErrors then
-          Some(ScriptingException("Errors encountered during compilation"))
-        else {
-          try {
-            val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
-            val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-            val mainMethod = lookupMainMethod(outDir.toNIO, classpathEntries)
-            mainMethod.invoke(null, scriptArgs)
-            None //TODO return a `Try[Unit]` instead?
-          } catch {
-            case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
-          } finally os.remove.all(outDir)
-        }
-      case None => None
+      if doCompile(newCompiler, toCompile).hasErrors then
+        Some(ScriptingException("Errors encountered during compilation"))
+      else {
+        try {
+          val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
+          val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
+          val mainMethod = lookupMainMethod(outDir.toNIO, classpathEntries)
+          mainMethod.invoke(null, scriptArgs)
+          None
+        } catch {
+          case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
+        } finally os.remove.all(outDir)
+      }
     }
   }
 
