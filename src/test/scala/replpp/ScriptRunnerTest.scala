@@ -1,5 +1,6 @@
 package replpp
 
+import dotty.tools.scripting.ScriptingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -76,7 +77,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-predefFile"
   }
 
-  "--predefFiles imports" in {
+  "--predefFiles imports are available" in {
     execTest { testOutputPath =>
       val predefFile = os.temp()
       os.write.over(predefFile, "import Byte.MaxValue")
@@ -217,24 +218,21 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-using-file-test5:99"
   }
 
-  "line numbers in file imports" in {
-    execTest { testOutputPath =>
-      val additionalScript0 = os.temp()
-      val additionalScript1 = os.temp()
-      os.write.over(additionalScript0,
-        s"""//> using file $additionalScript1
-           |val foo = 99""".stripMargin)
-      os.write.over(additionalScript1,
-        s"""val bar = foo
-           |val thisWillNotCompile: Int = "because we need an Int"
-           |""".stripMargin)
-      TestSetup(
-        s"""//> using file $additionalScript1
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
-           |""".stripMargin,
-        adaptConfig = _.copy(verbose = true)
-      )
-    } shouldBe "iwashere-using-file-test5:99"
+  "on compilation error: throw ScriptingException" in {
+    assertThrows[ScriptingException] {
+      execTest { _ =>
+        val additionalScript = os.temp()
+        os.write.over(additionalScript,
+          s"""val foo = 42
+             |val thisWillNotCompile: Int = "because we need an Int"
+             |""".stripMargin)
+        TestSetup(
+          s"""//> using file $additionalScript
+             |val bar = 34
+             |""".stripMargin
+        )
+      }
+    }
   }
 
 

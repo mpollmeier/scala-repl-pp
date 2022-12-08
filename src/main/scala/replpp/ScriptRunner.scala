@@ -30,7 +30,7 @@ object ScriptRunner {
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
     val predefCode = allPredefCode(config)
-    val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc")
+    val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
     val scriptCode = os.read(scriptFile)
     val scriptContent = wrapForMainargs(predefCode, scriptCode)
     if (config.verbose) println(scriptContent)
@@ -40,13 +40,17 @@ object ScriptRunner {
       compilerArgs = compilerArgs(config, predefCode) :+ "-nowarn",
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
-    ).compileAndRun()
-    System.err.println(s"script finished successfully")
-
-    // if the script failed, the ScriptingDriver would have thrown an exception, in which case we
-    // don't delete the temporary file which includes the predef,
-    // so that the line numbers are accurate and the user can properly debug
-    os.remove(predefPlusScriptFileTmp)
+    ).compileAndRun() match {
+      case Some(exception) =>
+        System.err.println(s"error during script execution: ${exception.getMessage}")
+        System.err.println(s"note: line numbers may not be accurate - to help with debugging, the final scriptContent is at $predefPlusScriptFileTmp")
+        throw exception
+      case None => // no exception, i.e. all is good
+        System.err.println(s"script finished successfully")
+        // if the script failed, we don't want to delete the temporary file which includes the predef,
+        // so that the line numbers are accurate and the user can properly debug
+        os.remove(predefPlusScriptFileTmp)
+    }
   }
 
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
