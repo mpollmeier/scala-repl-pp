@@ -56,6 +56,15 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-predefCode"
   }
 
+  "--predefCode imports" in {
+    execTest { testOutputPath =>
+      TestSetup(
+        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-" + MaxValue)""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
+      )
+    } shouldBe "iwashere-predefCode-127"
+  }
+
   "--predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp()
@@ -65,6 +74,17 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
     } shouldBe "iwashere-predefFile"
+  }
+
+  "--predefFiles imports" in {
+    execTest { testOutputPath =>
+      val predefFile = os.temp()
+      os.write.over(predefFile, "import Byte.MaxValue")
+      TestSetup(
+        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+      )
+    } shouldBe "iwashere-predefFile-127"
   }
 
   "additional dependencies via --dependency" in {
@@ -190,6 +210,26 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         s"""val foo = 99""".stripMargin)
       TestSetup(
         s"""//> using file $additionalScript0
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
+           |""".stripMargin,
+        adaptConfig = _.copy(verbose = true)
+      )
+    } shouldBe "iwashere-using-file-test5:99"
+  }
+
+  "line numbers in file imports" in {
+    execTest { testOutputPath =>
+      val additionalScript0 = os.temp()
+      val additionalScript1 = os.temp()
+      os.write.over(additionalScript0,
+        s"""//> using file $additionalScript1
+           |val foo = 99""".stripMargin)
+      os.write.over(additionalScript1,
+        s"""val bar = foo
+           |val thisWillNotCompile: Int = "because we need an Int"
+           |""".stripMargin)
+      TestSetup(
+        s"""//> using file $additionalScript1
            |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
            |""".stripMargin,
         adaptConfig = _.copy(verbose = true)
