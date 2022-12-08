@@ -1,6 +1,5 @@
 package replpp
 
-import dotty.tools.scripting.ScriptingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
