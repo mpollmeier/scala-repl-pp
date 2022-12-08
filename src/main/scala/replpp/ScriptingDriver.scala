@@ -31,7 +31,7 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
             // TODO use shared constants
             // TODO use replpp namespace to avoid clashes
             val mainClass = "Main"
-            val mainMethod = detectMainClassAndMethod(outDir.toNIO, classpathEntries)
+            val mainMethod = getMainMethod(outDir.toNIO, classpathEntries)
             val invokeMain: Boolean = Option(pack).map { func =>
               func(outDir.toNIO, classpathEntries, mainClass)
             }.getOrElse(true)
@@ -45,21 +45,13 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
     }
   }
 
-  def detectMainClassAndMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
+  def getMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
     val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
     val cl = URLClassLoader(classpathUrls.toArray)
 
-    def collectMainMethod(target: File): Option[Method] = {
-      val targetPath = target.getName.takeWhile(_ != '.')
-      println(s"XXX0 target=$target; targetPath=$targetPath")
-      val cls = cl.loadClass(targetPath)
-      val method = cls.getMethod("main", classOf[Array[String]])
-      Option(method).filter(method => Modifier.isStatic(method.getModifiers))
-    }
-
-    val file = outDir.resolve("Main.class").toFile
-    val method = collectMainMethod(file).get
-    method
+    // TODO use constants
+    val cls = cl.loadClass("Main")
+    cls.getMethod("main", classOf[Array[String]])
   }
 
   def pathsep = sys.props("path.separator")
