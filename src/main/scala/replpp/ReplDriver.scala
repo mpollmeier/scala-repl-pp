@@ -75,7 +75,7 @@ class ReplDriver(args: Array[String],
       val comps = completions(line.cursor, line.line, state)
       candidates.addAll(comps.asJava)
     }
-    terminal.readLine(completer).split(lineSeparator).iterator
+    terminal.readLine(completer).linesIterator
   }
 
   private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
