@@ -65,7 +65,7 @@ object ScriptRunner {
     s"""
        |import mainargs.main // intentionally shadow any potentially given @main
        |
-       |// dotty's ScriptingDriver expects an object with a `main(Array[String]): Unit`
+       |// ScriptingDriver expects an object with a `main(Array[String]): Unit`
        |object Main {
        |
        |$predefCode
