@@ -31,16 +31,14 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
             // TODO use shared constants
             // TODO use replpp namespace to avoid clashes
             val mainClass = "Main"
-            detectMainClassAndMethod(outDir.toNIO, classpathEntries) match {
-              case Right((mainClass, mainMethod)) =>
+            val mainMethod = detectMainClassAndMethod(outDir.toNIO, classpathEntries)
+//              case Right((mainClass, mainMethod)) =>
                 println(s"XXX0 $mainClass; $mainMethod")
                 val invokeMain: Boolean = Option(pack).map { func =>
                   func(outDir.toNIO, classpathEntries, mainClass)
                 }.getOrElse(true)
                 if invokeMain then mainMethod.invoke(null, scriptArgs)
                 None
-              case Left(ex) => Some(ex)
-            }
           } catch {
             case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
           } finally os.remove.all(outDir)
@@ -50,7 +48,7 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
   }
 
 
-  def detectMainClassAndMethod(outDir: Path, classpathEntries: Seq[Path]): Either[Throwable, (String, Method)] =
+  def detectMainClassAndMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
     val classpathUrls = (classpathEntries :+ outDir).map {
       _.toUri.toURL
     }
@@ -82,8 +80,8 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
       method <- collectMainMethods(file, "")
     yield method
 
-    Right(mains.head)
-  end detectMainClassAndMethod
+    mains.head._2
+  }
 
   def pathsep = sys.props("path.separator")
 
