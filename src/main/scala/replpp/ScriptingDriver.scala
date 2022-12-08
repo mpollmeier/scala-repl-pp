@@ -45,43 +45,24 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
     }
   }
 
-
   def detectMainClassAndMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
     val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
     val cl = URLClassLoader(classpathUrls.toArray)
 
-    def collectMainMethods(target: File, path: String): List[Method] =
-      val nameWithoutExtension = target.getName.takeWhile(_ != '.')
-      val targetPath =
-        if path.nonEmpty then s"$path.$nameWithoutExtension"
-        else nameWithoutExtension
+    def collectMainMethod(target: File): Option[Method] = {
+      val targetPath = target.getName.takeWhile(_ != '.')
+      println(s"XXX0 target=$target; targetPath=$targetPath")
+      val cls = cl.loadClass(targetPath)
+      val method = cls.getMethod("main", classOf[Array[String]])
+      Option(method).filter(method => Modifier.isStatic(method.getModifiers))
+    }
 
-      if target.isDirectory then
-        for
-          packageMember <- target.listFiles.toList
-          membersMainMethod <- collectMainMethods(packageMember, targetPath)
-        yield membersMainMethod
-      else if target.getName.endsWith(".class") then
-        val cls = cl.loadClass(targetPath)
-        try
-          val method = cls.getMethod("main", classOf[Array[String]])
-          if Modifier.isStatic(method.getModifiers) then List(method) else Nil
-        catch
-          case _: java.lang.NoSuchMethodException => Nil
-      else Nil
-    end collectMainMethods
-
-    val mains = for
-      file <- outDir.toFile.listFiles.toList
-      method <- collectMainMethods(file, "")
-    yield method
-
-    mains.head
+    val file = outDir.resolve("Main.class").toFile
+    val method = collectMainMethod(file).get
+    method
   }
 
   def pathsep = sys.props("path.separator")
-
-
 }
 
 case class ScriptingException(msg: String) extends RuntimeException(msg)
