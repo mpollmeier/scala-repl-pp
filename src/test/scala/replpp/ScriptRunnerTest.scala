@@ -1,5 +1,6 @@
 package replpp
 
+import dotty.tools.scripting.ScriptingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -56,6 +57,15 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-predefCode"
   }
 
+  "--predefCode imports" in {
+    execTest { testOutputPath =>
+      TestSetup(
+        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-" + MaxValue)""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
+      )
+    } shouldBe "iwashere-predefCode-127"
+  }
+
   "--predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp()
@@ -65,6 +75,17 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
     } shouldBe "iwashere-predefFile"
+  }
+
+  "--predefFiles imports are available" in {
+    execTest { testOutputPath =>
+      val predefFile = os.temp()
+      os.write.over(predefFile, "import Byte.MaxValue")
+      TestSetup(
+        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+      )
+    } shouldBe "iwashere-predefFile-127"
   }
 
   "additional dependencies via --dependency" in {
@@ -195,6 +216,23 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
         adaptConfig = _.copy(verbose = true)
       )
     } shouldBe "iwashere-using-file-test5:99"
+  }
+
+  "on compilation error: throw ScriptingException" in {
+    assertThrows[ScriptingException] {
+      execTest { _ =>
+        val additionalScript = os.temp()
+        os.write.over(additionalScript,
+          s"""val foo = 42
+             |val thisWillNotCompile: Int = "because we need an Int"
+             |""".stripMargin)
+        TestSetup(
+          s"""//> using file $additionalScript
+             |val bar = 34
+             |""".stripMargin
+        )
+      }
+    }
   }
 
 
