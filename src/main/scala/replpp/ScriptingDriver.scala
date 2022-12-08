@@ -9,6 +9,7 @@ import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
+import replpp.ScriptingDriver.{MainClassName, MainMethodName}
 
 /** Copied and adapted from dotty.tools.scripting.ScriptingDriver
  * In other words: if anything in here is unsound, ugly or buggy: chances are that it was like that before... :) */
@@ -28,12 +29,9 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
           try {
             val classpath = s"${ctx.settings.classpath.value}$pathsep${sys.props("java.class.path")}"
             val classpathEntries: Seq[Path] = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-            // TODO use shared constants
-            // TODO use replpp namespace to avoid clashes
-            val mainClass = "Main"
             val mainMethod = getMainMethod(outDir.toNIO, classpathEntries)
             val invokeMain: Boolean = Option(pack).map { func =>
-              func(outDir.toNIO, classpathEntries, mainClass)
+              func(outDir.toNIO, classpathEntries, MainClassName)
             }.getOrElse(true)
             if invokeMain then mainMethod.invoke(null, scriptArgs)
             None
@@ -48,13 +46,16 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
   def getMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
     val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
     val cl = URLClassLoader(classpathUrls.toArray)
-
-    // TODO use constants
-    val cls = cl.loadClass("Main")
-    cls.getMethod("main", classOf[Array[String]])
+    val cls = cl.loadClass(MainClassName)
+    cls.getMethod(MainMethodName, classOf[Array[String]])
   }
 
   def pathsep = sys.props("path.separator")
+}
+
+object ScriptingDriver {
+  val MainClassName  = "ScalaReplPP"
+  val MainMethodName = "main"
 }
 
 case class ScriptingException(msg: String) extends RuntimeException(msg)

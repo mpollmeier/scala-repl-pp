@@ -66,13 +66,13 @@ object ScriptRunner {
        |import mainargs.main // intentionally shadow any potentially given @main
        |
        |// ScriptingDriver expects an object with a `main(Array[String]): Unit`
-       |object Main {
+       |object ${ScriptingDriver.MainClassName} {
        |
        |$predefCode
        |
        |$mainImpl
        |
-       |  def main(args: Array[String]): Unit = {
+       |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
        |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
        |  }
        |}
