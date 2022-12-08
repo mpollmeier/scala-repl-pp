@@ -1,7 +1,5 @@
 package replpp
 
-import dotty.tools.scripting.ScriptingDriver
-
 import java.util.stream.Collectors
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
