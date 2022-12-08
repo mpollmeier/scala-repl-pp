@@ -116,6 +116,88 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-dependency-using-predefFiles:1"
   }
 
+  "import additional files via `//> using file` in main script" in {
+    execTest { testOutputPath =>
+      val additionalScript = os.temp()
+      os.write.over(additionalScript, "def foo = 99")
+      TestSetup(
+        s"""//> using file $additionalScript
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test1:" + foo)
+           |""".stripMargin
+      )
+    } shouldBe "iwashere-using-file-test1:99"
+  }
+
+  "import additional files via `//> using file` via --predefCode" in {
+    execTest { testOutputPath =>
+      val additionalScript = os.temp()
+      os.write.over(additionalScript, "def foo = 99")
+      TestSetup(
+        s"""
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test2:" + foo)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefCode = Some(s"//> using file $additionalScript"))
+      )
+    } shouldBe "iwashere-using-file-test2:99"
+  }
+
+  "import additional files via `//> using file` via --predefFiles" in {
+    execTest { testOutputPath =>
+      val additionalScript = os.temp()
+      val predefFile = os.temp()
+      os.write.over(additionalScript, "def foo = 99")
+      os.write.over(predefFile, s"//> using file $additionalScript")
+      TestSetup(
+        s"""
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test3:" + foo)
+           |""".stripMargin,
+        adaptConfig = _.copy(predefFiles = List(predefFile))
+      )
+    } shouldBe "iwashere-using-file-test3:99"
+  }
+
+  "import additional files via `//> using file` recursively" in {
+    execTest { testOutputPath =>
+      val additionalScript0 = os.temp()
+      val additionalScript1 = os.temp()
+      // should handle recursive loop as well
+      os.write.over(additionalScript0,
+        s"""//> using file $additionalScript1
+           |def foo = 99""".stripMargin)
+      os.write.over(additionalScript1,
+        s"""//> using file $additionalScript0
+           |def bar = foo""".stripMargin)
+      TestSetup(
+        s"""//> using file $additionalScript1
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test4:" + bar)
+           |""".stripMargin
+      )
+    } shouldBe "iwashere-using-file-test4:99"
+  }
+
+  "import additional files: use relative path of dependent script, and import in correct order" in {
+    execTest { testOutputPath =>
+      val scriptRootDir = os.temp.dir()
+      val scriptSubDir = scriptRootDir / "subdir"
+      os.makeDir(scriptSubDir)
+      val additionalScript0 = scriptRootDir / "additional-script0.sc"
+      val additionalScript1 = scriptSubDir / "additional-script1.sc"
+      os.write.over(additionalScript0,
+        // specifying path relative from the additionalScript0
+        s"""//> using file subdir/additional-script1.sc
+           |val bar = foo""".stripMargin)
+      os.write.over(additionalScript1,
+        s"""val foo = 99""".stripMargin)
+      TestSetup(
+        s"""//> using file $additionalScript0
+           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
+           |""".stripMargin,
+        adaptConfig = _.copy(verbose = true)
+      )
+    } shouldBe "iwashere-using-file-test5:99"
+  }
+
+
   type TestOutputPath = String
   type TestOutput = String
   case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)

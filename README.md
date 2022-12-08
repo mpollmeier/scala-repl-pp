@@ -87,8 +87,24 @@ val foo = "Hello, predef file"
 ./scala-repl-pp --script test-predef.sc --timesiles test-predef-file.sc
 ```
 
+#### Importing files / scripts
+foo.sc:
+```scala
+val foo = 42
+```
+
+test.sc:
+```scala
+//> using file foo.sc
+println(foo)
+```
+
+```bash
+./scala-repl-pp --script test.sc
+```
+
 #### Dependencies
-Dependencies can be added via `//> using lib` syntax as in scala-cli: 
+Dependencies can be added via `//> using lib` syntax (like in scala-cli).
 
 test-dependencies.sc:
 ```scala
@@ -125,7 +141,6 @@ test-main.sc
 ./scala-repl-pp --script test-main-multiple.sc --command=foo
 ```
 
-
 #### named parameters
 test-main-withargs.sc
 ```scala
@@ -138,7 +153,6 @@ test-main-withargs.sc
 ./scala-repl-pp --script test-main-withargs.sc --params name=Michael
 ```
 
-
 ### Server
 ```bash
 ./scala-repl-pp --server
@@ -146,7 +160,6 @@ test-main-withargs.sc
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}'
 ```
-
 
 ### Embed into your own project
 Try out the working [string calculator example](src/test/resources/demo-project) in this repo:
