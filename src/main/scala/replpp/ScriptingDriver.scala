@@ -23,25 +23,21 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
 
       if doCompile(newCompiler, toCompile).hasErrors then
         Some(ScriptingException("Errors encountered during compilation"))
-      else {
-        try {
-          val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
-          val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-          val mainMethod = lookupMainMethod(outDir.toNIO, classpathEntries)
-          mainMethod.invoke(null, scriptArgs)
-          None
-        } catch {
-          case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
-        } finally os.remove.all(outDir)
-      }
+      else try {
+        val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
+        val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
+        lookupMainMethod(outDir.toNIO, classpathEntries).invoke(null, scriptArgs)
+        None
+      } catch {
+        case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
+      } finally os.remove.all(outDir)
     }
   }
 
   private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
     val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
-    val cl = URLClassLoader(classpathUrls.toArray)
-    val cls = cl.loadClass(MainClassName)
-    cls.getMethod(MainMethodName, classOf[Array[String]])
+    val clazz = URLClassLoader(classpathUrls.toArray).loadClass(MainClassName)
+    clazz.getMethod(MainMethodName, classOf[Array[String]])
   }
 
   lazy val pathSeparator = sys.props("path.separator")
