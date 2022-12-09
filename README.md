@@ -28,7 +28,6 @@ scala-cli is mostly a wrapper around the regular Scala REPL and Ammonite, so dep
 Prerequisite (for now):
 ```bash
 sbt stage
-cd target/universal/stage/bin/
 ```
 
 Generally speaking, `--help` is your friend!

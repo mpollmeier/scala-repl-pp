@@ -8,7 +8,6 @@ import java.util.{Base64, UUID}
 import replpp.{Config, allPredefCode}
 import ujson.Obj
 
-// TODO factor out server mode into separate subproject
 object ReplServer {
 
   def startHttpServer(config: Config): Unit = {
