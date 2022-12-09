@@ -15,7 +15,6 @@ lazy val core   = project.in(file("core")).settings(
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.7.3",
     "com.github.scopt" %% "scopt"     % "4.1.0",
-    // "org.slf4j"         % "slf4j-api" % "1.7.36",
     ("io.get-coursier" %% "coursier" % "2.0.13").cross(CrossVersion.for3Use2_13)
       .exclude("org.scala-lang.modules", "scala-xml_2.13")
       .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
@@ -23,18 +22,23 @@ lazy val core   = project.in(file("core")).settings(
   )
 )
 
-lazy val server = project.in(file("server")).dependsOn(core).settings(
-  name := "scala-repl-pp-server",
-  libraryDependencies ++= Seq(
-    "com.lihaoyi"      %% "cask"      % "0.8.3",
-    "org.slf4j" % "slf4j-simple" % "1.7.36" % Optional,
-    "com.lihaoyi"      %% "requests"  % "0.7.1" % Test,
+lazy val server = project.in(file("server"))
+  .dependsOn(core)
+  .settings(
+    name := "scala-repl-pp-server",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi"      %% "cask"      % "0.8.3",
+      "org.slf4j" % "slf4j-simple" % "1.7.36" % Optional,
+      "com.lihaoyi"      %% "requests"  % "0.7.1" % Test,
+    )
   )
-)
 
-lazy val all = project.in(file("all")).dependsOn(core, server).settings(
-  name := "scala-repl-pp-all"
-)
+lazy val all = project.in(file("all"))
+  .dependsOn(core, server)
+  .enablePlugins(JavaAppPackaging)
+  .settings(
+    name := "scala-repl-pp-all"
+  )
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.12" % Test,
@@ -43,7 +47,6 @@ ThisBuild / libraryDependencies ++= Seq(
 ThisBuild/Test/fork := true
 
 resolvers += Resolver.mavenLocal
-enablePlugins(JavaAppPackaging)
 Global/onChangedBuildSource := ReloadOnSourceChanges
 
 publishTo := sonatypePublishToBundle.value
