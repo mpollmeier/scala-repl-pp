@@ -46,14 +46,14 @@ ThisBuild / libraryDependencies ++= Seq(
 
 ThisBuild/Test/fork := true
 
-resolvers += Resolver.mavenLocal
+ThisBuild/resolvers += Resolver.mavenLocal
 Global/onChangedBuildSource := ReloadOnSourceChanges
 
-publishTo := sonatypePublishToBundle.value
-scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
+ThisBuild/publishTo := sonatypePublishToBundle.value
+ThisBuild/scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
                             "scm:git@github.com:mpollmeier/scala-repl-pp.git"))
-homepage := Some(url("https://github.com/mpollmeier/scala-repl-pp/"))
-licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
-developers := List(
+ThisBuild/homepage := Some(url("https://github.com/mpollmeier/scala-repl-pp/"))
+ThisBuild/licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild/developers := List(
   Developer("mpollmeier", "Michael Pollmeier", "michael@michaelpollmeier.com", url("http://www.michaelpollmeier.com/"))
 )
