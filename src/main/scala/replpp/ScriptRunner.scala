@@ -53,23 +53,19 @@ object ScriptRunner {
 
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
     val mainImpl =
-      if (scriptCode.contains("@main")) {
-        scriptCode
-      } else {
-        s"""@main def _execMain(): Unit = {
+      if (scriptCode.contains("@main")) scriptCode
+      else s"""@main def _execMain(): Unit = {
            |  $scriptCode
            |}
            |""".stripMargin
-      }
 
-    s"""
-       |import mainargs.main // intentionally shadow any potentially given @main
+    s"""import mainargs.main // intentionally shadow any potentially given @main
        |
-       |// ScriptingDriver expects an object with a `main(Array[String]): Unit`
+       |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
        |object ${ScriptingDriver.MainClassName} {
        |
        |$predefCode
-       |
+       |  
        |$mainImpl
        |
        |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
