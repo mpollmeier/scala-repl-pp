@@ -14,12 +14,11 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class ReplServerTest extends AnyWordSpec with Matchers {
-  private val validBasicAuthHeaderVal: String = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-
+class ReplServerTests extends AnyWordSpec with Matchers {
+  private val ValidBasicAuthHeaderVal: String = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
   private val DefaultPromiseAwaitTimeout: FiniteDuration = Duration(10, SECONDS)
 
-  private def postQuery(host: String, query: String, authHeaderVal: String = validBasicAuthHeaderVal): Value = {
+  private def postQuery(host: String, query: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
     val postResponse = requests.post(
       s"$host/query",
       data = ujson.Obj("query" -> query).toString,
@@ -33,7 +32,7 @@ class ReplServerTest extends AnyWordSpec with Matchers {
     res
   }
 
-  private def getResponse(host: String, uuidParam: String, authHeaderVal: String = validBasicAuthHeaderVal): Value = {
+  private def getResponse(host: String, uuidParam: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
     val uri         = s"$host/result/${URLEncoder.encode(uuidParam, "utf-8")}"
     val getResponse = requests.get(uri, headers = Seq("authorization" -> authHeaderVal))
     ujson.read(getResponse.bytes)
