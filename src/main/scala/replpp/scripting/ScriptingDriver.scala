@@ -1,10 +1,10 @@
-package replpp
+package replpp.scripting
 
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
-import replpp.ScriptingDriver.{MainClassName, MainMethodName}
+import replpp.scripting.ScriptingDriver.*
 
 import java.io.File
 import java.lang.reflect.{Method, Modifier}
@@ -45,10 +45,8 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
 
   lazy val pathSeparator = sys.props("path.separator")
 }
-
 object ScriptingDriver {
   val MainClassName  = "ScalaReplPP"
   val MainMethodName = "main"
 }
-
 case class ScriptingException(msg: String) extends RuntimeException(msg)

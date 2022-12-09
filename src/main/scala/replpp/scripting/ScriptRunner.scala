@@ -1,6 +1,8 @@
-package replpp
+package replpp.scripting
 
 import java.util.stream.Collectors
+import replpp.Config
+import replpp.{allPredefCode, compilerArgs}
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
