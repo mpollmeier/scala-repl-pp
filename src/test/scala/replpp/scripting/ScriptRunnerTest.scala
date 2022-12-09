@@ -1,7 +1,8 @@
-package replpp
+package replpp.scripting
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.Config
 
 class ScriptRunnerTest extends AnyWordSpec with Matchers {
 

@@ -1,5 +1,6 @@
 package replpp
 
+import replpp.scripting.ScriptRunner
 import replpp.server.ReplServer
 
 import java.io.{InputStream, PrintStream, File as JFile}
