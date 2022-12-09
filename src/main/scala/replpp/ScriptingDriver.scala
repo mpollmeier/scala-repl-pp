@@ -12,8 +12,11 @@ import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
 
-/** Copied and adapted from dotty.tools.scripting.ScriptingDriver
- * In other words: if anything in here is unsound, ugly or buggy: chances are that it was like that before... :) */
+/**
+ * Similar to dotty.tools.scripting.ScriptingDriver, but simpler and faster.
+ * Main difference: we don't (need to) recursive look for main method entrypoints in the entire classpath,
+ * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
+ * */
 class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs: Array[String]) extends Driver {
 
   def compileAndRun(): Option[Throwable] = {
