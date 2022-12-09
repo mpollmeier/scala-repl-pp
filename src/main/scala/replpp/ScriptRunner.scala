@@ -1,7 +1,5 @@
 package replpp
 
-import dotty.tools.scripting.ScriptingDriver
-
 import java.util.stream.Collectors
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
@@ -67,14 +65,14 @@ object ScriptRunner {
     s"""
        |import mainargs.main // intentionally shadow any potentially given @main
        |
-       |// dotty's ScriptingDriver expects an object with a `main(Array[String]): Unit`
-       |object Main {
+       |// ScriptingDriver expects an object with a `main(Array[String]): Unit`
+       |object ${ScriptingDriver.MainClassName} {
        |
        |$predefCode
        |
        |$mainImpl
        |
-       |  def main(args: Array[String]): Unit = {
+       |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
        |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
        |  }
        |}

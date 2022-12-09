@@ -1,6 +1,5 @@
 package replpp
 
-import dotty.tools.scripting.ScriptingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -60,10 +59,10 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
   "--predefCode imports" in {
     execTest { testOutputPath =>
       TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-" + MaxValue)""".stripMargin,
+        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-import-" + MaxValue)""".stripMargin,
         adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
       )
-    } shouldBe "iwashere-predefCode-127"
+    } shouldBe "iwashere-predefCode-import-127"
   }
 
   "--predefFiles" in {
