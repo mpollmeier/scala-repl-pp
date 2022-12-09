@@ -1,4 +1,4 @@
-package replpp
+package replpp.all
 
 import replpp.scripting.ScriptRunner
 import replpp.server.ReplServer
