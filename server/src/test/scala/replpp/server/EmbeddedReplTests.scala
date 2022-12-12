@@ -5,6 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.util.concurrent.Semaphore
 
+@tags.Later
 class EmbeddedReplTests extends AnyWordSpec with Matchers {
 
   "start and shutdown without hanging" in {
@@ -23,18 +24,18 @@ class EmbeddedReplTests extends AnyWordSpec with Matchers {
     shell.shutdown()
   }
 
-  "execute a command asynchronously" in {
-    val shell = new EmbeddedRepl()
-    val mutex = new Semaphore(0)
-    shell.start()
-    var resultOut = "uninitialized"
-    shell.queryAsync("val x = 0") { result =>
-      resultOut = result.out
-      mutex.release()
-    }
-    mutex.acquire()
-    resultOut shouldBe "val x: Int = 0\n"
-    shell.shutdown()
-  }
+   "execute a command asynchronously" in {
+     val shell = new EmbeddedRepl()
+     val mutex = new Semaphore(0)
+     shell.start()
+     var resultOut = "uninitialized"
+     shell.queryAsync("val x = 0") { result =>
+       resultOut = result.out
+       mutex.release()
+     }
+     mutex.acquire()
+     resultOut shouldBe "val x: Int = 0\n"
+     shell.shutdown()
+   }
 
 }
