@@ -2,6 +2,7 @@ import java.lang.System.lineSeparator
 import java.nio.file.Path
 
 package object replpp {
+  val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
 
   def compilerArgs(config: Config, predefCode: String): Array[String] = {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
