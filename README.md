@@ -1,3 +1,6 @@
+[![Release](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml/badge.svg)](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
+
 ## scala-repl-pp
 Scala REPL PlusPlus - a (slightly) better Scala 3 / dotty REPL.
 Note: this currently depends on a [slightly patched](https://github.com/mpollmeier/dotty/tree/michael/extensible-repl-minified) version of dotty. I'll try to get those merged upstream.
