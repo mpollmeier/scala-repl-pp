@@ -40,10 +40,10 @@ package object replpp {
 
     // --predefCode and `SCALA_REPL_PP_PREDEF_CODE` env var
     val fromPredefCode =
-      Seq(
+      Seq.concat(
         config.predefCode,
-        Option(System.getenv(PredefCodeEnvVar))
-      ).flatten.filter(_.nonEmpty).map((os.pwd, _))
+        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty)
+      ).map((os.pwd, _))
 
     val results = (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read(file))
