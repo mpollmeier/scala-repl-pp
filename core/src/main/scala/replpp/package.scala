@@ -2,6 +2,7 @@ import java.lang.System.lineSeparator
 import java.nio.file.Path
 
 package object replpp {
+  val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
 
   def compilerArgs(config: Config, predefCode: String): Array[String] = {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
@@ -37,11 +38,16 @@ package object replpp {
       fromPredefCode ++ fromFiles
     }
 
-    val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq
+    // --predefCode and `SCALA_REPL_PP_PREDEF_CODE` env var
+    val fromPredefCode =
+      Seq.concat(
+        config.predefCode,
+        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty)
+      ).map((os.pwd, _))
 
     val results = (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read(file))
-    } ++ fromPredefCodeParam
+    } ++ fromPredefCode
 
     results.distinct
   }

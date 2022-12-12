@@ -27,6 +27,7 @@ case class Config(
 )
 
 object Config {
+  
   def parse(args: Array[String]): Config = {
     implicit def pathRead: scopt.Read[os.Path] =
       scopt.Read.stringRead.map(os.Path(_, os.pwd)) // support both relative and absolute paths

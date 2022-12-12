@@ -2,7 +2,7 @@ package replpp.scripting
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import replpp.Config
+import replpp.{Config, PredefCodeEnvVar}
 
 class ScriptRunnerTest extends AnyWordSpec with Matchers {
 
@@ -251,12 +251,12 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
 
   type TestOutputPath = String
   type TestOutput = String
-  case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)
+  case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity, predefCodeViaEnvVar: String = "")
   private def execTest(setupTest: TestOutputPath => TestSetup): TestOutput = {
     val testOutputFile = os.temp()
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
 
-    val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
+    val TestSetup(scriptSrc, adaptConfig, predefCodeViaEnvVar) = setupTest(testOutputPath)
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
     val config = adaptConfig(Config(scriptFile = Some(scriptFile)))
