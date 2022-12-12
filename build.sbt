@@ -4,7 +4,9 @@ publish/skip := true
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.2.1"
 
-lazy val core   = project.in(file("core")).settings(
+lazy val ScalaTestVersion = "3.2.12"
+
+lazy val core = project.in(file("core")).settings(
   name := "scala-repl-pp",
   libraryDependencies ++= Seq(
     /* my fork was merged into upstream dotty, i.e. we'll be able to depend on the regular
@@ -15,7 +17,7 @@ lazy val core   = project.in(file("core")).settings(
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.7.3",
     "com.github.scopt" %% "scopt"     % "4.1.0",
-    ("io.get-coursier" %% "coursier" % "2.0.13").cross(CrossVersion.for3Use2_13)
+    ("io.get-coursier" %% "coursier"  % "2.0.13").cross(CrossVersion.for3Use2_13)
       .exclude("org.scala-lang.modules", "scala-xml_2.13")
       .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
     "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
@@ -29,23 +31,19 @@ lazy val server = project.in(file("server"))
     name := "scala-repl-pp-server",
     Defaults.itSettings,
     libraryDependencies ++= Seq(
-      "com.lihaoyi"      %% "cask"      % "0.8.3",
-      "org.slf4j" % "slf4j-simple" % "1.7.36" % Optional,
-      "com.lihaoyi"      %% "requests"  % "0.7.1" % Test,
-      "org.scalatest" %% "scalatest" % "3.2.12" % "it",
+      "com.lihaoyi"   %% "cask"         % "0.8.3",
+      "org.slf4j"      % "slf4j-simple" % "1.7.36" % Optional,
+      "com.lihaoyi"   %% "requests"     % "0.7.1" % Test,
+      "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
   )
 
 lazy val all = project.in(file("all"))
   .dependsOn(core, server)
   .enablePlugins(JavaAppPackaging)
-  .settings(
-    name := "scala-repl-pp-all"
-  )
+  .settings(name := "scala-repl-pp-all")
 
-ThisBuild / libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.2.12" % Test,
-)
+ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % ScalaTestVersion % Test
 
 ThisBuild/Test/fork := true
 ThisBuild/IntegrationTest/fork := true
