@@ -70,6 +70,16 @@ println(foo)
 ./scala-repl-pp --script test-predef.sc --predefCode 'val foo = "Hello, predef!"'
 ```
 
+#### Predef code via environment variable
+test-predef.sc
+```scala
+println(foo)
+```
+
+```bash
+export SCALA_REPL_PP_PREDEF_CODE='val foo = "Hello, predef!"'
+./scala-repl-pp --script test-predef.sc
+```
 
 #### Predef file(s)
 test-predef.sc

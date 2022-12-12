@@ -38,11 +38,16 @@ package object replpp {
       fromPredefCode ++ fromFiles
     }
 
-    val fromPredefCodeParam = config.predefCode.map((os.pwd, _)).toSeq
+    // --predefCode and `SCALA_REPL_PP_PREDEF_CODE` env var
+    val fromPredefCode =
+      Seq(
+        config.predefCode,
+        Option(System.getenv(PredefCodeEnvVar))
+      ).flatten.filter(_.nonEmpty).map((os.pwd, _))
 
     val results = (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read(file))
-    } ++ fromPredefCodeParam
+    } ++ fromPredefCode
 
     results.distinct
   }
