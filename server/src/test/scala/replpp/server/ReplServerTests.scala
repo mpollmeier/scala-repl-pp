@@ -56,7 +56,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     info("tests were cancelled because github actions windows doesn't support them for some unknown reason...")
   } else {
 
-    (1.to(50)).foreach { i =>
+    (1.to(10)).foreach { i =>
       s"foo $i" in Fixture() { host =>
         val wsMsgPromise = scala.concurrent.Promise[String]()
         cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
