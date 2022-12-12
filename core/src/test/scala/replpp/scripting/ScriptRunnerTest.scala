@@ -79,15 +79,6 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     } shouldBe "iwashere-predefCode-using-file-import:127"
   }
 
-  s"$PredefCodeEnvVar env var" in {
-    execTest { testOutputPath =>
-      TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
-        predefCodeViaEnvVar = "val bar = \"iwashere-predefCodeViaEnvVar\""
-      )
-    } shouldBe "iwashere-predefCodeViaEnvVar"
-  }
-
   "--predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp()
@@ -269,9 +260,7 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
     val config = adaptConfig(Config(scriptFile = Some(scriptFile)))
-    if (predefCodeViaEnvVar.nonEmpty) System.getenv.put(PredefCodeEnvVar, predefCodeViaEnvVar)
     ScriptRunner.exec(config)
-    System.getenv.remove(PredefCodeEnvVar)
 
     os.read(testOutputFile)
   }
