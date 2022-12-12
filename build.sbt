@@ -24,12 +24,15 @@ lazy val core   = project.in(file("core")).settings(
 
 lazy val server = project.in(file("server"))
   .dependsOn(core)
+  .configs(IntegrationTest)
   .settings(
     name := "scala-repl-pp-server",
+    Defaults.itSettings,
     libraryDependencies ++= Seq(
       "com.lihaoyi"      %% "cask"      % "0.8.3",
       "org.slf4j" % "slf4j-simple" % "1.7.36" % Optional,
       "com.lihaoyi"      %% "requests"  % "0.7.1" % Test,
+      "org.scalatest" %% "scalatest" % "3.2.12" % "it",
     )
   )
 
@@ -45,6 +48,7 @@ ThisBuild / libraryDependencies ++= Seq(
 )
 
 ThisBuild/Test/fork := true
+ThisBuild/IntegrationTest/fork := true
 
 ThisBuild/resolvers += Resolver.mavenLocal
 Global/onChangedBuildSource := ReloadOnSourceChanges

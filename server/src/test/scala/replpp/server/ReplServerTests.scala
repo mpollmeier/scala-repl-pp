@@ -33,7 +33,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
   }
 
   private def getResponse(host: String, uuidParam: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
-    val uri         = s"$host/result/${URLEncoder.encode(uuidParam, "utf-8")}"
+    val uri = s"$host/result/${URLEncoder.encode(uuidParam, "utf-8")}"
     val getResponse = requests.get(uri, headers = Seq("authorization" -> authHeaderVal))
     ujson.read(getResponse.bytes)
   }
@@ -56,46 +56,89 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     info("tests were cancelled because github actions windows doesn't support them for some unknown reason...")
   } else {
 
-    // TODO temporarily ignored most test cases here, due to some Threading deadlock issue - debug separately from this PR
-    "CPGQLServer" should {
-
-      "allow websocket connections to the `/connect` endpoint" in Fixture() { host =>
-        val wsMsgPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
-          wsMsgPromise.success(msg)
-        }
-        val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
-        wsMsg shouldBe "connected"
+    "allow websocket connections to the `/connect` endpoint" in Fixture() { host =>
+      val wsMsgPromise = scala.concurrent.Promise[String]()
+      cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
+        wsMsgPromise.success(msg)
       }
+      val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+      wsMsg shouldBe "connected"
+    }
 
-      "allow posting a simple query without any websocket connections established" in Fixture() { host =>
+    "allow posting a simple query without any websocket connections established" in Fixture() { host =>
+      val postQueryResponse = postQuery(host, "1")
+      postQueryResponse.obj.keySet should contain("success")
+      val UUIDResponse = postQueryResponse("uuid").str
+      UUIDResponse should not be empty
+      postQueryResponse("success").bool shouldBe true
+    }
+
+    "disallow posting a query when request headers do not include a valid authentication value" in Fixture() { host =>
+      assertThrows[RequestFailedException] {
+        postQuery(host, "1", authHeaderVal = "Basic b4df00d")
+      }
+    }
+
+    "return a valid JSON response when trying to retrieve the result of a query without a connection" in Fixture() {
+      host =>
         val postQueryResponse = postQuery(host, "1")
-        postQueryResponse.obj.keySet should contain("success")
+        postQueryResponse.obj.keySet should contain("uuid")
         val UUIDResponse = postQueryResponse("uuid").str
-        UUIDResponse should not be empty
-        postQueryResponse("success").bool shouldBe true
-      }
+        val getResultResponse = getResponse(host, UUIDResponse)
+        getResultResponse.obj.keySet should contain("success")
+        getResultResponse.obj.keySet should contain("err")
+        getResultResponse("success").bool shouldBe false
+        getResultResponse("err").str.length should not be 0
+    }
 
-      "disallow posting a query when request headers do not include a valid authentication value" in Fixture() { host =>
-        assertThrows[RequestFailedException] {
-          postQuery(host, "1", authHeaderVal = "Basic b4df00d")
-        }
+    "allow fetching the result of a completed query using its UUID" in Fixture() { host =>
+      val wsMsgPromise = scala.concurrent.Promise[String]()
+      val connectedPromise = scala.concurrent.Promise[String]()
+      cask.util.WsClient.connect(s"$host/connect") {
+        case cask.Ws.Text(msg) if msg == "connected" =>
+          connectedPromise.success(msg)
+        case cask.Ws.Text(msg) =>
+          wsMsgPromise.success(msg)
       }
+      Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+      val postQueryResponse = postQuery(host, "1")
+      val queryUUID = postQueryResponse("uuid").str
+      queryUUID.length should not be 0
 
-      "return a valid JSON response when trying to retrieve the result of a query without a connection" ignore Fixture() {
-        host =>
-          val postQueryResponse = postQuery(host, "1")
-          postQueryResponse.obj.keySet should contain("uuid")
-          val UUIDResponse      = postQueryResponse("uuid").str
-          val getResultResponse = getResponse(host, UUIDResponse)
-          getResultResponse.obj.keySet should contain("success")
-          getResultResponse.obj.keySet should contain("err")
-          getResultResponse("success").bool shouldBe false
-          getResultResponse("err").str.length should not be 0
+      val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+      queryResultWSMessage.length should not be 0
+
+      val getResultResponse = getResponse(host, queryUUID)
+      getResultResponse.obj.keySet should contain("success")
+      getResultResponse("uuid").str shouldBe queryResultWSMessage
+      getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
+    }
+
+    "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { host =>
+      val wsMsgPromise = scala.concurrent.Promise[String]()
+      val connectedPromise = scala.concurrent.Promise[String]()
+      cask.util.WsClient.connect(s"$host/connect") {
+        case cask.Ws.Text(msg) if msg == "connected" =>
+          connectedPromise.success(msg)
+        case cask.Ws.Text(msg) =>
+          wsMsgPromise.success(msg)
       }
+      Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+      val postQueryResponse = postQuery(host, "1")
+      val queryUUID = postQueryResponse("uuid").str
+      queryUUID.length should not be 0
 
-      "allow fetching the result of a completed query using its UUID" ignore Fixture() { host =>
-        val wsMsgPromise     = scala.concurrent.Promise[String]()
+      val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+      queryResultWSMessage.length should not be 0
+
+      assertThrows[RequestFailedException] {
+        getResponse(host, queryUUID, "Basic b4df00d")
+      }
+    }
+
+    "write a well-formatted message to a websocket connection when a query has finished evaluation" in Fixture() {
+      host =>
+        val wsMsgPromise = scala.concurrent.Promise[String]()
         val connectedPromise = scala.concurrent.Promise[String]()
         cask.util.WsClient.connect(s"$host/connect") {
           case cask.Ws.Text(msg) if msg == "connected" =>
@@ -104,8 +147,9 @@ class ReplServerTests extends AnyWordSpec with Matchers {
             wsMsgPromise.success(msg)
         }
         Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+
         val postQueryResponse = postQuery(host, "1")
-        val queryUUID         = postQueryResponse("uuid").str
+        val queryUUID = postQueryResponse("uuid").str
         queryUUID.length should not be 0
 
         val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
@@ -113,61 +157,43 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
         val getResultResponse = getResponse(host, queryUUID)
         getResultResponse.obj.keySet should contain("success")
+        getResultResponse.obj.keySet should contain("stdout")
+        getResultResponse.obj.keySet should not contain "err"
         getResultResponse("uuid").str shouldBe queryResultWSMessage
         getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
+    }
+
+    "write a well-formatted message to a websocket connection when a query failed evaluation" in Fixture() { host =>
+      val wsMsgPromise = scala.concurrent.Promise[String]()
+      val connectedPromise = scala.concurrent.Promise[String]()
+      cask.util.WsClient.connect(s"$host/connect") {
+        case cask.Ws.Text(msg) if msg == "connected" =>
+          connectedPromise.success(msg)
+        case cask.Ws.Text(msg) =>
+          wsMsgPromise.success(msg)
       }
+      Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
 
-      "disallow fetching the result of a completed query with an invalid auth header" ignore Fixture() { host =>
-        val wsMsgPromise     = scala.concurrent.Promise[String]()
-        val connectedPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$host/connect") {
-          case cask.Ws.Text(msg) if msg == "connected" =>
-            connectedPromise.success(msg)
-          case cask.Ws.Text(msg) =>
-            wsMsgPromise.success(msg)
-        }
-        Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
-        val postQueryResponse = postQuery(host, "1")
-        val queryUUID         = postQueryResponse("uuid").str
-        queryUUID.length should not be 0
+      val postQueryResponse = postQuery(host, "if else for loop soup // i.e., an invalid Ammonite query")
+      val queryUUID = postQueryResponse("uuid").str
+      queryUUID.length should not be 0
 
-        val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
-        queryResultWSMessage.length should not be 0
+      val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+      wsMsg.length should not be 0
 
-        assertThrows[RequestFailedException] {
-          getResponse(host, queryUUID, "Basic b4df00d")
-        }
-      }
+      val resp = getResponse(host, queryUUID)
+      resp.obj.keySet should contain("success")
+      resp.obj.keySet should contain("stdout")
+      resp.obj.keySet should not contain "err"
 
-      "write a well-formatted message to a websocket connection when a query has finished evaluation" ignore Fixture() {
-        host =>
-          val wsMsgPromise     = scala.concurrent.Promise[String]()
-          val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$host/connect") {
-            case cask.Ws.Text(msg) if msg == "connected" =>
-              connectedPromise.success(msg)
-            case cask.Ws.Text(msg) =>
-              wsMsgPromise.success(msg)
-          }
-          Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+      resp("success").bool shouldBe true
+      resp("uuid").str shouldBe wsMsg
+      resp("stdout").str.length should not be 0
+    }
 
-          val postQueryResponse = postQuery(host, "1")
-          val queryUUID         = postQueryResponse("uuid").str
-          queryUUID.length should not be 0
-
-          val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
-          queryResultWSMessage.length should not be 0
-
-          val getResultResponse = getResponse(host, queryUUID)
-          getResultResponse.obj.keySet should contain("success")
-          getResultResponse.obj.keySet should contain("stdout")
-          getResultResponse.obj.keySet should not contain "err"
-          getResultResponse("uuid").str shouldBe queryResultWSMessage
-          getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
-      }
-
-      "write a well-formatted message to a websocket connection when a query failed evaluation" ignore Fixture() { host =>
-        val wsMsgPromise     = scala.concurrent.Promise[String]()
+    "write a well-formatted message to a websocket connection when a query containing an invalid char is submitted" in Fixture() {
+      host =>
+        val wsMsgPromise = scala.concurrent.Promise[String]()
         val connectedPromise = scala.concurrent.Promise[String]()
         cask.util.WsClient.connect(s"$host/connect") {
           case cask.Ws.Text(msg) if msg == "connected" =>
@@ -177,8 +203,8 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         }
         Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
 
-        val postQueryResponse = postQuery(host, "if else for loop soup // i.e., an invalid Ammonite query")
-        val queryUUID         = postQueryResponse("uuid").str
+        val postQueryResponse = postQuery(host, "@1")
+        val queryUUID = postQueryResponse("uuid").str
         queryUUID.length should not be 0
 
         val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
@@ -187,43 +213,13 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         val resp = getResponse(host, queryUUID)
         resp.obj.keySet should contain("success")
         resp.obj.keySet should contain("stdout")
-        resp.obj.keySet should not contain "err"
 
         resp("success").bool shouldBe true
         resp("uuid").str shouldBe wsMsg
         resp("stdout").str.length should not be 0
-      }
-
-      "write a well-formatted message to a websocket connection when a query containing an invalid char is submitted" ignore Fixture() {
-        host =>
-          val wsMsgPromise     = scala.concurrent.Promise[String]()
-          val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$host/connect") {
-            case cask.Ws.Text(msg) if msg == "connected" =>
-              connectedPromise.success(msg)
-            case cask.Ws.Text(msg) =>
-              wsMsgPromise.success(msg)
-          }
-          Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
-
-          val postQueryResponse = postQuery(host, "@1")
-          val queryUUID         = postQueryResponse("uuid").str
-          queryUUID.length should not be 0
-
-          val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
-          wsMsg.length should not be 0
-
-          val resp = getResponse(host, queryUUID)
-          resp.obj.keySet should contain("success")
-          resp.obj.keySet should contain("stdout")
-
-          resp("success").bool shouldBe true
-          resp("uuid").str shouldBe wsMsg
-          resp("stdout").str.length should not be 0
-      }
     }
 
-    "receive error when attempting to retrieve result with invalid uuid" ignore Fixture() { host =>
+    "receive error when attempting to retrieve result with invalid uuid" in Fixture() { host =>
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         connectedPromise.success(msg)
@@ -235,7 +231,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("success").bool shouldBe false
     }
 
-    "return a valid JSON response when calling /result with incorrectly-formatted UUID parameter" ignore Fixture() { host =>
+    "return a valid JSON response when calling /result with incorrectly-formatted UUID parameter" in Fixture() { host =>
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         connectedPromise.success(msg)
@@ -248,12 +244,12 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("err").str.length should not equal 0
     }
 
-    "return websocket responses for all queries when posted quickly ignore a large number" ignore Fixture() { host =>
-      val numQueries                   = 10
+    "return websocket responses for all queries when posted quickly in a large number" in Fixture() { host =>
+      val numQueries = 10
       val correctNumberOfUUIDsReceived = scala.concurrent.Promise[String]()
-      val wsUUIDs                      = ListBuffer[String]()
+      val wsUUIDs = ListBuffer[String]()
 
-      val rtl: Lock        = new ReentrantLock()
+      val rtl: Lock = new ReentrantLock()
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         if (msg == "connected") {
@@ -282,11 +278,11 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       wsUUIDs.toSet should be(postQueriesResponseUUIDs.toSet)
     }
 
-    "return websocket responses for all queries when some are invalid" ignore Fixture() { host =>
-      val queries                      = List("1", "1 + 1", "open(", "open)", "open{", "open}")
+    "return websocket responses for all queries when some are invalid" in Fixture() { host =>
+      val queries = List("1", "1 + 1", "open(", "open)", "open{", "open}")
       val correctNumberOfUUIDsReceived = scala.concurrent.Promise[String]()
-      val wsUUIDs                      = ListBuffer[String]()
-      val connectedPromise             = scala.concurrent.Promise[String]()
+      val wsUUIDs = ListBuffer[String]()
+      val connectedPromise = scala.concurrent.Promise[String]()
 
       val rtl: Lock = new ReentrantLock()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
@@ -325,19 +321,21 @@ object Fixture {
     val embeddedRepl = new EmbeddedRepl()
     embeddedRepl.start()
 
-    val host         = "localhost"
-    val port         = 8081
+    val host = "localhost"
+    val port = 8081
     val authUsername = "username"
     val authPassword = "password"
     val httpEndpoint = "http://" + host + ":" + port.toString
-    val replServer    = new ReplServer(embeddedRepl, host, port, authUsername, authPassword)
+    val replServer = new ReplServer(embeddedRepl, host, port, authUsername, authPassword)
     val server = io.undertow.Undertow.builder
       .addHttpListener(replServer.port, replServer.host)
       .setHandler(replServer.defaultHandler)
       .build
     server.start()
     val res =
-      try { f(httpEndpoint) }
+      try {
+        f(httpEndpoint)
+      }
       finally {
         server.stop()
         embeddedRepl.shutdown()
