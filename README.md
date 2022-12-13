@@ -242,12 +242,38 @@ cd src/test/resources/demo-project
 sbt stage
 target/universal/stage/bin/stringcalc
 
-
 Welcome to the magical world of string calculation!
 Type `help` for help
 
 stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
+```
+
+## Predef code and scripts
+There's a variety of ways to define predef code, i.e. code that is being run before any given script:
+
+```
+echo 'def bar = 90' > ~/.scala-repl-pp.sc
+echo 'def baz = 91' > script1.sc
+echo 'def bam = 92' > script2.sc
+export SCALA_REPL_PP_PREDEF_CODE='def bax = 93'
+
+./scala-repl-pp --predefCode='def foo = 42' --predefFiles=script1.sc,script2.sc
+
+scala> foo
+val res0: Int = 42
+
+scala> bar
+val res1: Int = 90
+
+scala> baz
+val res2: Int = 91
+
+scala> bam
+val res3: Int = 92
+
+scala> bax
+val res4: Int = 93
 ```
 
 ## Limitations
