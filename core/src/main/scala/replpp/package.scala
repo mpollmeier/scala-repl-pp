@@ -3,6 +3,7 @@ import java.nio.file.Path
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
+  lazy val globalPredefFile = os.home / ".scala-repl-pp.sc"
 
   def compilerArgs(config: Config, predefCode: String): Array[String] = {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
@@ -38,11 +39,12 @@ package object replpp {
       fromPredefCode ++ fromFiles
     }
 
-    // --predefCode and `SCALA_REPL_PP_PREDEF_CODE` env var
+    // --predefCode, ~/.scala-repl-pp.sc and `SCALA_REPL_PP_PREDEF_CODE` env var
     val fromPredefCode =
       Seq.concat(
         config.predefCode,
-        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty)
+        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty),
+        readGlobalPredefFile
       ).map((os.pwd, _))
 
     val results = (config.predefFiles ++ importedFiles).map { file =>
@@ -63,5 +65,12 @@ package object replpp {
   def resolveFile(base: os.Path, pathStr: String): os.Path = {
     if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
     else base / os.RelPath(pathStr)
+  }
+
+  private def readGlobalPredefFile: Seq[String] = {
+    if (os.exists(globalPredefFile))
+      os.read.lines(globalPredefFile)
+    else
+      Seq.empty
   }
 }
