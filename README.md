@@ -1,3 +1,6 @@
+[![Release](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml/badge.svg)](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
+
 ## scala-repl-pp
 Scala REPL PlusPlus - a (slightly) better Scala 3 / dotty REPL.
 Note: this currently depends on a [slightly patched](https://github.com/mpollmeier/dotty/tree/michael/extensible-repl-minified) version of dotty. I'll try to get those merged upstream.
@@ -6,7 +9,36 @@ Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite
 
 Note: this currently depends on a dotty fork, which has since been [merged](https://github.com/lampepfl/dotty/pull/16276) into dotty upstream, i.e. we'll be able to depend on the regular dotty release from 3.2.2 on :tada:
 
-### Why use scala-repl-pp over the regular Scala REPL?
+## TOC
+<!-- generated with: -->
+<!-- markdown-toc --maxdepth 3 README.md -->
+
+- [Benefits over / comparison with](#benefits-over--comparison-with)
+  * [Regular Scala REPL](#regular-scala-repl)
+  * [Ammonite](#ammonite)
+  * [scala-cli](#scala-cli)
+- [Build it locally](#build-it-locally)
+- [REPL](#repl)
+  * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
+  * [Importing additional script files interactively](#importing-additional-script-files-interactively)
+- [Scripting](#scripting)
+  * [Simple "Hello world" script](#simple-hello-world-script)
+  * [Predef code for script](#predef-code-for-script)
+  * [Predef code via environment variable](#predef-code-via-environment-variable)
+  * [Predef file(s)](#predef-files)
+  * [Importing files / scripts](#importing-files--scripts)
+  * [Dependencies](#dependencies)
+  * [@main entrypoints](#main-entrypoints)
+  * [multiple @main entrypoints: test-main-multiple.sc](#multiple-main-entrypoints-test-main-multiplesc)
+  * [named parameters](#named-parameters)
+- [Server mode](#server-mode)
+- [Embed into your own project](#embed-into-your-own-project)
+- [Limitations](#limitations)
+  * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+
+## Benefits over / comparison with
+
+### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
 * pretty printing via [pprint](https://com-lihaoyi.github.io/PPrint/)
 * customize greeting, prompt and shutdown code
@@ -15,17 +47,17 @@ Note: this currently depends on a dotty fork, which has since been [merged](http
 * server mode: REPL runs embedded
 * easily embeddable into your own build
 
-### Why use scala-repl-pp over [Ammonite](http://ammonite.io/)?
+### [Ammonite](http://ammonite.io)
 * Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: scala-repl-pp uses the regular Scala3/dotty ReplDriver. 
 * Ammonite has some Scala2 dependencies intermixed, leading to downstream build problems like [this](https://github.com/com-lihaoyi/Ammonite/issues/1241). It's no longer easy to embed Ammonite into your own build.
 * Note: Ammonite allows to add dependencies dynamically even in the middle of the REPL session - that's not supported by scala-repl-pp yet. You need to know which dependencies you want on startup. 
 
-### Why use scala-repl-pp over [scala-cli](https://scala-cli.virtuslab.org/)?
+### [scala-cli](https://scala-cli.virtuslab.org/)
 scala-cli is mostly a wrapper around the regular Scala REPL and Ammonite, so depending on which one you choose, you essentially end up with the same differences as above. 
 
-## Use Cases
+## Build it locally
 
-Prerequisite (for now):
+Prerequisite for all of the below:
 ```bash
 sbt stage
 ```
@@ -35,22 +67,55 @@ Generally speaking, `--help` is your friend!
 ./scala-repl-pp --help
 ```
 
-### REPL
-```
+## REPL
+
+```bash
+# run with defaults
+./scala-repl-pp
+
+# customize prompt, greeting and exit code
 ./scala-repl-pp --prompt=myprompt --greeting='hey there!' --onExitCode='println("see ya!")'
 
+# pass some predef code
 ./scala-repl-pp --predefCode='def foo = 42'
 scala> foo
 val res0: Int = 42
+```
 
+### Add dependencies with maven coordinates
+Note: the dependency must be known at startup time, either via `--dependency` parameter...
+```
 ./scala-repl-pp --dependency com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
 
-### Scripting
+... or `using lib` directive in predef code or predef files...
+```
+echo '//> using lib com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-#### Simple "Hello world" script
+./scala-repl-pp --predefFiles=predef.sc
+
+scala> versionsort.VersionHelper.compare("1.0", "0.9")
+val res0: Int = 1
+```
+
+### Importing additional script files interactively
+```
+echo 'val bar = foo' > myScript.sc
+
+./scala-repl-pp
+
+val foo = 1
+//> using file myScript.sc
+println(bar) //1
+```
+
+## Scripting
+
+See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
+
+### Simple "Hello world" script
 test-simple.sc
 ```scala
 println("Hello!")
@@ -60,7 +125,7 @@ println("Hello!")
 ./scala-repl-pp --script test-simple.sc
 ```
 
-#### Predef code
+### Predef code for script
 test-predef.sc
 ```scala
 println(foo)
@@ -70,7 +135,7 @@ println(foo)
 ./scala-repl-pp --script test-predef.sc --predefCode 'val foo = "Hello, predef!"'
 ```
 
-#### Predef code via environment variable
+### Predef code via environment variable
 test-predef.sc
 ```scala
 println(foo)
@@ -81,7 +146,7 @@ export SCALA_REPL_PP_PREDEF_CODE='val foo = "Hello, predef!"'
 ./scala-repl-pp --script test-predef.sc
 ```
 
-#### Predef file(s)
+### Predef file(s)
 test-predef.sc
 ```scala
 println(foo)
@@ -96,7 +161,7 @@ val foo = "Hello, predef file"
 ./scala-repl-pp --script test-predef.sc --timesiles test-predef-file.sc
 ```
 
-#### Importing files / scripts
+### Importing files / scripts
 foo.sc:
 ```scala
 val foo = 42
@@ -112,7 +177,7 @@ println(foo)
 ./scala-repl-pp --script test.sc
 ```
 
-#### Dependencies
+### Dependencies
 Dependencies can be added via `//> using lib` syntax (like in scala-cli).
 
 test-dependencies.sc:
@@ -130,7 +195,7 @@ assert(compareResult == 1,
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
-#### @main entrypoints
+### @main entrypoints
 test-main.sc
 ```scala
 @main def main() = println("Hello, world!")
@@ -140,7 +205,7 @@ test-main.sc
 ./scala-repl-pp --script test-main.sc
 ```
 
-#### multiple @main entrypoints: test-main-multiple.sc
+### multiple @main entrypoints: test-main-multiple.sc
 ```scala
 @main def foo() = println("foo!")
 @main def bar() = println("bar!")
@@ -150,7 +215,7 @@ test-main.sc
 ./scala-repl-pp --script test-main-multiple.sc --command=foo
 ```
 
-#### named parameters
+### named parameters
 test-main-withargs.sc
 ```scala
 @main def main(name: String) = {
@@ -162,7 +227,7 @@ test-main-withargs.sc
 ./scala-repl-pp --script test-main-withargs.sc --params name=Michael
 ```
 
-### Server
+## Server mode
 ```bash
 ./scala-repl-pp --server
 
@@ -170,7 +235,7 @@ curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}'
 ```
 
-### Embed into your own project
+## Embed into your own project
 Try out the working [string calculator example](src/test/resources/demo-project) in this repo:
 ```bash
 cd src/test/resources/demo-project
@@ -185,9 +250,11 @@ stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
 ```
 
+## Limitations
+
 ### Why are script line numbers incorrect?
 Scala-REPL-PP currently uses a simplistic model for predef code|files and additionally imported files, and just copies everything into one large script. That simplicity naturally comes with a few limitations, e.g. line numbers may be different from the input script(s). 
 
-A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. 
+A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
