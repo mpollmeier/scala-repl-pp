@@ -54,7 +54,7 @@ class ReplDriver(args: Array[String],
           state
         case Failure(_: UserInterruptException) =>
           // Ctrl+C -> swallow, do nothing
-          state
+          loop(using state)()
         case Failure(exception) =>
           throw exception
       }
