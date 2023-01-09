@@ -10,8 +10,9 @@ lazy val core = project.in(file("core")).settings(
   name := "scala-repl-pp",
   libraryDependencies ++= Seq(
     /* my fork was merged into upstream dotty, i.e. we'll be able to depend on the regular
-    * scala3-compiler from org.scala-lang with the next major release, probably 3.3.0
-    * see https://github.com/lampepfl/dotty/pull/16276 */
+     * scala3-compiler from org.scala-lang once 3.3.0 is out:
+     * "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
+     * see https://github.com/lampepfl/dotty/pull/16276 */
     "com.michaelpollmeier" %% "scala3-compiler" % "3.2.1+1-extensible-repl",
     "com.lihaoyi"      %% "mainargs"  % "0.3.0",
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
