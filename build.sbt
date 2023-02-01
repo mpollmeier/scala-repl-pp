@@ -2,18 +2,14 @@ name := "root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
-ThisBuild / scalaVersion := "3.2.1"
+ThisBuild / scalaVersion := "3.3.0-RC2"
 
 lazy val ScalaTestVersion = "3.2.12"
 
 lazy val core = project.in(file("core")).settings(
   name := "scala-repl-pp",
   libraryDependencies ++= Seq(
-    /* my fork was merged into upstream dotty, i.e. we'll be able to depend on the regular
-     * scala3-compiler from org.scala-lang once 3.3.0 is out:
-     * "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-     * see https://github.com/lampepfl/dotty/pull/16276 */
-    "com.michaelpollmeier" %% "scala3-compiler" % "3.2.1+1-extensible-repl",
+    "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
     "com.lihaoyi"      %% "mainargs"  % "0.3.0",
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.7.3",

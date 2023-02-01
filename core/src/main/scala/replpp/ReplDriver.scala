@@ -125,7 +125,7 @@ class ReplDriver(args: Array[String],
       // This is analogous to what happens in dotty.tools.repl.Rendering.
       val pprinter = Class.forName("replpp.PPrinter", true, rendering.myClassLoader)
       val renderer = pprinter.getMethod("apply", classOf[Object])
-      (value: Object) => renderer.invoke(null, value).asInstanceOf[String]
+      (value: Object, maxElements: Int, maxCharacters: Int) => renderer.invoke(null, value).asInstanceOf[String]
     }
   }
 
