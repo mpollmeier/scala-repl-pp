@@ -3,11 +3,8 @@
 
 ## scala-repl-pp
 Scala REPL PlusPlus - a (slightly) better Scala 3 / dotty REPL.
-Note: this currently depends on a [slightly patched](https://github.com/mpollmeier/dotty/tree/michael/extensible-repl-minified) version of dotty. I'll try to get those merged upstream.
 
 Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-cli.
-
-Note: this currently depends on a dotty fork, which has since been [merged](https://github.com/lampepfl/dotty/pull/16276) into dotty upstream, i.e. we'll be able to depend on the regular dotty release from 3.2.2 on :tada:
 
 ## TOC
 <!-- generated with: -->
