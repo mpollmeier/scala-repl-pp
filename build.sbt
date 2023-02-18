@@ -2,7 +2,7 @@ name := "root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
-ThisBuild / scalaVersion := "3.3.0-RC2"
+ThisBuild / scalaVersion := "3.3.0-RC3"
 
 lazy val ScalaTestVersion = "3.2.15"
 
