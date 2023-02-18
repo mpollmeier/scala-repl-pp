@@ -29,7 +29,7 @@ lazy val server = project.in(file("server"))
     Defaults.itSettings,
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
-      "org.slf4j"      % "slf4j-simple" % "1.7.36" % Optional,
+      "org.slf4j"      % "slf4j-simple" % "2.0.6" % Optional,
       "com.lihaoyi"   %% "requests"     % "0.7.1" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
