@@ -10,7 +10,7 @@ lazy val core = project.in(file("core")).settings(
   name := "scala-repl-pp",
   libraryDependencies ++= Seq(
     "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-    "com.lihaoyi"      %% "mainargs"  % "0.3.0",
+    "com.lihaoyi"      %% "mainargs"  % "0.4.0",
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.7.3",
     "com.github.scopt" %% "scopt"     % "4.1.0",
