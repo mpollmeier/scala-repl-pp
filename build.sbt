@@ -14,7 +14,7 @@ lazy val core = project.in(file("core")).settings(
     "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.7.3",
     "com.github.scopt" %% "scopt"     % "4.1.0",
-    ("io.get-coursier" %% "coursier"  % "2.0.13").cross(CrossVersion.for3Use2_13)
+    ("io.get-coursier" %% "coursier"  % "2.0.16").cross(CrossVersion.for3Use2_13)
       .exclude("org.scala-lang.modules", "scala-xml_2.13")
       .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
     "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
