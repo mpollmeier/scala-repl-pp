@@ -2,7 +2,7 @@ name := "root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
-ThisBuild / scalaVersion := "3.3.0-RC2"
+ThisBuild / scalaVersion := "3.3.0-RC3"
 
 lazy val ScalaTestVersion = "3.2.15"
 
@@ -11,7 +11,7 @@ lazy val core = project.in(file("core")).settings(
   libraryDependencies ++= Seq(
     "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
     "com.lihaoyi"      %% "mainargs"  % "0.3.0",
-    "com.lihaoyi"      %% "os-lib"    % "0.9.0",
+    "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.8.1",
     "com.github.scopt" %% "scopt"     % "4.1.0",
     ("io.get-coursier" %% "coursier"  % "2.0.16").cross(CrossVersion.for3Use2_13)
