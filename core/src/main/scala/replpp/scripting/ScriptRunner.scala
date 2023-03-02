@@ -2,7 +2,7 @@ package replpp.scripting
 
 import java.util.stream.Collectors
 import replpp.Config
-import replpp.{allPredefCode, compilerArgs}
+import replpp.allPredefCode
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
@@ -33,11 +33,18 @@ object ScriptRunner {
     val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
     val scriptCode = os.read(scriptFile)
     val scriptContent = wrapForMainargs(predefCode, scriptCode)
-    if (config.verbose) println(scriptContent)
     os.write.over(predefPlusScriptFileTmp, scriptContent)
+    val compilerArgs = replpp.compilerArgs(config, predefCode) :+ "-nowarn"
+      
+    if (config.verbose) {
+      println(s"full script content (including wrapper code) -> $predefPlusScriptFileTmp:")
+      println(scriptContent)
+      println(s"script arguments: ${scriptArgs.mkString(",")}")
+      println(s"compiler arguments: ${compilerArgs.mkString(",")}")
+    }
 
     new ScriptingDriver(
-      compilerArgs = compilerArgs(config, predefCode) :+ "-nowarn",
+      compilerArgs = compilerArgs,
       scriptFile = predefPlusScriptFileTmp.toIO,
       scriptArgs = scriptArgs.toArray
     ).compileAndRun() match {
