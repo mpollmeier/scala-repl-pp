@@ -3,7 +3,14 @@ import java.nio.file.Path
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
+  val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
   lazy val globalPredefFile = os.home / ".scala-repl-pp.sc"
+
+  /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
+  def verboseEnabled(config: Config): Boolean = {
+    config.verbose ||
+      sys.env.get(VerboseEnvVar).getOrElse("false").toLowerCase.trim == "true"
+  }
 
   def compilerArgs(config: Config, predefCode: String): Array[String] = {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
@@ -12,7 +19,7 @@ package object replpp {
 
     val compilerArgs = Array.newBuilder[String]
 
-    val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, config.verbose)
+    val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
     compilerArgs ++= Array("-classpath", replClasspath(dependencyFiles))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"

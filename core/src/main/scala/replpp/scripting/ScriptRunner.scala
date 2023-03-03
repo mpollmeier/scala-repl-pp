@@ -36,7 +36,7 @@ object ScriptRunner {
     os.write.over(predefPlusScriptFileTmp, scriptContent)
     val compilerArgs = replpp.compilerArgs(config, predefCode) :+ "-nowarn"
       
-    if (config.verbose) {
+    if (replpp.verboseEnabled(config)) {
       println(s"full script content (including wrapper code) -> $predefPlusScriptFileTmp:")
       println(scriptContent)
       println(s"script arguments: ${scriptArgs.mkString(",")}")

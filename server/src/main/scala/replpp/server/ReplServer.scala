@@ -12,7 +12,7 @@ object ReplServer {
 
   def startHttpServer(config: Config): Unit = {
     val predef = allPredefCode(config)
-    val embeddedRepl = new EmbeddedRepl(predef, config.verbose)
+    val embeddedRepl = new EmbeddedRepl(predef, replpp.verboseEnabled(config))
     embeddedRepl.start()
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       println("Shutting down server...")
