@@ -20,14 +20,14 @@ package object replpp {
     val compilerArgs = Array.newBuilder[String]
 
     val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
-    compilerArgs ++= Array("-classpath", replClasspath(dependencyFiles))
+    compilerArgs ++= Array("-classpath", classpath(dependencyFiles))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
     compilerArgs.result()
   }
 
-  private def replClasspath(dependencies: Seq[java.io.File]): String = {
+  private def classpath(dependencies: Seq[java.io.File]): String = {
     val inheritedClasspath = System.getProperty("java.class.path")
     val separator = System.getProperty("path.separator")
 

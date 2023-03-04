@@ -22,13 +22,23 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
   def compileAndRun(): Option[Throwable] = {
     setup(compilerArgs :+ scriptFile.getAbsolutePath, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
       val outDir = os.temp.dir(prefix = "scala3-scripting", deleteOnExit = false)
-      given Context = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
+
+      // TODO cleanup
+      val classpath0: String = rootCtx.settings.classpath.value(using rootCtx)
+      val classloaderUrls = classOf[replpp.ReplDriver].getClassLoader.asInstanceOf[java.net.URLClassLoader].getURLs.mkString(pathSeparator)
+      val classpath1 = s"$classpath0$pathSeparator$classloaderUrls$pathSeparator${sys.props("java.class.path")}"
+//      println("XXX1 cp=" + classpath1)
+      val ctx = rootCtx.fresh
+        .setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
+        .setSetting(rootCtx.settings.classpath, classpath1)
+      given Context = ctx
+//      given Context = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
 
       if doCompile(newCompiler, toCompile).hasErrors then
         Some(ScriptingException("Errors encountered during compilation"))
       else try {
-        val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
-        val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
+//        val classpath = s"${ctx.settings.classpath.value}$pathSeparator${sys.props("java.class.path")}"
+        val classpathEntries = ClassPath.expandPath(classpath1, expandStar = true).map(Paths.get(_))
         lookupMainMethod(outDir.toNIO, classpathEntries).invoke(null, scriptArgs)
         None
       } catch {
