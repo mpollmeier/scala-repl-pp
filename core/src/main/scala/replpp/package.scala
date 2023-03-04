@@ -29,12 +29,17 @@ package object replpp {
 
   private def classpath(dependencies: Seq[java.io.File]): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
-    
+
     val pathSeparator = System.getProperty("path.separator")
     val fromDependencies = dependencies.mkString(pathSeparator)
-    val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader.asInstanceOf[java.net.URLClassLoader].getURLs.mkString(pathSeparator)
+    val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
+      case cl: java.net.URLClassLoader => cl.getURLs.mkString(pathSeparator)
+      case _ => ""
+    }
 
-    s"$fromJavaClassPathProperty$pathSeparator$fromDependencies$pathSeparator$fromRootClassLoader"
+    s"$fromJavaClassPathProperty$pathSeparator"+
+      s"$fromDependencies$pathSeparator" +
+      fromRootClassLoader
   }
 
   def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {

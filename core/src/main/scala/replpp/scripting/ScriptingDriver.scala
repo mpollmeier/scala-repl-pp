@@ -17,7 +17,14 @@ import scala.language.unsafeNulls
  * Main difference: we don't (need to) recursive look for main method entrypoints in the entire classpath,
  * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
  * */
-class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs: Array[String]) extends Driver {
+class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs: Array[String], verbose: Boolean) extends Driver {
+
+  if (verbose) {
+    println(s"full script content (including wrapper code) -> $scriptFile:")
+    println(os.read(os.Path(scriptFile)))
+    println(s"script arguments: ${scriptArgs.mkString(",")}")
+    println(s"compiler arguments: ${compilerArgs.mkString(",")}")
+  }
 
   def compileAndRun(): Option[Throwable] = {
     setup(compilerArgs :+ scriptFile.getAbsolutePath, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>

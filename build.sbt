@@ -42,7 +42,7 @@ lazy val all = project.in(file("all"))
 
 ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % ScalaTestVersion % Test
 
-ThisBuild/Test/fork := true
+// ThisBuild/Test/fork := true
 ThisBuild/IntegrationTest/fork := true
 
 ThisBuild/resolvers += Resolver.mavenLocal

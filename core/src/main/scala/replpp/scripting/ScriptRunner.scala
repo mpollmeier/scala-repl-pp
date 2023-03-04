@@ -32,21 +32,17 @@ object ScriptRunner {
     val predefCode = allPredefCode(config)
     val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
     val scriptCode = os.read(scriptFile)
-    val scriptContent = wrapForMainargs(predefCode, scriptCode)
+    // TODO revert debug changes
+//    val scriptContent = wrapForMainargs(predefCode, scriptCode)
+    val scriptContent = wrapForMainargsFoo(predefCode, scriptCode)
     os.write.over(predefPlusScriptFileTmp, scriptContent)
     val compilerArgs = replpp.compilerArgs(config, predefCode) :+ "-nowarn"
-      
-    if (replpp.verboseEnabled(config)) {
-      println(s"full script content (including wrapper code) -> $predefPlusScriptFileTmp:")
-      println(scriptContent)
-      println(s"script arguments: ${scriptArgs.mkString(",")}")
-      println(s"compiler arguments: ${compilerArgs.mkString(",")}")
-    }
 
     new ScriptingDriver(
       compilerArgs = compilerArgs,
       scriptFile = predefPlusScriptFileTmp.toIO,
-      scriptArgs = scriptArgs.toArray
+      scriptArgs = scriptArgs.toArray,
+      verbose = replpp.verboseEnabled(config)
     ).compileAndRun() match {
       case Some(exception) =>
         System.err.println(s"error during script execution: ${exception.getMessage}")
@@ -63,7 +59,8 @@ object ScriptRunner {
   private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
     val mainImpl =
       if (scriptCode.contains("@main")) scriptCode
-      else s"""@main def _execMain(): Unit = {
+      else
+        s"""@main def _execMain(): Unit = {
            |  $scriptCode
            |}
            |""".stripMargin
@@ -74,11 +71,22 @@ object ScriptRunner {
        |object ${ScriptingDriver.MainClassName} {
        |
        |$predefCode
-       |  
+       |
        |$mainImpl
        |
        |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
        |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
+       |  }
+       |}
+       |""".stripMargin
+  }
+
+  private def wrapForMainargsFoo(predefCode: String, scriptCode: String): String = {
+    s"""
+       |object ${ScriptingDriver.MainClassName} {
+       |
+       | def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
+       |   $scriptCode
        |  }
        |}
        |""".stripMargin
