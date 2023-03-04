@@ -273,7 +273,11 @@ scala> bax
 val res4: Int = 93
 ```
 
-## Limitations
+## Verbose mode
+If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
+To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
+
+## Limitations / Debugging
 
 ### Why are script line numbers incorrect?
 Scala-REPL-PP currently uses a simplistic model for predef code|files and additionally imported files, and just copies everything into one large script. That simplicity naturally comes with a few limitations, e.g. line numbers may be different from the input script(s). 
@@ -281,3 +285,4 @@ Scala-REPL-PP currently uses a simplistic model for predef code|files and additi
 A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
+
