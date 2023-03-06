@@ -21,7 +21,7 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
 
   if (verbose) {
     println(s"full script content (including wrapper code) -> $scriptFile:")
-    println(os.read(os.Path(scriptFile)))
+    println(os.read(os.Path(scriptFile.getAbsolutePath)))
     println(s"script arguments: ${scriptArgs.mkString(",")}")
     println(s"compiler arguments: ${compilerArgs.mkString(",")}")
   }
