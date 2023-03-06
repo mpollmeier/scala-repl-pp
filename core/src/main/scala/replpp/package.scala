@@ -37,6 +37,9 @@ package object replpp {
       case _ => ""
     }
 
+//    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
+//    println("XX fromRootClassLoader=" + fromRootClassLoader)
+
     s"$fromJavaClassPathProperty$pathSeparator"+
       s"$fromDependencies$pathSeparator" +
       fromRootClassLoader
