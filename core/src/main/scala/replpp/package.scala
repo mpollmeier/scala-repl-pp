@@ -33,13 +33,15 @@ package object replpp {
     val pathSeparator = System.getProperty("path.separator")
     val fromDependencies = dependencies.mkString(pathSeparator)
     val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
-      case cl: java.net.URLClassLoader => cl.getURLs.mkString(pathSeparator)
+      case cl: java.net.URLClassLoader => cl.getURLs.map(_.getFile).mkString(pathSeparator)
       case _ => ""
     }
 
     s"$fromJavaClassPathProperty$pathSeparator"+
       s"$fromDependencies$pathSeparator" +
       fromRootClassLoader
+    // TODO not required? done for debug...
+//    .replaceAll(s"$pathSeparator$pathSeparator", pathSeparator)
   }
 
   def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
