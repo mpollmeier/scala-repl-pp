@@ -4,7 +4,31 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.{Config, PredefCodeEnvVar}
 
+object ScriptRunnerTest {
+  def main(args: Array[String]): Unit = {
+    val scriptSrc =
+      s"""val i = 2 + 10
+         |println("in script: i=" + i)
+         |""".stripMargin
+    val scriptFile = os.temp()
+    os.write.over(scriptFile, scriptSrc)
+    val config = Config(scriptFile = Some(scriptFile))
+    ScriptRunner.exec(config)
+  }
+}
+
 class ScriptRunnerTest extends AnyWordSpec with Matchers {
+
+  "footest" in {
+    val scriptSrc =
+      s"""val i = 1 + 10
+         |println("in script: i=" + i)
+         |""".stripMargin
+    val scriptFile = os.temp()
+    os.write.over(scriptFile, scriptSrc)
+    val config = Config(scriptFile = Some(scriptFile))
+    ScriptRunner.exec(config)
+  }
 
   "execute simple single-statement script" in {
     execTest { testOutputPath =>
