@@ -44,7 +44,8 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
       given Context = ctx
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
-        Some(ScriptingException("Errors encountered during compilation"))
+        val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
+        Some(ScriptingException(s"Errors encountered during compilation$msgAddonMaybe"))
       } else {
         val classpath = s"${outDir.toNIO.toAbsolutePath.toString}$pathSeparator${ctx.settings.classpath.value}"
         val forkJvm = true // TODO get from config

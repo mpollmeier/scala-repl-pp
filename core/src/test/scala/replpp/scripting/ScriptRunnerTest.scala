@@ -12,7 +12,7 @@ object ScriptRunnerTest {
          |""".stripMargin
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
-    val config = Config(scriptFile = Some(scriptFile))
+    val config = Config(scriptFile = Some(scriptFile), verbose = true)
     ScriptRunner.exec(config)
   }
 }
