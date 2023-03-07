@@ -4,7 +4,7 @@ import replpp.Config
 
 import sys.process.Process
 
-/** TODO describe why we have this and why this should be the default. */
+/** TODO describe why we have this and why this should be the default. Maybe rename to ScriptRunner */
 object ForkingScriptRunner {
 
   def exec(config: Config): Unit = {
@@ -16,11 +16,9 @@ object ForkingScriptRunner {
       replpp.classpath(config),
       "replpp.scripting.ScriptRunner",
     ) ++ config.asJavaArgs
-    //    if (replpp.verboseEnabled(config)) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
-    println(s"forking jvm: executing `java ${args.mkString(" ")}`")
-//    Thread.sleep(100000)
-    val p = Process("java", args).run()
-    assert(p.exitValue() == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was ${p.exitValue()}")
+    if (replpp.verboseEnabled(config)) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
+    val exitValue = Process("java", args).run().exitValue()
+    assert(exitValue == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was $exitValue")
   }
 
   def main(args: Array[String]): Unit = {

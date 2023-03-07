@@ -7,6 +7,9 @@ import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
 
+/**
+  * TODO rename and document. this one doesn't fork/spawn a new JVM and doesn't work in all setups. e.g. when starting from `sbt test` with `fork := false` it runs into classloader/classpath issues
+  */
 object ScriptRunner {
 
   def main(args: Array[String]): Unit = {
