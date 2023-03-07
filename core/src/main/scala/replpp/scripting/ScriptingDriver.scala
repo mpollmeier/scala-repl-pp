@@ -4,6 +4,7 @@ import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
+import replpp.pathSeparator
 import replpp.scripting.ScriptingDriver.*
 
 import java.io.File
@@ -11,7 +12,6 @@ import java.lang.reflect.{Method, Modifier}
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
-import sys.process.Process
 
 /**
  * Similar to dotty.tools.scripting.ScriptingDriver, but simpler and faster.
@@ -48,34 +48,14 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
         Some(ScriptingException(s"Errors encountered during compilation$msgAddonMaybe"))
       } else {
         val classpath = s"${outDir.toNIO.toAbsolutePath.toString}$pathSeparator${ctx.settings.classpath.value}"
-        val forkJvm = true // TODO get from config
-        // TODO refactor for readability
-        if (forkJvm) {
-          if (verbose) println("forking jvm")
-          val args = Seq(
-            "-classpath",
-            classpath,
-            MainClassName
-          )
-          val p = Process("java", args).run()
-          // the next line blocks
-          p.exitValue match {
-            case 0 =>
-              os.remove.all(outDir)
-              None // "good case"
-            case nonZero =>
-              Some(new AssertionError(s"error while invoking `java ${args.mkString(" ")}`. exit code was $nonZero"))
-          }
-        } else {
-          val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-          val mainMethod = lookupMainMethod(outDir.toNIO, classpathEntries)
-          try {
-            mainMethod.invoke(null, scriptArgs)
-            None // i.e. no Throwable - this is the 'good case' in the Driver api
-          } catch {
-            case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
-          } finally os.remove.all(outDir)
-        }
+        val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
+        val mainMethod = lookupMainMethod(outDir.toNIO, classpathEntries)
+        try {
+          mainMethod.invoke(null, scriptArgs)
+          None // i.e. no Throwable - this is the 'good case' in the Driver api
+        } catch {
+          case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
+        } finally os.remove.all(outDir)
       }
     }
   }
@@ -92,8 +72,6 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
 
     mainMethod
   }
-
-  lazy val pathSeparator = sys.props("path.separator")
 }
 object ScriptingDriver {
   val MainClassName  = "ScalaReplPP"

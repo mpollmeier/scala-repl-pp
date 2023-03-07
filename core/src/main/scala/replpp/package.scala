@@ -1,3 +1,4 @@
+import java.io.File
 import java.lang.System.lineSeparator
 import java.nio.file.Path
 
@@ -12,26 +13,18 @@ package object replpp {
       sys.env.get(VerboseEnvVar).getOrElse("false").toLowerCase.trim == "true"
   }
 
-  def compilerArgs(config: Config, predefCode: String): Array[String] = {
-    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
-    val allDependencies = config.dependencies ++
-      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-
+  def compilerArgs(config: Config): Array[String] = {
     val compilerArgs = Array.newBuilder[String]
-
-    val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
-    compilerArgs ++= Array("-classpath", classpath(dependencyFiles))
+    compilerArgs ++= Array("-classpath", classpath(config))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
     compilerArgs.result()
   }
 
-  private def classpath(dependencies: Seq[java.io.File]): String = {
+  def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
-
-    val pathSeparator = System.getProperty("path.separator")
-    val fromDependencies = dependencies.mkString(pathSeparator)
+    val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
     val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
       case cl: java.net.URLClassLoader => cl.getURLs.map(_.getFile).mkString(pathSeparator)
       case _ => ""
@@ -47,7 +40,15 @@ package object replpp {
 //    .replaceAll(s"$pathSeparator$pathSeparator", pathSeparator)
   }
 
-  def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
+  private def dependencyFiles(config: Config): Seq[File] = {
+    val predefCode = allPredefCode(config)
+    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
+    val allDependencies = config.dependencies ++
+      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
+    Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
+  }
+
+  private def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
     val importedFiles = {
       val fromPredefCode = config.predefCode.map { code =>
         UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
@@ -92,4 +93,7 @@ package object replpp {
     else
       Seq.empty
   }
+
+  // ":" on unix
+  val pathSeparator = java.io.File.pathSeparator
 }

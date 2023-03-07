@@ -10,7 +10,7 @@ object InteractiveShell {
   def run(config: Config): Unit = {
 
     val predefCode = allPredefCode(config)
-    val compilerArgs = replpp.compilerArgs(config, predefCode)
+    val compilerArgs = replpp.compilerArgs(config)
     val replDriver = new ReplDriver(
       compilerArgs,
       onExitCode = config.onExitCode,
