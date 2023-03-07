@@ -29,10 +29,20 @@ case class Config(
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
+    def add(entries: String*) = args.addAll(entries)
+    
+    // TODO add tests, check all parameters
     // TODO define constants for those params
+    predefCode.foreach { code =>
+      add("--predefCode", code)
+    }
+
+    if (predefFiles.nonEmpty) {
+      add("--predefFiles", predefFiles.mkString(","))
+    }
+
     scriptFile.foreach { file =>
-      args.addOne("--script")
-      args.addOne(file.toString)
+      add("--script", file.toString)
     }
     args.result()
   }
@@ -55,7 +65,7 @@ object Config {
       opt[Seq[os.Path]]("predefFiles")
         .valueName("script1.sc,script2.sc,...")
         .action((x, c) => c.copy(predefFiles = x.toList))
-        .text("import (and run) additional script(s) on startup")
+        .text("import (and run) additional script(s) on startup, separated by ','")
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
