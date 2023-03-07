@@ -24,14 +24,6 @@ package object replpp {
     compilerArgs.result()
   }
 
-  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
-    classLoader match {
-      case cl: java.net.URLClassLoader =>
-        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
-      case _ => Seq.empty
-    }
-  }
-
   def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
@@ -40,16 +32,7 @@ package object replpp {
         .map(_.getFile)
         .mkString(pathSeparator)
 
-//    System.getenv().forEach { case (a, b) => println(s"env var: $a=$b") }
-//    System.getProperties.entrySet().forEach(x => println(s"property: $x"))
-//    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
-//    println("XX fromRootClassLoader=" + fromClassLoaderHierarchy)
-
-    s"$fromJavaClassPathProperty$pathSeparator"+
-      s"$fromDependencies$pathSeparator" +
-      fromClassLoaderHierarchy
-    // TODO not required? done for debug...
-//    .replaceAll(s"$pathSeparator$pathSeparator", pathSeparator)
+    Seq(fromClassLoaderHierarchy, fromDependencies, fromJavaClassPathProperty).mkString(pathSeparator)
   }
 
   private def dependencyFiles(config: Config): Seq[File] = {
@@ -85,6 +68,15 @@ package object replpp {
 
     results.distinct
   }
+
+  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
+    classLoader match {
+      case cl: java.net.URLClassLoader =>
+        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
+      case _ => Seq.empty
+    }
+  }
+
 
   def allPredefCode(config: Config): String =
     predefCodeByFile(config).map(_._2).mkString(lineSeparator)

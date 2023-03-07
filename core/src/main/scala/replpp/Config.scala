@@ -24,7 +24,19 @@ case class Config(
   serverPort: Int = 8080,
   serverAuthUsername: String = "",
   serverAuthPassword: String = "",
-)
+) {
+
+  /** inverse of `Config.parse` */
+  lazy val asJavaArgs: Seq[String] = {
+    val args = Seq.newBuilder[String]
+    // TODO define constants for those params
+    scriptFile.foreach { file =>
+      args.addOne("--script")
+      args.addOne(file.toString)
+    }
+    args.result()
+  }
+}
 
 object Config {
   

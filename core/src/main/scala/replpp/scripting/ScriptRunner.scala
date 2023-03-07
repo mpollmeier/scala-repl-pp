@@ -15,7 +15,7 @@ object ScriptRunner {
   }
 
   def exec(config: Config): Unit = {
-    val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
+    val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("script file not defined - please specify e.g. via `--script=myscript.sc`"))
     if (!os.exists(scriptFile)) {
       throw new AssertionError(s"given script file $scriptFile does not exist")
     }

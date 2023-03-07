@@ -15,8 +15,7 @@ object ForkingScriptRunner {
       "-classpath",
       replpp.classpath(config),
       "replpp.scripting.ScriptRunner",
-      // TODO pass on config (unapplied) -> unapply config params -> check scopt readme
-    )
+    ) ++ config.asJavaArgs
     //    if (replpp.verboseEnabled(config)) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
     println(s"forking jvm: executing `java ${args.mkString(" ")}`")
 //    Thread.sleep(100000)
