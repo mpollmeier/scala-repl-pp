@@ -29,7 +29,7 @@ package object replpp {
   private def resolveJarsRecursively(classLoader: ClassLoader): Seq[URL] = {
     classLoader match {
       case cl: java.net.URLClassLoader =>
-        cl.getURLs ++ resolveJarsRecursively(cl.getParent)
+        resolveJarsRecursively(cl.getParent) ++ cl.getURLs
       case _ => Seq.empty
     }
   }
