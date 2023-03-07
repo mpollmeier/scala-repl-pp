@@ -33,8 +33,8 @@ object ScriptRunner {
     val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
     val scriptCode = os.read(scriptFile)
     // TODO revert debug changes
-//    val scriptContent = wrapForMainargs(predefCode, scriptCode)
-    val scriptContent = wrapForMainargsFoo(predefCode, scriptCode)
+    val scriptContent = wrapForMainargs(predefCode, scriptCode)
+//    val scriptContent = wrapForMainargsFoo(predefCode, scriptCode)
     os.write.over(predefPlusScriptFileTmp, scriptContent)
     val compilerArgs = replpp.compilerArgs(config, predefCode) :+ "-nowarn"
 
