@@ -16,6 +16,25 @@ object ScriptRunner {
   }
 
   def exec(config: Config): Unit = {
+    val forkJvm = true // TODO get from config
+    // TODO refactor for readability
+    if (forkJvm) {
+      val args = Seq(
+        "-classpath",
+        replpp.classpath(config),
+        "replpp.scripting.ScriptRunner",
+        // TODO pass on config (unapplied), but remove `--fork`, so this doesn't become an endless loop
+        // TODO call ScriptRunner with non-fork", but pass on other config options -> unapply config params -> check scopt readme
+      )
+      if (replpp.verboseEnabled(config)) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
+      val p = Process("java", args).run()
+      assert(p.exitValue() == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was ${p.exitValue()}")
+    } else {
+      execNonForked(config)
+    }
+  }
+
+  private def execNonForked(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
     if (!os.exists(scriptFile)) {
       throw new AssertionError(s"given script file $scriptFile does not exist")
@@ -39,42 +58,26 @@ object ScriptRunner {
     val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
     val scriptCode = os.read(scriptFile)
     // TODO revert debug changes
-//    val scriptContent = wrapForMainargs(predefCode, scriptCode)
-    val scriptContent = wrapForMainargsFoo(predefCode, scriptCode)
+    val scriptContent = wrapForMainargs(predefCode, scriptCode)
+//    val scriptContent = wrapForMainargsFoo(predefCode, scriptCode)
     os.write.over(predefPlusScriptFileTmp, scriptContent)
-    val verbose = replpp.verboseEnabled(config)
 
-    val forkJvm = true // TODO get from config
-    // TODO refactor for readability
-    if (forkJvm) {
-      val args = Seq(
-        "-classpath",
-        replpp.classpath(config),
-        "replpp.scripting.ScriptRunner",
-        // TODO pass on config (unapplied), but remove `--fork`, so this doesn't become an endless loop
-        // TODO call ScriptRunner with non-fork", but pass on other config options -> unapply config params -> check scopt readme
-      )
-      if (verbose) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
-      val p = Process("java", args).run()
-      assert(p.exitValue() == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was ${p.exitValue()}")
-    } else {
-      val compilerArgs = replpp.compilerArgs(config) :+ "-nowarn"
-      new ScriptingDriver(
-        compilerArgs = compilerArgs,
-        scriptFile = predefPlusScriptFileTmp.toIO,
-        scriptArgs = scriptArgs.toArray,
-        verbose = verbose
-      ).compileAndRun() match {
-        case Some(exception) =>
-          System.err.println(s"error during script execution: ${exception.getMessage}")
-          System.err.println(s"note: line numbers may not be accurate - to help with debugging, the final scriptContent is at $predefPlusScriptFileTmp")
-          throw exception
-        case None => // no exception, i.e. all is good
-          System.err.println(s"script finished successfully")
-          // if the script failed, we don't want to delete the temporary file which includes the predef,
-          // so that the line numbers are accurate and the user can properly debug
-          os.remove(predefPlusScriptFileTmp)
-      }
+    val compilerArgs = replpp.compilerArgs(config) :+ "-nowarn"
+    new ScriptingDriver(
+      compilerArgs = compilerArgs,
+      scriptFile = predefPlusScriptFileTmp.toIO,
+      scriptArgs = scriptArgs.toArray,
+      verbose = replpp.verboseEnabled(config)
+    ).compileAndRun() match {
+      case Some(exception) =>
+        System.err.println(s"error during script execution: ${exception.getMessage}")
+        System.err.println(s"note: line numbers may not be accurate - to help with debugging, the final scriptContent is at $predefPlusScriptFileTmp")
+        throw exception
+      case None => // no exception, i.e. all is good
+        System.err.println(s"script finished successfully")
+        // if the script failed, we don't want to delete the temporary file which includes the predef,
+        // so that the line numbers are accurate and the user can properly debug
+        os.remove(predefPlusScriptFileTmp)
     }
   }
 
