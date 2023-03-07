@@ -24,12 +24,10 @@ package object replpp {
     compilerArgs.result()
   }
 
-  // TODO make tailrecursive
-//  @tailrec
-  private def resolveJarsRecursively(classLoader: ClassLoader): Seq[URL] = {
+  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
     classLoader match {
       case cl: java.net.URLClassLoader =>
-        resolveJarsRecursively(cl.getParent) ++ cl.getURLs
+        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
       case _ => Seq.empty
     }
   }
@@ -37,21 +35,15 @@ package object replpp {
   def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
-//    val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
-//      case cl: java.net.URLClassLoader =>
-//        println("YY " + cl.getParent) // TODO yes, do recursively!
-//        cl.getURLs.map(_.getFile).mkString(pathSeparator)
-//      case _ => ""
-//    }
     val fromClassLoaderHierarchy =
-      resolveJarsRecursively(classOf[replpp.ReplDriver].getClassLoader)
+      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
         .map(_.getFile)
         .mkString(pathSeparator)
 
-    System.getenv().forEach { case (a, b) => println(s"env var: $a=$b") }
-    System.getProperties.entrySet().forEach(x => println(s"property: $x"))
-    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
-    println("XX fromRootClassLoader=" + fromClassLoaderHierarchy)
+//    System.getenv().forEach { case (a, b) => println(s"env var: $a=$b") }
+//    System.getProperties.entrySet().forEach(x => println(s"property: $x"))
+//    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
+//    println("XX fromRootClassLoader=" + fromClassLoaderHierarchy)
 
     s"$fromJavaClassPathProperty$pathSeparator"+
       s"$fromDependencies$pathSeparator" +

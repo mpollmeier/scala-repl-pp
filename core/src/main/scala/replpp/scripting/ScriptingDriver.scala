@@ -66,8 +66,8 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
     val mainMethod = clazz.getMethod(MainMethodName, classOf[Array[String]])
     println("mainMethod: " + mainMethod)
 
-    val clFoo = URLClassLoader(classpathUrls.toArray).loadClass("scala.Predef$")
-    println("XX " + clFoo)
+//    val clFoo = URLClassLoader(classpathUrls.toArray).loadClass("scala.Predef$")
+//    println("XX " + clFoo)
 //    println("XX: " + clazz.getMethod("scala.Predef$.println"))
 
     mainMethod
