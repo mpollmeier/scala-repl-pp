@@ -30,15 +30,23 @@ case class Config(
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
     def add(entries: String*) = args.addAll(entries)
-    
+
     // TODO add tests, check all parameters
     // TODO define constants for those params
     predefCode.foreach { code =>
+      // TODO maybe better to write to some file? at least for debugging this? attention: preserve same order as normally...
       add("--predefCode", code)
     }
 
     if (predefFiles.nonEmpty) {
       add("--predefFiles", predefFiles.mkString(","))
+    }
+
+    if (params.nonEmpty) {
+      add("--params",
+        // ("k1=v1,k2=v2")
+        params.map { (key, value) => s"$key=$value"}.mkString(",")
+      )
     }
 
     scriptFile.foreach { file =>
