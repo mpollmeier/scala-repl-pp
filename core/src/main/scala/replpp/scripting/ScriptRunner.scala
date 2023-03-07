@@ -6,7 +6,6 @@ import replpp.allPredefCode
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
-import sys.process.Process
 
 object ScriptRunner {
 
@@ -16,25 +15,6 @@ object ScriptRunner {
   }
 
   def exec(config: Config): Unit = {
-    val forkJvm = true // TODO get from config
-    // TODO refactor for readability
-    if (forkJvm) {
-      val args = Seq(
-        "-classpath",
-        replpp.classpath(config),
-        "replpp.scripting.ScriptRunner",
-        // TODO pass on config (unapplied), but remove `--fork`, so this doesn't become an endless loop
-        // TODO call ScriptRunner with non-fork", but pass on other config options -> unapply config params -> check scopt readme
-      )
-      if (replpp.verboseEnabled(config)) println(s"forking jvm - executing `java ${args.mkString(" ")}`")
-      val p = Process("java", args).run()
-      assert(p.exitValue() == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was ${p.exitValue()}")
-    } else {
-      execNonForked(config)
-    }
-  }
-
-  private def execNonForked(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("scriptFile not defined"))
     if (!os.exists(scriptFile)) {
       throw new AssertionError(s"given script file $scriptFile does not exist")

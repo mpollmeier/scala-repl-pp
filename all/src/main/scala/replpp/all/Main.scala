@@ -1,7 +1,7 @@
 package replpp.all
 
 import replpp.{Config, InteractiveShell}
-import replpp.scripting.ScriptRunner
+import replpp.scripting.ForkingScriptRunner
 import replpp.server.ReplServer
 
 import java.io.{InputStream, PrintStream, File as JFile}
@@ -19,7 +19,7 @@ object Main {
     if (config.server) {
       ReplServer.startHttpServer(config)
     } else if (config.scriptFile.isDefined)
-      ScriptRunner.exec(config)
+      ForkingScriptRunner.main(args)
     else 
       InteractiveShell.run(config)
   }

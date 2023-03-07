@@ -13,7 +13,7 @@ object ScriptRunnerTest {
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
     val config = Config(scriptFile = Some(scriptFile), verbose = true)
-    ScriptRunner.exec(config)
+    ForkingScriptRunner.exec(config)
   }
 }
 
@@ -27,7 +27,8 @@ class ScriptRunnerTest extends AnyWordSpec with Matchers {
     val scriptFile = os.temp()
     os.write.over(scriptFile, scriptSrc)
     val config = Config(scriptFile = Some(scriptFile))
-    ScriptRunner.exec(config)
+    ForkingScriptRunner.exec(config)
+//    ScriptRunner.exec(config)
   }
 
   "execute simple single-statement script" in {

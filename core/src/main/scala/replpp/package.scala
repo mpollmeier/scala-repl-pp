@@ -1,6 +1,8 @@
 import java.io.File
 import java.lang.System.lineSeparator
+import java.net.URL
 import java.nio.file.Path
+import scala.annotation.tailrec
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
@@ -22,20 +24,38 @@ package object replpp {
     compilerArgs.result()
   }
 
+  // TODO make tailrecursive
+//  @tailrec
+  private def resolveJarsRecursively(classLoader: ClassLoader): Seq[URL] = {
+    classLoader match {
+      case cl: java.net.URLClassLoader =>
+        cl.getURLs ++ resolveJarsRecursively(cl.getParent)
+      case _ => Seq.empty
+    }
+  }
+
   def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
-    val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
-      case cl: java.net.URLClassLoader => cl.getURLs.map(_.getFile).mkString(pathSeparator)
-      case _ => ""
-    }
+//    val fromRootClassLoader = classOf[replpp.ReplDriver].getClassLoader match {
+//      case cl: java.net.URLClassLoader =>
+//        println("YY " + cl.getParent) // TODO yes, do recursively!
+//        cl.getURLs.map(_.getFile).mkString(pathSeparator)
+//      case _ => ""
+//    }
+    val fromClassLoaderHierarchy =
+      resolveJarsRecursively(classOf[replpp.ReplDriver].getClassLoader)
+        .map(_.getFile)
+        .mkString(pathSeparator)
 
-//    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
-//    println("XX fromRootClassLoader=" + fromRootClassLoader)
+    System.getenv().forEach { case (a, b) => println(s"env var: $a=$b") }
+    System.getProperties.entrySet().forEach(x => println(s"property: $x"))
+    println("XX fromJavaClassPathProperty=" + fromJavaClassPathProperty)
+    println("XX fromRootClassLoader=" + fromClassLoaderHierarchy)
 
     s"$fromJavaClassPathProperty$pathSeparator"+
       s"$fromDependencies$pathSeparator" +
-      fromRootClassLoader
+      fromClassLoaderHierarchy
     // TODO not required? done for debug...
 //    .replaceAll(s"$pathSeparator$pathSeparator", pathSeparator)
   }
