@@ -80,9 +80,9 @@ val res0: Int = 42
 ```
 
 ### Add dependencies with maven coordinates
-Note: the dependency must be known at startup time, either via `--dependency` parameter...
+Note: the dependencies must be known at startup time, either via `--dependencies` parameter...
 ```
-./scala-repl-pp --dependency com.michaelpollmeier:versionsort:1.0.7
+./scala-repl-pp --dependencies com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
