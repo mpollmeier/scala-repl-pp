@@ -28,7 +28,7 @@ lazy val server = project.in(file("server"))
     name := "scala-repl-pp-server",
     Defaults.itSettings,
     libraryDependencies ++= Seq(
-      "com.lihaoyi"   %% "cask"         % "0.8.3",
+      "com.lihaoyi"   %% "cask"         % "0.9.0",
       "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
