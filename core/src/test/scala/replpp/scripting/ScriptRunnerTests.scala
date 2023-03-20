@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.{Config, PredefCodeEnvVar}
 
-object ScriptRunnerTest {
+object ScriptRunnerTests {
   def main(args: Array[String]): Unit = {
     val scriptSrc =
       s"""val i = 2 + 10
@@ -17,7 +17,7 @@ object ScriptRunnerTest {
   }
 }
 
-class ScriptRunnerTest extends AnyWordSpec with Matchers {
+class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
 //  "footest" in {
 //    val scriptSrc =
