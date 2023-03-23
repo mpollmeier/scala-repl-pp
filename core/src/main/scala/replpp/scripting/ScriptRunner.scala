@@ -2,6 +2,7 @@ package replpp.scripting
 
 import replpp.Config
 
+import scala.util.{Failure, Success, Try}
 import sys.process.Process
 
 /** ScriptRunner: executes a script in a separate java process.
@@ -10,15 +11,20 @@ import sys.process.Process
   * `sbt console` and some certain IDEs) */
 object ScriptRunner {
 
-  def exec(config: Config): Unit = {
+  def exec(config: Config): Try[Unit] = {
     val args = Seq(
       "-classpath",
       replpp.classpath(config),
       "replpp.scripting.NonForkingScriptRunner",
     ) ++ config.asJavaArgs
     if (replpp.verboseEnabled(config)) println(s"executing `java ${args.mkString(" ")}`")
-    val exitValue = Process("java", args).run().exitValue()
-    assert(exitValue == 0, s"error while invoking `java ${args.mkString(" ")}`. exit code was $exitValue")
+    Process("java", args).run().exitValue() match {
+      case 0 => Success(())
+      case nonZeroExitValue => 
+        Failure(new AssertionError(
+          s"${getClass.getName}: error while invoking `java ${args.mkString(" ")}`: exit code was $nonZeroExitValue"
+        ))
+    }
   }
 
   def main(args: Array[String]): Unit = {
