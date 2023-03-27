@@ -14,7 +14,6 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 
-// TODO reenable all tests
 class ReplServerTests extends AnyWordSpec with Matchers {
   private val ValidBasicAuthHeaderVal: String = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
   private val DefaultPromiseAwaitTimeout: FiniteDuration = Duration(10, SECONDS)
@@ -57,7 +56,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     info("tests were cancelled because github actions windows doesn't support them for some unknown reason...")
   } else {
 
-    "allow websocket connections to the `/connect` endpoint" ignore Fixture() { host =>
+    "allow websocket connections to the `/connect` endpoint" in Fixture() { host =>
       val wsMsgPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         wsMsgPromise.success(msg)
@@ -66,7 +65,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       wsMsg shouldBe "connected"
     }
 
-    "allow posting a simple query without any websocket connections established" ignore Fixture() { host =>
+    "allow posting a simple query without any websocket connections established" in Fixture() { host =>
       val postQueryResponse = postQuery(host, "1")
       postQueryResponse.obj.keySet should contain("success")
       val UUIDResponse = postQueryResponse("uuid").str
@@ -74,13 +73,13 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       postQueryResponse("success").bool shouldBe true
     }
 
-    "disallow posting a query when request headers do not include a valid authentication value" ignore Fixture() { host =>
+    "disallow posting a query when request headers do not include a valid authentication value" in Fixture() { host =>
       assertThrows[RequestFailedException] {
         postQuery(host, "1", authHeaderVal = "Basic b4df00d")
       }
     }
 
-    "return a valid JSON response when trying to retrieve the result of a query without a connection" ignore Fixture() {
+    "return a valid JSON response when trying to retrieve the result of a query without a connection" in Fixture() {
       host =>
         val postQueryResponse = postQuery(host, "1")
         postQueryResponse.obj.keySet should contain("uuid")
@@ -92,7 +91,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         getResultResponse("err").str.length should not be 0
     }
 
-    "allow fetching the result of a completed query using its UUID" ignore Fixture() { host =>
+    "allow fetching the result of a completed query using its UUID" in Fixture() { host =>
       val wsMsgPromise = scala.concurrent.Promise[String]()
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") {
@@ -115,7 +114,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
     }
 
-    "disallow fetching the result of a completed query with an invalid auth header" ignore Fixture() { host =>
+    "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { host =>
       val wsMsgPromise = scala.concurrent.Promise[String]()
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") {
@@ -137,7 +136,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       }
     }
 
-    "write a well-formatted message to a websocket connection when a query has finished evaluation" ignore Fixture() {
+    "write a well-formatted message to a websocket connection when a query has finished evaluation" in Fixture() {
       host =>
         val wsMsgPromise = scala.concurrent.Promise[String]()
         val connectedPromise = scala.concurrent.Promise[String]()
@@ -164,7 +163,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
     }
 
-    "write a well-formatted message to a websocket connection when a query failed evaluation" ignore Fixture() { host =>
+    "write a well-formatted message to a websocket connection when a query failed evaluation" in Fixture() { host =>
       val wsMsgPromise = scala.concurrent.Promise[String]()
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") {
@@ -192,7 +191,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       resp("stdout").str.length should not be 0
     }
 
-    "write a well-formatted message to a websocket connection when a query containing an invalid char is submitted" ignore Fixture() {
+    "write a well-formatted message to a websocket connection when a query containing an invalid char is submitted" in Fixture() {
       host =>
         val wsMsgPromise = scala.concurrent.Promise[String]()
         val connectedPromise = scala.concurrent.Promise[String]()
@@ -220,7 +219,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         resp("stdout").str.length should not be 0
     }
 
-    "receive error when attempting to retrieve result with invalid uuid" ignore Fixture() { host =>
+    "receive error when attempting to retrieve result with invalid uuid" in Fixture() { host =>
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         connectedPromise.success(msg)
@@ -232,7 +231,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("success").bool shouldBe false
     }
 
-    "return a valid JSON response when calling /result with incorrectly-formatted UUID parameter" ignore Fixture() { host =>
+    "return a valid JSON response when calling /result with incorrectly-formatted UUID parameter" in Fixture() { host =>
       val connectedPromise = scala.concurrent.Promise[String]()
       cask.util.WsClient.connect(s"$host/connect") { case cask.Ws.Text(msg) =>
         connectedPromise.success(msg)
@@ -245,7 +244,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("err").str.length should not equal 0
     }
 
-    "return websocket responses for all queries when posted quickly in a large number" ignore Fixture() { host =>
+    "return websocket responses for all queries when posted quickly in a large number" in Fixture() { host =>
       val numQueries = 10
       val correctNumberOfUUIDsReceived = scala.concurrent.Promise[String]()
       val wsUUIDs = ListBuffer[String]()
@@ -279,7 +278,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       wsUUIDs.toSet should be(postQueriesResponseUUIDs.toSet)
     }
 
-    "return websocket responses for all queries when some are invalid" ignore Fixture() { host =>
+    "return websocket responses for all queries when some are invalid" in Fixture() { host =>
       val queries = List("1", "1 + 1", "open(", "open)", "open{", "open}")
       val correctNumberOfUUIDsReceived = scala.concurrent.Promise[String]()
       val wsUUIDs = ListBuffer[String]()
