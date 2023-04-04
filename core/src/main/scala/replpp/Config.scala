@@ -24,7 +24,42 @@ case class Config(
   serverPort: Int = 8080,
   serverAuthUsername: String = "",
   serverAuthPassword: String = "",
-)
+) {
+
+  /** inverse of `Config.parse` */
+  lazy val asJavaArgs: Seq[String] = {
+    val args = Seq.newBuilder[String]
+    def add(entries: String*) = args.addAll(entries)
+
+    predefCode.foreach { code =>
+      // TODO maybe better to write to some file? at least for debugging this? attention: preserve same order as normally...
+      add("--predefCode", code)
+    }
+
+    if (predefFiles.nonEmpty) {
+      add("--predefFiles", predefFiles.mkString(","))
+    }
+
+    if (nocolors) add("--nocolors")
+    if (verbose) add("--verbose")
+
+    if (dependencies.nonEmpty) {
+      add("--dependencies", dependencies.mkString(","))
+    }
+
+    scriptFile.foreach(file => add("--script", file.toString))
+    command.foreach(cmd => add("--command", cmd))
+
+    if (params.nonEmpty) {
+      add("--params",
+        // ("k1=v1,k2=v2")
+        params.map { (key, value) => s"$key=$value" }.mkString(",")
+      )
+    }
+
+    args.result()
+  }
+}
 
 object Config {
   
@@ -43,7 +78,7 @@ object Config {
       opt[Seq[os.Path]]("predefFiles")
         .valueName("script1.sc,script2.sc,...")
         .action((x, c) => c.copy(predefFiles = x.toList))
-        .text("import (and run) additional script(s) on startup")
+        .text("import (and run) additional script(s) on startup, separated by ','")
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
@@ -53,10 +88,10 @@ object Config {
         .action((_, c) => c.copy(verbose = true))
         .text("enable verbose output (predef, resolved dependency jars, ...)")
 
-      opt[Seq[String]]("dependency")
+      opt[Seq[String]]("dependencies")
         .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
         .action((x, c) => c.copy(dependencies = x.toList))
-        .text("resolve dependency (and it's transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+        .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
 
       note("REPL options")
 

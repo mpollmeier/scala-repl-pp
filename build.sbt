@@ -27,6 +27,7 @@ lazy val server = project.in(file("server"))
   .settings(
     name := "scala-repl-pp-server",
     Defaults.itSettings,
+    fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
       "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
@@ -42,8 +43,7 @@ lazy val all = project.in(file("all"))
 
 ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % ScalaTestVersion % Test
 
-ThisBuild/Test/fork := true
-ThisBuild/IntegrationTest/fork := true
+ThisBuild/Test/fork := false
 
 ThisBuild/resolvers += Resolver.mavenLocal
 Global/onChangedBuildSource := ReloadOnSourceChanges

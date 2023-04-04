@@ -7,7 +7,7 @@ import org.scalatest.wordspec.AnyWordSpec
   * colour-coding, and while both pledge to follow the ansi codec, they aren't compatible TODO: PR for fansi to support
   * these standard encodings out of the box
   */
-class PPrinterTest extends AnyWordSpec with Matchers {
+class PPrinterTests extends AnyWordSpec with Matchers {
   // ansi colour-encoded strings as source-highlight produces them
   val IntGreenForeground = "\u001b[32mint\u001b[m"
   val IfBlueBold         = "\u001b[01;34mif\u001b[m"

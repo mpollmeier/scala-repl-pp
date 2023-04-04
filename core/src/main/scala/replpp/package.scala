@@ -1,5 +1,8 @@
+import java.io.File
 import java.lang.System.lineSeparator
+import java.net.URL
 import java.nio.file.Path
+import scala.annotation.tailrec
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
@@ -12,30 +15,35 @@ package object replpp {
       sys.env.get(VerboseEnvVar).getOrElse("false").toLowerCase.trim == "true"
   }
 
-  def compilerArgs(config: Config, predefCode: String): Array[String] = {
-    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
-    val allDependencies = config.dependencies ++
-      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-
+  def compilerArgs(config: Config): Array[String] = {
     val compilerArgs = Array.newBuilder[String]
-
-    val dependencyFiles = Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
-    compilerArgs ++= Array("-classpath", replClasspath(dependencyFiles))
+    compilerArgs ++= Array("-classpath", classpath(config))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
     compilerArgs.result()
   }
 
-  private def replClasspath(dependencies: Seq[java.io.File]): String = {
-    val inheritedClasspath = System.getProperty("java.class.path")
-    val separator = System.getProperty("path.separator")
+  def classpath(config: Config): String = {
+    val fromJavaClassPathProperty = System.getProperty("java.class.path")
+    val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
+    val fromClassLoaderHierarchy =
+      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
+        .map(_.getFile)
+        .mkString(pathSeparator)
 
-    val entriesForDeps = dependencies.mkString(separator)
-    s"$inheritedClasspath$separator$entriesForDeps"
+    Seq(fromClassLoaderHierarchy, fromDependencies, fromJavaClassPathProperty).mkString(pathSeparator)
   }
 
-  def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
+  private def dependencyFiles(config: Config): Seq[File] = {
+    val predefCode = allPredefCode(config)
+    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
+    val allDependencies = config.dependencies ++
+      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
+    Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
+  }
+
+  private def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
     val importedFiles = {
       val fromPredefCode = config.predefCode.map { code =>
         UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
@@ -61,6 +69,15 @@ package object replpp {
     results.distinct
   }
 
+  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
+    classLoader match {
+      case cl: java.net.URLClassLoader =>
+        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
+      case _ => Seq.empty
+    }
+  }
+
+
   def allPredefCode(config: Config): String =
     predefCodeByFile(config).map(_._2).mkString(lineSeparator)
 
@@ -80,4 +97,7 @@ package object replpp {
     else
       Seq.empty
   }
+
+  // ":" on unix
+  val pathSeparator = java.io.File.pathSeparator
 }
