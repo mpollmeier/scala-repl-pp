@@ -15,7 +15,7 @@ import scala.language.unsafeNulls
 
 /**
   * Runs a given script on the current JVM.
-  * 
+  *
   * Similar to dotty.tools.scripting.ScriptingDriver, but simpler and faster.
   * Main difference: we don't (need to) recursively look for main method entrypoints in the entire classpath,
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
@@ -33,16 +33,16 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: File, scriptArgs:
     setup(compilerArgs :+ scriptFile.getAbsolutePath, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
       val outDir = os.temp.dir(prefix = "scala3-scripting", deleteOnExit = false)
 
-      // TODO enable debugging options only for `--verbose`
-      val ctx = rootCtx.fresh
-        .setSetting(rootCtx.settings.help, true)
-        .setSetting(rootCtx.settings.XshowPhases, true)
-        .setSetting(rootCtx.settings.Vhelp, true)
-        .setSetting(rootCtx.settings.Vprofile, true)
-        .setSetting(rootCtx.settings.explain, true)
-        .setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
-
-      given Context = ctx
+      given Context = {
+        val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir.toNIO)))
+        if (verbose) {
+          ctx.setSetting(rootCtx.settings.help, true)
+             .setSetting(rootCtx.settings.XshowPhases, true)
+             .setSetting(rootCtx.settings.Vhelp, true)
+             .setSetting(rootCtx.settings.Vprofile, true)
+             .setSetting(rootCtx.settings.explain, true)
+        } else ctx
+      }
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
