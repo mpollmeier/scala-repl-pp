@@ -8,7 +8,12 @@ import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
 
 /**
-  * TODO document. this one doesn't fork/spawn a new JVM and doesn't work in all setups. e.g. when starting from `sbt test` with `fork := false` it runs into classloader/classpath issues
+  * Main entrypoint for ScriptingDriver, i.e. it takes commandline arguments and executes a script on the current JVM. 
+  * Note: because it doesn't spawn a new JVM it doesn't work in all setups: e.g. when starting from `sbt test` 
+  * with `fork := false` it runs into classloader/classpath issues. Same goes for some IDEs, depending on their 
+  * classloader setup. 
+  * Because of these issues, the forking `ScriptRunner` is the default option. It simply spawns a new JVM and invokes 
+  * the NonForkingScriptRunner :)
   */
 object NonForkingScriptRunner {
 

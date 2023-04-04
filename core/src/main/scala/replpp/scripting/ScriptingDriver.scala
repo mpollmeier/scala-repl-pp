@@ -14,7 +14,8 @@ import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
 
 /**
-  * Invoke a script within the current JVM.
+  * Runs a given script on the current JVM.
+  * 
   * Similar to dotty.tools.scripting.ScriptingDriver, but simpler and faster.
   * Main difference: we don't (need to) recursively look for main method entrypoints in the entire classpath,
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.

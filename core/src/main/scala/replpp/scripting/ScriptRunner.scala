@@ -5,10 +5,11 @@ import replpp.Config
 import scala.util.{Failure, Success, Try}
 import sys.process.Process
 
-/** ScriptRunner: executes a script in a separate java process.
-  * Note: there's also a non-forking ScriptRunner, but this one is the default, because some environments have
-  * complex classloader setups that cause issues with the non-forking ScriptRunner - examples include `sbt test`,
-  * `sbt console` and some certain IDEs) */
+/** Executes a script by spawning/forking a new JVM process and then invoking the `NonForkingScriptRunner`.
+  *
+  * Alternatively you can directly invoke the `NonForkingScriptRunner`, but some environments have  complex classloader
+  * setups which cause issues with the non-forking ScriptRunner - examples include some IDEs and
+  * sbt (e.g. test|console) in non-fork mode. Therefor, this forking ScriptRunner is the default one. */
 object ScriptRunner {
 
   def exec(config: Config): Try[Unit] = {
