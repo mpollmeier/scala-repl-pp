@@ -3,7 +3,8 @@ package replpp
 // TODO split into repl|script|server config - with some options shared...
 case class Config(
   predefCode: Option[String] = None,
-  predefFiles: List[os.Path] = Nil,
+  predefFiles: Seq[os.Path] = Nil,
+  predefFilesBeforePredefCode: Boolean = false,
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,

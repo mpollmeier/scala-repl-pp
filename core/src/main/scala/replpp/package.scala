@@ -62,9 +62,15 @@ package object replpp {
         readGlobalPredefFile
       ).map((os.pwd, _))
 
-    val results = (config.predefFiles ++ importedFiles).map { file =>
+    val fromPredefFiles = (config.predefFiles ++ importedFiles).map { file =>
       (file, os.read(file))
-    } ++ fromPredefCode
+    }
+
+    val results =
+      if (config.predefFilesBeforePredefCode)
+        fromPredefFiles ++ fromPredefCode
+      else
+        fromPredefCode ++ fromPredefFiles
 
     results.distinct
   }
@@ -76,7 +82,6 @@ package object replpp {
       case _ => Seq.empty
     }
   }
-
 
   def allPredefCode(config: Config): String =
     predefCodeByFile(config).map(_._2).mkString(lineSeparator)
