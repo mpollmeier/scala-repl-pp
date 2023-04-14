@@ -100,7 +100,9 @@ package object replpp {
       }
     }
 
-    resultLines.result().mkString(lineSeparator)
+    resultLines.result()
+      .filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
+      .mkString(lineSeparator)
   }
 
   private def lines(str: String): Seq[String] =
