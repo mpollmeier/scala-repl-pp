@@ -48,67 +48,44 @@ package object replpp {
     classLoader match {
       case cl: java.net.URLClassLoader =>
         jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
-      case _ => Seq.empty
+      case _ =>
+        Seq.empty
     }
   }
-
-  /*
-  TODO drop
-  def allPredefCodeOld(config: Config): String = {
-    val importedFiles = {
-      val fromPredefCode = config.predefCode.map { code =>
-        UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
-      }.getOrElse(Seq.empty)
-      val fromFiles = (config.scriptFile.toSeq ++ config.predefFiles)
-        .flatMap(UsingDirectives.findImportedFilesRecursively)
-        .reverse // dependencies should get evaluated before dependents
-      fromPredefCode ++ fromFiles
-    }
-
-    // --predefCode, ~/.scala-repl-pp.sc and `SCALA_REPL_PP_PREDEF_CODE` env var
-    val fromPredefCode =
-      Seq.concat(
-        config.predefCode,
-        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty),
-        globalPredefFileLines
-      ).map((os.pwd, _))
-
-    val fromPredefFiles = (config.predefFiles ++ importedFiles).map { file =>
-      (file, os.read(file))
-    }
-
-    val predefCodeByFile =
-      if (config.predefFilesBeforePredefCode)
-        fromPredefFiles ++ fromPredefCode
-      else
-        fromPredefCode ++ fromPredefFiles
-
-    predefCodeByFile.map(_._2).distinct.mkString(lineSeparator)
-  }
-  */
 
   def allPredefCode(config: Config): String = {
     val result = Seq.newBuilder[String]
     val visited = mutable.Set.empty[os.Path]
 
-    // `--predefCode` parameter, ~/.scala-repl-pp.sc and `SCALA_REPL_PP_PREDEF_CODE` env var
-    val predefCodeWithoutPredefFiles =
-       lines(config.predefCode) ++
-       lines(Option(System.getenv(PredefCodeEnvVar))) ++
-       globalPredefFileLines
+    def handlePredefCodeWithoutPredefFiles() = {
+      val code =
+        lines(config.predefCode) ++                       // `--predefCode` parameter
+        lines(Option(System.getenv(PredefCodeEnvVar))) ++ // ~/.scala-repl-pp.sc file
+        globalPredefFileLines                             // `SCALA_REPL_PP_PREDEF_CODE` env var
 
-    val importedFilesViaPredefCode = UsingDirectives.findImportedFilesRecursively(predefCodeWithoutPredefFiles, os.pwd)
-    result ++= importedFilesViaPredefCode.map(os.read)
-    visited ++= importedFilesViaPredefCode
-    result += predefCodeWithoutPredefFiles.mkString(lineSeparator)
+      val importedFilesViaPredefCode = UsingDirectives.findImportedFilesRecursively(code, os.pwd)
+      result ++= importedFilesViaPredefCode.map(os.read)
+      visited ++= importedFilesViaPredefCode
+      result += code.mkString(lineSeparator)
+    }
 
-    config.predefFiles.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-      visited ++= importedFiles
-      result ++= importedFiles.map(os.read)
+    def handlePredefFiles() = {
+      config.predefFiles.foreach { file =>
+        val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+        visited ++= importedFiles
+        result ++= importedFiles.map(os.read)
 
-      result += os.read(file)
-      visited += file
+        result += os.read(file)
+        visited += file
+      }
+    }
+
+    if (config.predefFilesBeforePredefCode) {
+      handlePredefFiles()
+      handlePredefCodeWithoutPredefFiles()
+    } else {
+      handlePredefCodeWithoutPredefFiles()
+      handlePredefFiles()
     }
 
     config.scriptFile.foreach { file =>
