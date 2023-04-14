@@ -43,7 +43,15 @@ package object replpp {
     Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
   }
 
-  private def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
+  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
+    classLoader match {
+      case cl: java.net.URLClassLoader =>
+        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
+      case _ => Seq.empty
+    }
+  }
+
+  def allPredefCode(config: Config): String = {
     val importedFiles = {
       val fromPredefCode = config.predefCode.map { code =>
         UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
@@ -66,25 +74,14 @@ package object replpp {
       (file, os.read(file))
     }
 
-    val results =
+    val predefCodeByFile =
       if (config.predefFilesBeforePredefCode)
         fromPredefFiles ++ fromPredefCode
       else
         fromPredefCode ++ fromPredefFiles
 
-    results.distinct
+    predefCodeByFile.map(_._2).distinct.mkString(lineSeparator)
   }
-
-  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
-    classLoader match {
-      case cl: java.net.URLClassLoader =>
-        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
-      case _ => Seq.empty
-    }
-  }
-
-  def allPredefCode(config: Config): String =
-    predefCodeByFile(config).map(_._2).mkString(lineSeparator)
 
   /**
     * resolve absolute or relative paths to an absolute path
