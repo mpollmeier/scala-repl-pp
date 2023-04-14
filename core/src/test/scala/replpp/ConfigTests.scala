@@ -62,9 +62,9 @@ class ConfigTests extends AnyWordSpec with Matchers {
     }
 
     "recursively resolve `//> using file` directive and insert at the top of the referencing file - simple case" in {
-      val additionalScript1 = os.temp("val additionalScript1 = 10", suffix = "-script1")
-      val additionalScript2 = os.temp("val additionalScript2 = 20", suffix = "-script2")
-      val x = allPredefCode(Config(
+      val additionalScript1 = os.temp("val additionalScript1 = 10")
+      val additionalScript2 = os.temp("val additionalScript2 = 20")
+      allPredefCode(Config(
         predefCode = Some(
           s"""//> using file $additionalScript1
              |val predefCode = 1
@@ -73,13 +73,11 @@ class ConfigTests extends AnyWordSpec with Matchers {
       )) shouldBe
         s"""val additionalScript1 = 10
            |val additionalScript2 = 20
-           |//> using file $additionalScript1
            |val predefCode = 1
-           |//> using file $additionalScript2
            |""".stripMargin.trim
     }
 
-    "recursively resolve `//> using file` directive and insert at the top of the referencing file - more complex case" in {
+  "recursively resolve `//> using file` directive and insert at the top of the referencing file - more complex case" in {
       val additionalScript1 = os.temp("val additionalScript1 = 10")
       val additionalScript2 = os.temp("val additionalScript2 = 20")
       val additionalScript3 = os.temp("val additionalScript3 = 30")

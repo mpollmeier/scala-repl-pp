@@ -54,28 +54,32 @@ package object replpp {
   }
 
   def allPredefCode(config: Config): String = {
-    val result = Seq.newBuilder[String]
+    val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[os.Path]
 
     def handlePredefCodeWithoutPredefFiles() = {
-      val code =
+      val codeLines =
         lines(config.predefCode) ++                       // `--predefCode` parameter
         lines(Option(System.getenv(PredefCodeEnvVar))) ++ // ~/.scala-repl-pp.sc file
         globalPredefFileLines                             // `SCALA_REPL_PP_PREDEF_CODE` env var
 
-      val importedFilesViaPredefCode = UsingDirectives.findImportedFilesRecursively(code, os.pwd)
-      result ++= importedFilesViaPredefCode.map(os.read)
-      visited ++= importedFilesViaPredefCode
-      result += code.mkString(lineSeparator)
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(codeLines, os.pwd)
+      importedFiles.foreach { file =>
+        resultLines ++= os.read.lines(file)
+      }
+      visited ++= importedFiles
+      resultLines ++= codeLines
     }
 
     def handlePredefFiles() = {
       config.predefFiles.foreach { file =>
         val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
         visited ++= importedFiles
-        result ++= importedFiles.map(os.read)
+        importedFiles.foreach { file =>
+          resultLines ++= os.read.lines(file)
+        }
 
-        result += os.read(file)
+        resultLines ++= os.read.lines(file)
         visited += file
       }
     }
@@ -91,10 +95,12 @@ package object replpp {
     config.scriptFile.foreach { file =>
       val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
       visited ++= importedFiles
-      result ++= importedFiles.map(os.read)
+      importedFiles.foreach { file =>
+        resultLines ++= os.read.lines(file)
+      }
     }
 
-    result.result().mkString(lineSeparator)
+    resultLines.result().mkString(lineSeparator)
   }
 
   private def lines(str: String): Seq[String] =
