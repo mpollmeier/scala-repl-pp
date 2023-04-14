@@ -62,19 +62,21 @@ class ConfigTests extends AnyWordSpec with Matchers {
     }
 
     "recursively resolve `//> using file` directive and insert at the top of the referencing file - simple case" in {
-      val additionalScript1 = os.temp("val additionalScript1 = 10")
-      val additionalScript2 = os.temp("val additionalScript2 = 20")
-      allPredefCode(Config(
+      val additionalScript1 = os.temp("val additionalScript1 = 10", suffix = "-script1")
+      val additionalScript2 = os.temp("val additionalScript2 = 20", suffix = "-script2")
+      val x = allPredefCode(Config(
         predefCode = Some(
           s"""//> using file $additionalScript1
              |val predefCode = 1
              |//> using file $additionalScript2
-             |"""".stripMargin),
+             |""".stripMargin),
       )) shouldBe
-        """val additionalScript1 = 10
-          |val additionalScript2 = 20
-          |val predefCode = 1
-          |""".stripMargin.trim
+        s"""val additionalScript1 = 10
+           |val additionalScript2 = 20
+           |//> using file $additionalScript1
+           |val predefCode = 1
+           |//> using file $additionalScript2
+           |""".stripMargin.trim
     }
 
     "recursively resolve `//> using file` directive and insert at the top of the referencing file - more complex case" in {
@@ -91,7 +93,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
           s"""//> using file $additionalScript1
              |val predefCode = 1
              |//> using file $additionalScript4
-             |"""".stripMargin),
+             |""".stripMargin),
       )) shouldBe
         """val additionalScript1 = 10
           |val additionalScript2 = 20
@@ -113,7 +115,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
         predefCode = Some(
           s"""//> using file $additionalScript1
              |val predefCode = 1
-             |"""".stripMargin),
+             |""".stripMargin),
       )) shouldBe // most importantly, this should not loop endlessly due to the recursive imports
         """val additionalScript2 = 20
           |val additionalScript1 = 10

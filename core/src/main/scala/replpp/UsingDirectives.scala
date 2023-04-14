@@ -22,8 +22,21 @@ object UsingDirectives {
   def findImportedFiles(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
     scanFor(FileDirective, lines).iterator.map(resolveFile(rootPath, _)).toSeq
     
-  def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
-    findImportedFiles(lines, rootPath).flatMap(file => findImportedFilesRecursively(file, Set.empty))
+  def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] = {
+    val results = Seq.newBuilder[os.Path]
+    val visited = mutable.Set.empty[os.Path]
+
+    findImportedFiles(lines, rootPath).foreach { file =>
+      results += file
+
+      val recursiveFiles = findImportedFilesRecursively(file, visited.toSet)
+      results ++= recursiveFiles
+      visited += file
+      visited ++= recursiveFiles
+    }
+
+    results.result()
+  }
 
   def findDeclaredDependencies(source: String): IterableOnce[String] =
     scanFor(LibDirective, source.linesIterator)
