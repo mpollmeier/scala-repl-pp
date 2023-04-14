@@ -35,11 +35,11 @@ class ConfigTests extends AnyWordSpec with Matchers {
 
   "allPredef" should {
     "import predefCode before additionalFiles by default" in {
-      val predefFile1 = os.temp(contents = "val predefFile1 = 10")
-      val predefFile2 = os.temp(contents = "val predefFile2 = 20")
+      val predefFile1 = os.temp("val predefFile1 = 10")
+      val predefFile2 = os.temp("val predefFile2 = 20")
       allPredefCode(Config(
         predefCode = Some("val predefCode = 1"),
-        predefFiles = Seq(predefFile1, predefFile2)
+        predefFiles = Seq(predefFile1, predefFile2),
       )) shouldBe
         """val predefCode = 1
           |val predefFile1 = 10
@@ -48,8 +48,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
     }
 
     "import predefCode last if configured to do so" in {
-      val predefFile1 = os.temp(contents = "val predefFile1 = 10")
-      val predefFile2 = os.temp(contents = "val predefFile2 = 20")
+      val predefFile1 = os.temp("val predefFile1 = 10")
+      val predefFile2 = os.temp("val predefFile2 = 20")
       allPredefCode(Config(
         predefCode = Some("val predefCode = 1"),
         predefFiles = Seq(predefFile1, predefFile2),
@@ -62,8 +62,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
     }
 
     "recursively resolve `//> using file` directive and insert at the top of the referencing file - simple case" in {
-      val additionalScript1 = os.temp(contents = "val additionalScript1 = 10")
-      val additionalScript2 = os.temp(contents = "val additionalScript2 = 20")
+      val additionalScript1 = os.temp("val additionalScript1 = 10")
+      val additionalScript2 = os.temp("val additionalScript2 = 20")
       allPredefCode(Config(
         predefCode = Some(
           s"""//> using file $additionalScript1
@@ -78,9 +78,9 @@ class ConfigTests extends AnyWordSpec with Matchers {
     }
 
     "recursively resolve `//> using file` directive and insert at the top of the referencing file - more complex case" in {
-      val additionalScript1 = os.temp(contents = "val additionalScript1 = 10")
-      val additionalScript2 = os.temp(contents = "val additionalScript2 = 20")
-      val additionalScript3 = os.temp(contents = "val additionalScript3 = 30")
+      val additionalScript1 = os.temp("val additionalScript1 = 10")
+      val additionalScript2 = os.temp("val additionalScript2 = 20")
+      val additionalScript3 = os.temp("val additionalScript3 = 30")
       val additionalScript4 = os.temp(contents =
         s"""//> using file $additionalScript2
            |val additionalScript4 = 40

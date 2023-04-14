@@ -3,6 +3,7 @@ import java.lang.System.lineSeparator
 import java.net.URL
 import java.nio.file.Path
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
@@ -51,7 +52,9 @@ package object replpp {
     }
   }
 
-  def allPredefCode(config: Config): String = {
+  /*
+  TODO drop
+  def allPredefCodeOld(config: Config): String = {
     val importedFiles = {
       val fromPredefCode = config.predefCode.map { code =>
         UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
@@ -67,7 +70,7 @@ package object replpp {
       Seq.concat(
         config.predefCode,
         Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty),
-        readGlobalPredefFile
+        globalPredefFileLines
       ).map((os.pwd, _))
 
     val fromPredefFiles = (config.predefFiles ++ importedFiles).map { file =>
@@ -82,6 +85,46 @@ package object replpp {
 
     predefCodeByFile.map(_._2).distinct.mkString(lineSeparator)
   }
+  */
+
+  def allPredefCode(config: Config): String = {
+    val result = Seq.newBuilder[String]
+    val visited = mutable.Set.empty[os.Path]
+
+    // `--predefCode` parameter, ~/.scala-repl-pp.sc and `SCALA_REPL_PP_PREDEF_CODE` env var
+    val predefCodeWithoutPredefFiles =
+       lines(config.predefCode) ++
+       lines(Option(System.getenv(PredefCodeEnvVar))) ++
+       globalPredefFileLines
+
+    val importedFilesViaPredefCode = UsingDirectives.findImportedFilesRecursively(predefCodeWithoutPredefFiles, os.pwd)
+    result ++= importedFilesViaPredefCode.map(os.read)
+    visited ++= importedFilesViaPredefCode
+    result += predefCodeWithoutPredefFiles.mkString(lineSeparator)
+
+    config.predefFiles.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+      visited ++= importedFiles
+      result ++= importedFiles.map(os.read)
+
+      result += os.read(file)
+      visited += file
+    }
+
+    config.scriptFile.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+      visited ++= importedFiles
+      result ++= importedFiles.map(os.read)
+    }
+
+    result.result().mkString(lineSeparator)
+  }
+
+  private def lines(str: String): Seq[String] =
+    str.split(lineSeparator)
+
+  private def lines(strMaybe: Option[String]): Seq[String] =
+    strMaybe.map(lines).getOrElse(Seq.empty)
 
   /**
     * resolve absolute or relative paths to an absolute path
@@ -93,7 +136,7 @@ package object replpp {
     else base / os.RelPath(pathStr)
   }
 
-  private def readGlobalPredefFile: Seq[String] = {
+  private def globalPredefFileLines: Seq[String] = {
     if (os.exists(globalPredefFile))
       os.read.lines(globalPredefFile)
     else

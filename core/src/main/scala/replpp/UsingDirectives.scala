@@ -7,24 +7,23 @@ object UsingDirectives {
   val LibDirective = s"$Prefix lib "
   val FileDirective = s"$Prefix file "
 
-  def findImportedFilesRecursively(file: os.Path): Seq[os.Path] = {
-    def findImportedFilesRecursively0(file: os.Path, visited: Set[os.Path]): Seq[os.Path] = {
-      val rootDir: os.Path =
-        if (os.isDir(file)) file
-        else os.Path(file.toNIO.getParent)
+  def findImportedFilesRecursively(file: os.Path, visited: Set[os.Path] = Set.empty): Seq[os.Path] = {
+    val rootDir: os.Path =
+      if (os.isDir(file)) file
+      else os.Path(file.toNIO.getParent)
 
-      val importedFiles = findImportedFiles(os.read.lines(file), rootDir)
-      val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
-        findImportedFilesRecursively0(file, visited + file)
-      }
-      importedFiles ++ recursivelyImportedFiles
+    val importedFiles = findImportedFiles(os.read.lines(file), rootDir)
+    val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
+      findImportedFilesRecursively(file, visited + file)
     }
-
-    findImportedFilesRecursively0(file, visited = Set.empty)
+    importedFiles ++ recursivelyImportedFiles
   }
 
   def findImportedFiles(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
     scanFor(FileDirective, lines).iterator.map(resolveFile(rootPath, _)).toSeq
+    
+  def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
+    findImportedFiles(lines, rootPath).flatMap(file => findImportedFilesRecursively(file, Set.empty))
 
   def findDeclaredDependencies(source: String): IterableOnce[String] =
     scanFor(LibDirective, source.linesIterator)
