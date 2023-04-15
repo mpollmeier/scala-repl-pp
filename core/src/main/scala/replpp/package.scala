@@ -3,6 +3,7 @@ import java.lang.System.lineSeparator
 import java.net.URL
 import java.nio.file.Path
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 package object replpp {
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
@@ -43,43 +44,72 @@ package object replpp {
     Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
   }
 
-  private def predefCodeByFile(config: Config): Seq[(os.Path, String)] = {
-    val importedFiles = {
-      val fromPredefCode = config.predefCode.map { code =>
-        UsingDirectives.findImportedFiles(code.split(lineSeparator), os.pwd)
-      }.getOrElse(Seq.empty)
-      val fromFiles = (config.scriptFile.toSeq ++ config.predefFiles)
-        .flatMap(UsingDirectives.findImportedFilesRecursively)
-        .reverse // dependencies should get evaluated before dependents
-      fromPredefCode ++ fromFiles
-    }
-
-    // --predefCode, ~/.scala-repl-pp.sc and `SCALA_REPL_PP_PREDEF_CODE` env var
-    val fromPredefCode =
-      Seq.concat(
-        config.predefCode,
-        Option(System.getenv(PredefCodeEnvVar)).filter(_.nonEmpty),
-        readGlobalPredefFile
-      ).map((os.pwd, _))
-
-    val results = (config.predefFiles ++ importedFiles).map { file =>
-      (file, os.read(file))
-    } ++ fromPredefCode
-
-    results.distinct
-  }
-
   private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
     classLoader match {
       case cl: java.net.URLClassLoader =>
         jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
-      case _ => Seq.empty
+      case _ =>
+        Seq.empty
     }
   }
 
+  def allPredefCode(config: Config): String = {
+    val resultLines = Seq.newBuilder[String]
+    val visited = mutable.Set.empty[os.Path]
 
-  def allPredefCode(config: Config): String =
-    predefCodeByFile(config).map(_._2).mkString(lineSeparator)
+    def handlePredefCodeWithoutPredefFiles() = {
+      val codeLines =
+        lines(config.predefCode) ++                       // `--predefCode` parameter
+        lines(Option(System.getenv(PredefCodeEnvVar))) ++ // ~/.scala-repl-pp.sc file
+        globalPredefFileLines                             // `SCALA_REPL_PP_PREDEF_CODE` env var
+
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(codeLines, os.pwd)
+      importedFiles.foreach { file =>
+        resultLines ++= os.read.lines(file)
+      }
+      visited ++= importedFiles
+      resultLines ++= codeLines
+    }
+
+    def handlePredefFiles() = {
+      config.predefFiles.foreach { file =>
+        val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+        visited ++= importedFiles
+        importedFiles.foreach { file =>
+          resultLines ++= os.read.lines(file)
+        }
+
+        resultLines ++= os.read.lines(file)
+        visited += file
+      }
+    }
+
+    if (config.predefFilesBeforePredefCode) {
+      handlePredefFiles()
+      handlePredefCodeWithoutPredefFiles()
+    } else {
+      handlePredefCodeWithoutPredefFiles()
+      handlePredefFiles()
+    }
+
+    config.scriptFile.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+      visited ++= importedFiles
+      importedFiles.foreach { file =>
+        resultLines ++= os.read.lines(file)
+      }
+    }
+
+    resultLines.result()
+      .filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
+      .mkString(lineSeparator)
+  }
+
+  private def lines(str: String): Seq[String] =
+    str.split(lineSeparator)
+
+  private def lines(strMaybe: Option[String]): Seq[String] =
+    strMaybe.map(lines).getOrElse(Seq.empty)
 
   /**
     * resolve absolute or relative paths to an absolute path
@@ -91,7 +121,7 @@ package object replpp {
     else base / os.RelPath(pathStr)
   }
 
-  private def readGlobalPredefFile: Seq[String] = {
+  private def globalPredefFileLines: Seq[String] = {
     if (os.exists(globalPredefFile))
       os.read.lines(globalPredefFile)
     else

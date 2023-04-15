@@ -72,12 +72,12 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
   "--predefCode imports in additionalScripts" in {
     execTest { testOutputPath =>
       val additionalScript = os.temp()
-      os.write.over(additionalScript, "import Byte.MaxValue")
+      os.write.over(additionalScript, "def foo = MaxValue")
       TestSetup(
         s"""//> using file $additionalScript
            |os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-using-file-import:" + foo)
            |""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("def foo = MaxValue"))
+        adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
       )
     }.get shouldBe "iwashere-predefCode-using-file-import:127"
   }
@@ -224,7 +224,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         s"""//> using file subdir/additional-script1.sc
            |val bar = foo""".stripMargin)
       os.write.over(additionalScript1,
-        s"""val foo = 99""".stripMargin)
+        s"""def foo = 99""".stripMargin)
       TestSetup(
         s"""//> using file $additionalScript0
            |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
