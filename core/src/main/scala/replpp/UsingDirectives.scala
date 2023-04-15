@@ -16,7 +16,7 @@ object UsingDirectives {
     val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
       findImportedFilesRecursively(file, visited + file)
     }
-    importedFiles ++ recursivelyImportedFiles
+    (importedFiles ++ recursivelyImportedFiles).distinct
   }
 
   def findImportedFiles(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
@@ -28,14 +28,14 @@ object UsingDirectives {
 
     findImportedFiles(lines, rootPath).foreach { file =>
       results += file
+      visited += file
 
       val recursiveFiles = findImportedFilesRecursively(file, visited.toSet)
       results ++= recursiveFiles
-      visited += file
       visited ++= recursiveFiles
     }
 
-    results.result()
+    results.result().distinct
   }
 
   def findDeclaredDependencies(source: String): IterableOnce[String] =
