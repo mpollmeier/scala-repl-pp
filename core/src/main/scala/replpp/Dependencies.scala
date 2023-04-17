@@ -2,7 +2,7 @@ package replpp
 
 import coursier.Dependency
 import coursier.core.Repository
-import coursier.parse.DependencyParser
+import coursier.parse.{DependencyParser, RepositoryParser}
 
 import java.io.File
 import java.nio.file.Path
@@ -15,10 +15,11 @@ object Dependencies {
       dependencies <- parse(coordinates)
 //      repositories <- readRepositoryConfiguration()
     } yield {
+//      val repository = RepositoryParser.repository("https://michael:secret@shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
+//      val repository = RepositoryParser.repository("https://shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
       coursier.Fetch()
         .addDependencies(dependencies: _*)
-//        .withCache()
-//        .addRepositories(repositories: _*)
+//        .addRepositories(repository)
         .run()
     }
 
