@@ -37,15 +37,19 @@ object Dependencies {
   }
 
 
-  private def parseDependencies(coordinates: Seq[String]): Try[Seq[Dependency]] = {
+  private def parseDependencies(coordinates: Seq[String]): Try[Seq[Dependency]] =
+    util.sequenceTry(coordinates.map(parseDependency))
+
+  private def parseDependency(coordinate: String): Try[Dependency] = {
+    lazy val errorGeneric = s"error while trying to parse the following dependency coordinate: `$coordinate`"
     Try {
-      val parseResults = coordinates.map(coordinate => DependencyParser.dependency(coordinate, defaultScalaVersion = "3"))
-      val failures = parseResults.collect { case Left(errorMsg) => errorMsg }
-      if (failures.isEmpty) {
-        parseResults.collect { case Right(dependency) => dependency }
-      } else {
-        throw new AssertionError(s"error while trying to parse the following dependency coordinates: ${failures.mkString(",")}")
+      DependencyParser.dependency(coordinate, defaultScalaVersion = "3") match {
+        // I'd expect coursier to return a `Left(errorMsg)` here in all error scenarios, but it only does it in certain scenarios...
+        case Left(error) => throw new AssertionError(s"$errorGeneric: $error")
+        case Right(value) => value
       }
+    }.recover {
+      case error => throw new AssertionError(errorGeneric, error)
     }
   }
 

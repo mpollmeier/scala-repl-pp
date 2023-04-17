@@ -14,7 +14,6 @@ object DependenciesTests {
 
     println(
       Dependencies.resolve(
-//        Seq("io.shiftleftcommon0.3.109"), // TODO should print nice error msg
         Seq("io.shiftleft::common:0.3.109"),
         Seq("https://shiftleft.jfrog.io/shiftleft/libs-release-local")
       ).get
