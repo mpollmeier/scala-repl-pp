@@ -13,27 +13,17 @@ object DependenciesTests {
     // and the private jfrog artifactory in shiftleft.jfrog.io
     // and the env var `COURSIER_REPOSITORIES=ivy2Local|central|sonatype:releases|jitpack|https://shiftleft.jfrog.io/shiftleft/libs-release-local`
 
-    // TODO automagically read credentials file(s) and pass that information on to fetch/resolve/...
-    // idea being: we can dynamically set the coursier.repositories jvm property - ideally we do this differently as well, but that's a separate concern
-    // coursier-cli does all of that automatically, but it's only published as a binary apparently
+    // TODO set the extra repo in a different way, i.e. not via side effecting system property
+    // TODO set this via a config parameter rather than hardcoded
     System.setProperty("coursier.repositories", "ivy2Local|central|sonatype:releases|jitpack|https://shiftleft.jfrog.io/shiftleft/libs-release-local")
-//    println(Dependencies.resolve(Seq("io.shiftleft::common:0.3.109")).get)
-
-//    val creds = CacheDefaults.credentials.head
-//    println(CacheDefaults.location) // ~/.cache/coursier/v1
-
-   // TODO next thoughts:
-   // understand how auth works for this resolve mechanism
-   // pass a `withCache` to fetch?
-
-//    val creds2 = coursier.bootstrap.launcher.credentials.Credentials
-
-    val results = coursier.Fetch()
-      .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
-      .addDependencies(DependencyParser.dependency("io.shiftleft::common:0.3.109", defaultScalaVersion = "3").getOrElse(???))
-      .run()
-
-    results.foreach(println)
+    println(Dependencies.resolve(Seq("io.shiftleft::common:0.3.109")).get)
+//
+//    val results = coursier.Fetch()
+//      .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
+//      .addDependencies(DependencyParser.dependency("io.shiftleft::common:0.3.109", defaultScalaVersion = "3").getOrElse(???))
+//      .run()
+//
+//    results.foreach(println)
   }
 
 }

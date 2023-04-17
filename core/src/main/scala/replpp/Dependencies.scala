@@ -1,6 +1,7 @@
 package replpp
 
 import coursier.Dependency
+import coursier.cache.FileCache
 import coursier.core.Repository
 import coursier.parse.{DependencyParser, RepositoryParser}
 
@@ -11,19 +12,18 @@ import scala.util.{Failure, Try}
 object Dependencies {
 
   def resolve(coordinates: Seq[String]): Try[Seq[File]] = {
-    val x = for {
+    for {
       dependencies <- parse(coordinates)
 //      repositories <- readRepositoryConfiguration()
     } yield {
+    // TODO cleanup
 //      val repository = RepositoryParser.repository("https://michael:secret@shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
 //      val repository = RepositoryParser.repository("https://shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
       coursier.Fetch()
+        .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
         .addDependencies(dependencies: _*)
-//        .addRepositories(repository)
         .run()
     }
-
-    x
   }
 
   private def readRepositoryConfiguration(): Try[Seq[Repository]] = {
