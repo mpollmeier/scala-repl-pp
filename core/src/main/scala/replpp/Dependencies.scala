@@ -14,13 +14,11 @@ object Dependencies {
   def resolve(coordinates: Seq[String]): Try[Seq[File]] = {
     for {
       dependencies <- parse(coordinates)
-//      repositories <- readRepositoryConfiguration()
     } yield {
-    // TODO cleanup
-//      val repository = RepositoryParser.repository("https://michael:secret@shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
-//      val repository = RepositoryParser.repository("https://shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
+      val repository = RepositoryParser.repository("https://shiftleft.jfrog.io/shiftleft/libs-release-local").getOrElse(???)
       coursier.Fetch()
         .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
+        .addRepositories(repository)
         .addDependencies(dependencies: _*)
         .run()
     }

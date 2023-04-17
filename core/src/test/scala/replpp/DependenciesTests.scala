@@ -15,15 +15,9 @@ object DependenciesTests {
 
     // TODO set the extra repo in a different way, i.e. not via side effecting system property
     // TODO set this via a config parameter rather than hardcoded
-    System.setProperty("coursier.repositories", "ivy2Local|central|sonatype:releases|jitpack|https://shiftleft.jfrog.io/shiftleft/libs-release-local")
+    // TODO update the above comment
+//    System.setProperty("coursier.repositories", "ivy2Local|central|sonatype:releases|jitpack|https://shiftleft.jfrog.io/shiftleft/libs-release-local")
     println(Dependencies.resolve(Seq("io.shiftleft::common:0.3.109")).get)
-//
-//    val results = coursier.Fetch()
-//      .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
-//      .addDependencies(DependencyParser.dependency("io.shiftleft::common:0.3.109", defaultScalaVersion = "3").getOrElse(???))
-//      .run()
-//
-//    results.foreach(println)
   }
 
 }
