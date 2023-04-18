@@ -51,7 +51,7 @@ object DependenciesTests {
   def main(args: Array[String]): Unit = {
     /** only to be run manually, sorry...
       * verify that we can access an artifact that's only available on a separate, password-protected repository
-      * note: relies on the local ~/config/coursier/credentials.properties
+      * note: relies on the local ~/.config/coursier/credentials.properties
       * and the private jfrog artifactory in shiftleft.jfrog.io
      */
 
