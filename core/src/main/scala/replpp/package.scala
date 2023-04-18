@@ -29,10 +29,11 @@ package object replpp {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyFiles(config)
 
-    if (verboseEnabled(config)) {
+    if (fromDependencies.nonEmpty) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath:")
-      fromDependencies.foreach(println)
+      if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
+
     val fromClassLoaderHierarchy =
       jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
         .map(_.getFile)

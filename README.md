@@ -71,10 +71,10 @@ Generally speaking, `--help` is your friend!
 ./scala-repl-pp
 
 # customize prompt, greeting and exit code
-./scala-repl-pp --prompt=myprompt --greeting='hey there!' --onExitCode='println("see ya!")'
+./scala-repl-pp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
 
 # pass some predef code
-./scala-repl-pp --predefCode='def foo = 42'
+./scala-repl-pp --predefCode 'def foo = 42'
 scala> foo
 val res0: Int = 42
 ```
@@ -86,12 +86,13 @@ Note: the dependencies must be known at startup time, either via `--dependencies
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
+To add multiple dependencies, you can specify this parameter multiple times.
 
-... or `using lib` directive in predef code or predef files...
+Alternatively, use the `//> using lib` directive in predef code or predef files:
 ```
 echo '//> using lib com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-./scala-repl-pp --predefFiles=predef.sc
+./scala-repl-pp --predefFiles predef.sc
 
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
@@ -155,8 +156,9 @@ val foo = "Hello, predef file"
 ```
 
 ```bash
-./scala-repl-pp --script test-predef.sc --timesiles test-predef-file.sc
+./scala-repl-pp --script test-predef.sc --predefFiles test-predef-file.sc
 ```
+To import multiple scripts, you can specify this parameter multiple times.
 
 ### Importing files / scripts
 foo.sc:
@@ -209,7 +211,7 @@ test-main.sc
 ```
 
 ```bash
-./scala-repl-pp --script test-main-multiple.sc --command=foo
+./scala-repl-pp --script test-main-multiple.sc --command foo
 ```
 
 ### named parameters
@@ -255,7 +257,7 @@ echo 'def baz = 91' > script1.sc
 echo 'def bam = 92' > script2.sc
 export SCALA_REPL_PP_PREDEF_CODE='def bax = 93'
 
-./scala-repl-pp --predefCode='def foo = 42' --predefFiles=script1.sc,script2.sc
+./scala-repl-pp --predefCode='def foo = 42' --predefFiles script1.sc --predefFiles script2.sc
 
 scala> foo
 val res0: Int = 42
