@@ -23,10 +23,12 @@ class ConfigTests extends AnyWordSpec with Matchers {
     val javaArgs = config.asJavaArgs
     javaArgs shouldBe Seq(
       "--predefCode", "val predefCode = 42",
-      "--predefFiles", "/some/path/predefFile1,/some/path/predefFile2",
+      "--predefFiles", "/some/path/predefFile1",
+      "--predefFiles", "/some/path/predefFile2",
       "--nocolors",
       "--verbose",
-      "--dependencies", "com.michaelpollmeier:versionsort:1.0.7,foo:bar:1.2.3",
+      "--dependencies", "com.michaelpollmeier:versionsort:1.0.7",
+      "--dependencies", "foo:bar:1.2.3",
       "--resolvers", apacheRepo,
       "--resolvers", sonatypeRepo,
       "--script", "/some/script.sc",
@@ -38,10 +40,4 @@ class ConfigTests extends AnyWordSpec with Matchers {
     Config.parse(javaArgs.toArray) shouldBe config
   }
 
-  "allow to pass multiple additional dependency resolvers" in {
-
-    Config.parse(
-      Array("--resolvers", apacheRepo, "--resolvers", sonatypeRepo)
-    ).resolvers shouldBe Seq(apacheRepo, sonatypeRepo)
-  }
 }
