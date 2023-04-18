@@ -27,13 +27,19 @@ package object replpp {
 
   def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
-    val fromDependencies = dependencyFiles(config).mkString(pathSeparator)
+    val fromDependencies = dependencyFiles(config)
+
+    if (fromDependencies.nonEmpty) {
+      println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
+      if (verboseEnabled(config)) fromDependencies.foreach(println)
+    }
+
     val fromClassLoaderHierarchy =
       jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
         .map(_.getFile)
         .mkString(pathSeparator)
 
-    Seq(fromClassLoaderHierarchy, fromDependencies, fromJavaClassPathProperty).mkString(pathSeparator)
+    (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).mkString(pathSeparator)
   }
 
   private def dependencyFiles(config: Config): Seq[File] = {
@@ -41,7 +47,7 @@ package object replpp {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
     val allDependencies = config.dependencies ++
       UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-    Dependencies.resolveOptimistically(allDependencies, verboseEnabled(config))
+    Dependencies.resolve(allDependencies, config.resolvers).get
   }
 
   private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {

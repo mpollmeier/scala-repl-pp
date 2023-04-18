@@ -8,6 +8,7 @@ case class Config(
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
+  resolvers: Seq[String] = Seq.empty,
 
   // repl only
   prompt: Option[String] = None,
@@ -37,15 +38,19 @@ case class Config(
       add("--predefCode", code)
     }
 
-    if (predefFiles.nonEmpty) {
-      add("--predefFiles", predefFiles.mkString(","))
+    predefFiles.foreach { predefFile =>
+      add("--predefFiles", predefFile.toString)
     }
 
     if (nocolors) add("--nocolors")
     if (verbose) add("--verbose")
 
-    if (dependencies.nonEmpty) {
-      add("--dependencies", dependencies.mkString(","))
+    dependencies.foreach { dependency =>
+      add("--dependencies", dependency)
+    }
+
+    resolvers.foreach { resolver =>
+      add("--resolvers", resolver)
     }
 
     scriptFile.foreach(file => add("--script", file.toString))
@@ -76,10 +81,12 @@ object Config {
         .action((x, c) => c.copy(predefCode = Option(x)))
         .text("code to execute (quietly) on startup")
 
-      opt[Seq[os.Path]]("predefFiles")
+      opt[os.Path]("predefFiles")
         .valueName("script1.sc,script2.sc,...")
-        .action((x, c) => c.copy(predefFiles = x.toList))
-        .text("import (and run) additional script(s) on startup, separated by ','")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
+        .text("import (and run) additional script(s) on startup - may be passed multiple times")
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
@@ -89,10 +96,19 @@ object Config {
         .action((_, c) => c.copy(verbose = true))
         .text("enable verbose output (predef, resolved dependency jars, ...)")
 
-      opt[Seq[String]]("dependencies")
-        .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
-        .action((x, c) => c.copy(dependencies = x.toList))
-        .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+      opt[String]("dependencies")
+        .valueName("com.michaelpollmeier:versionsort:1.0.7")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
+        .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s) - may be passed multiple times")
+
+      opt[String]("resolvers")
+        .valueName("https://repository.apache.org/content/groups/public/")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
+        .text("additional repositories to resolve dependencies - may be passed multiple times")
 
       note("REPL options")
 

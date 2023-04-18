@@ -267,7 +267,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
 }
 
-
 /** for manual testing */
 object ScriptRunnerTests {
   def main(args: Array[String]): Unit = {
