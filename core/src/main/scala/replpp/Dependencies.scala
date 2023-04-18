@@ -27,11 +27,10 @@ object Dependencies {
   private def parseRepositories(additionalRepositories: Seq[String]): Try[Seq[Repository]] = {
     Try {
       val parseResults = RepositoryParser.repositories(additionalRepositories)
-      if (parseResults.isSuccess) {
-        parseResults.either.getOrElse(???)
-      } else {
-        val failures = parseResults.either.left.getOrElse(???)
-        throw new AssertionError(s"error while trying to parse given repository coordinates: ${failures.mkString(",")}")
+      parseResults.either match {
+        case Right(res) => res
+        case Left(failures) =>
+          throw new AssertionError(s"error while trying to parse given repository coordinates: ${failures.mkString(",")}")
       }
     }
   }
