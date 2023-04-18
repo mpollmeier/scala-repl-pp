@@ -31,7 +31,7 @@ object Dependencies {
         parseResults.either.getOrElse(???)
       } else {
         val failures = parseResults.either.left.getOrElse(???)
-        throw new AssertionError(s"error while trying to parse the following repository coordinates: ${failures.mkString(",")}")
+        throw new AssertionError(s"error while trying to parse given repository coordinates: ${failures.mkString(",")}")
       }
     }
   }
