@@ -8,6 +8,7 @@ case class Config(
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
+  resolvers: Seq[String] = Seq.empty,
 
   // repl only
   prompt: Option[String] = None,
@@ -46,6 +47,10 @@ case class Config(
 
     if (dependencies.nonEmpty) {
       add("--dependencies", dependencies.mkString(","))
+    }
+
+    resolvers.foreach { resolver =>
+      add("--resolvers", resolver)
     }
 
     scriptFile.foreach(file => add("--script", file.toString))
@@ -93,6 +98,13 @@ object Config {
         .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
         .action((x, c) => c.copy(dependencies = x.toList))
         .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+
+      opt[String]("resolvers")
+        .unbounded()
+        .valueName("https://repository.apache.org/content/groups/public/")
+        .optional()
+        .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
+        .text("additional repositories to resolve dependencies - may be passed multiple times")
 
       note("REPL options")
 

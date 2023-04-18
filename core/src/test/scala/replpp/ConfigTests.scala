@@ -4,6 +4,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class ConfigTests extends AnyWordSpec with Matchers {
+  val apacheRepo = "https://repository.apache.org/content/groups/public"
+  val sonatypeRepo = "https://oss.sonatype.org/content/repositories/public"
 
   "asJavaArgs (inverse of Config.parse) for ScriptingDriver" in {
     val config = Config(
@@ -12,6 +14,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
       nocolors = true,
       verbose = true,
       dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7", "foo:bar:1.2.3"),
+      resolvers = Seq(apacheRepo, sonatypeRepo),
       scriptFile = Some(os.Path("/some/script.sc")),
       command = Some("someCommand"),
       params = Map("param1" -> "value1", "param2" -> "222")
@@ -24,6 +27,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--nocolors",
       "--verbose",
       "--dependencies", "com.michaelpollmeier:versionsort:1.0.7,foo:bar:1.2.3",
+      "--resolvers", apacheRepo,
+      "--resolvers", sonatypeRepo,
       "--script", "/some/script.sc",
       "--command", "someCommand",
       "--params", "param1=value1,param2=222"
@@ -33,4 +38,10 @@ class ConfigTests extends AnyWordSpec with Matchers {
     Config.parse(javaArgs.toArray) shouldBe config
   }
 
+  "allow to pass multiple additional dependency resolvers" in {
+
+    Config.parse(
+      Array("--resolvers", apacheRepo, "--resolvers", sonatypeRepo)
+    ).resolvers shouldBe Seq(apacheRepo, sonatypeRepo)
+  }
 }
