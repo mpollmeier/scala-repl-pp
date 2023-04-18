@@ -46,9 +46,7 @@ package object replpp {
     val scriptCode = config.scriptFile.map(os.read).getOrElse("")
     val allDependencies = config.dependencies ++
       UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-    // TODO get back to work
-//    Dependencies.resolve(allDependencies, verboseEnabled(config))
-    ???
+    Dependencies.resolve(allDependencies, config.resolvers).get
   }
 
   private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
