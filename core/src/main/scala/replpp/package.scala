@@ -30,7 +30,7 @@ package object replpp {
     val fromDependencies = dependencyFiles(config)
 
     if (fromDependencies.nonEmpty) {
-      println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath:")
+      println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 

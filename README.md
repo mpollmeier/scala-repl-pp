@@ -2,9 +2,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
 
 ## scala-repl-pp
-Scala REPL PlusPlus - a (slightly) better Scala 3 / dotty REPL.
-
-Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite and scala-cli.
+Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. 
 
 ## TOC
 <!-- generated with: -->
@@ -28,10 +26,14 @@ Motivation: scala-repl-pp fills a gap between the standard Scala3 REPL, Ammonite
   * [@main entrypoints](#main-entrypoints)
   * [multiple @main entrypoints: test-main-multiple.sc](#multiple-main-entrypoints-test-main-multiplesc)
   * [named parameters](#named-parameters)
+- [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
-- [Limitations](#limitations)
+- [Predef code and scripts](#predef-code-and-scripts)
+- [Verbose mode](#verbose-mode)
+- [Limitations / Debugging](#limitations--debugging)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+
 
 ## Benefits over / comparison with
 
@@ -225,6 +227,26 @@ test-main-withargs.sc
 ```bash
 ./scala-repl-pp --script test-main-withargs.sc --params name=Michael
 ```
+
+## Additional dependency resolvers and credentials
+```bash
+./scala-repl-pp --resolvers "https://repository.apache.org/content/groups/public"
+
+```
+To add multiple dependency resolvers, you can specify this parameter multiple times.
+
+If one or multiple of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file):
+```
+mycorp.realm=Artifactory Realm
+mycorp.host=shiftleft.jfrog.io
+mycorp.username=michael
+mycorp.password=secret
+
+otherone.username=j
+otherone.password=imj
+otherone.host=nexus.other.com
+```
+The prefix is arbitrary and is only used to specify several credentials in a single file. scala-repl-pp uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
 ## Server mode
 ```bash
