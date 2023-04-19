@@ -1,9 +1,11 @@
 package replpp
 
+import java.nio.file.Path
+
 // TODO split into repl|script|server config - with some options shared...
 case class Config(
   predefCode: Option[String] = None,
-  predefFiles: Seq[os.Path] = Nil,
+  predefFiles: Seq[Path] = Nil,
   predefFilesBeforePredefCode: Boolean = false,
   nocolors: Boolean = false,
   verbose: Boolean = false,
@@ -16,7 +18,7 @@ case class Config(
   onExitCode: Option[String] = None,
 
   // script only
-  scriptFile: Option[os.Path] = None,
+  scriptFile: Option[Path] = None,
   command: Option[String] = None,
   params: Map[String, String] = Map.empty,
 
@@ -70,9 +72,6 @@ case class Config(
 object Config {
   
   def parse(args: Array[String]): Config = {
-    implicit def pathRead: scopt.Read[os.Path] =
-      scopt.Read.stringRead.map(os.Path(_, os.pwd)) // support both relative and absolute paths
-
     val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
       override def errorOnUnknownArgument = false
 
@@ -81,7 +80,7 @@ object Config {
         .action((x, c) => c.copy(predefCode = Option(x)))
         .text("code to execute (quietly) on startup")
 
-      opt[os.Path]("predefFiles")
+      opt[Path]("predefFiles")
         .valueName("script1.sc,script2.sc,...")
         .unbounded()
         .optional()
@@ -128,7 +127,7 @@ object Config {
 
       note("Script execution")
 
-      opt[os.Path]("script")
+      opt[Path]("script")
         .action((x, c) => c.copy(scriptFile = Some(x)))
         .text("path to script file: will execute and exit")
 

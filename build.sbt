@@ -11,7 +11,6 @@ lazy val core = project.in(file("core")).settings(
   libraryDependencies ++= Seq(
     "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
     "com.lihaoyi"      %% "mainargs"  % "0.3.0",
-    "com.lihaoyi"      %% "os-lib"    % "0.8.1",
     "com.lihaoyi"      %% "pprint"    % "0.8.1",
     "com.github.scopt" %% "scopt"     % "4.1.0",
     ("io.get-coursier" %% "coursier"  % "2.1.1").cross(CrossVersion.for3Use2_13)
@@ -41,7 +40,10 @@ lazy val all = project.in(file("all"))
   .enablePlugins(JavaAppPackaging)
   .settings(name := "scala-repl-pp-all")
 
-ThisBuild / libraryDependencies += "org.scalatest" %% "scalatest" % ScalaTestVersion % Test
+ThisBuild / libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.8.1" % Test,
+)
 
 ThisBuild/Test/fork := false
 

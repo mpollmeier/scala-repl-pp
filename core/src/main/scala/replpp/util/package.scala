@@ -1,6 +1,8 @@
 package replpp
 
+import java.nio.file.{Files, Path}
 import scala.collection.immutable.Seq
+import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 package object util {
@@ -14,5 +16,18 @@ package object util {
         } yield a +: acc
     }
   }
-  
+
+  def linesFromFile(path: Path): Seq[String] =
+    linesStreamFromFile(path).iterator.toSeq
+
+  def linesStreamFromFile(path: Path): IterableOnce[String] =
+    Files.lines(path).iterator().asScala
+
+  def deleteRecursively(path: Path): Unit = {
+    if (Files.isDirectory(path))
+      Files.list(path).forEach(deleteRecursively)
+
+    Files.deleteIfExists(path)
+  }
+
 }

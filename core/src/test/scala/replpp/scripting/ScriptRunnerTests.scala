@@ -84,8 +84,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   "--predefFiles" in {
     execTest { testOutputPath =>
-      val predefFile = os.temp()
-      os.write.over(predefFile, "val bar = \"iwashere-predefFile\"")
+      val predefFile = os.temp("val bar = \"iwashere-predefFile\"").toNIO
       TestSetup(
         s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
@@ -95,8 +94,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   "--predefFiles imports are available" in {
     execTest { testOutputPath =>
-      val predefFile = os.temp()
-      os.write.over(predefFile, "import Byte.MaxValue")
+      val predefFile = os.temp("import Byte.MaxValue").toNIO
       TestSetup(
         s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
@@ -141,8 +139,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   "additional dependencies via `//> using lib` in --predefFiles" in {
     execTest { testOutputPath =>
-      val predefFile = os.temp()
-      os.write.over(predefFile, "//> using lib com.michaelpollmeier:versionsort:1.0.7")
+      val predefFile = os.temp("//> using lib com.michaelpollmeier:versionsort:1.0.7").toNIO
       TestSetup(
         s"""
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
@@ -180,10 +177,8 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   "import additional files via `//> using file` via --predefFiles" in {
     execTest { testOutputPath =>
-      val additionalScript = os.temp()
-      val predefFile = os.temp()
-      os.write.over(additionalScript, "def foo = 99")
-      os.write.over(predefFile, s"//> using file $additionalScript")
+      val additionalScript = os.temp("def foo = 99")
+      val predefFile = os.temp(s"//> using file $additionalScript").toNIO
       TestSetup(
         s"""
            |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test3:" + foo)
@@ -259,8 +254,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
 
     val TestSetup(scriptSrc, adaptConfig, predefCodeViaEnvVar) = setupTest(testOutputPath)
-    val scriptFile = os.temp()
-    os.write.over(scriptFile, scriptSrc)
+    val scriptFile = os.temp(scriptSrc).toNIO
     val config = adaptConfig(Config(scriptFile = Some(scriptFile), verbose = false))
     ScriptRunner.exec(config).map{_ => os.read(testOutputFile)}
   }
@@ -274,8 +268,7 @@ object ScriptRunnerTests {
       s"""val i = 2 + 10
          |println("in main/script: i=" + i)
          |""".stripMargin
-    val scriptFile = os.temp()
-    os.write.over(scriptFile, scriptSrc)
+    val scriptFile = os.temp(scriptSrc).toNIO
     val config = Config(scriptFile = Some(scriptFile), verbose = true)
     ScriptRunner.exec(config)
   }

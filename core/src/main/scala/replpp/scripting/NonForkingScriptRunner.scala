@@ -3,6 +3,8 @@ package replpp.scripting
 import java.util.stream.Collectors
 import replpp.Config
 import replpp.allPredefCode
+
+import java.nio.file.Files
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
 import scala.xml.NodeSeq
@@ -24,7 +26,7 @@ object NonForkingScriptRunner {
 
   def exec(config: Config): Unit = {
     val scriptFile = config.scriptFile.getOrElse(throw new AssertionError("script file not defined - please specify e.g. via `--script=myscript.sc`"))
-    if (!os.exists(scriptFile)) {
+    if (!Files.exists(scriptFile)) {
       throw new AssertionError(s"given script file $scriptFile does not exist")
     }
 
@@ -43,15 +45,15 @@ object NonForkingScriptRunner {
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
     val predefCode = allPredefCode(config)
-    val predefPlusScriptFileTmp = os.temp(prefix = "scala-repl-pp-script-with-predef", suffix = ".sc", deleteOnExit = false)
-    val scriptCode = os.read(scriptFile)
+    val scriptCode = Files.readString(scriptFile)
     val scriptContent = wrapForMainargs(predefCode, scriptCode)
-    os.write.over(predefPlusScriptFileTmp, scriptContent)
+    val predefPlusScriptFileTmp = Files.createTempFile("scala-repl-pp-script-with-predef", ".sc")
+    Files.writeString(predefPlusScriptFileTmp, scriptContent)
 
     val compilerArgs = replpp.compilerArgs(config) :+ "-nowarn"
     new ScriptingDriver(
       compilerArgs = compilerArgs,
-      scriptFile = predefPlusScriptFileTmp.toIO,
+      scriptFile = predefPlusScriptFileTmp,
       scriptArgs = scriptArgs.toArray,
       verbose = replpp.verboseEnabled(config)
     ).compileAndRun() match {
@@ -63,7 +65,7 @@ object NonForkingScriptRunner {
         System.err.println(s"script finished successfully")
         // if the script failed, we don't want to delete the temporary file which includes the predef,
         // so that the line numbers are accurate and the user can properly debug
-        os.remove(predefPlusScriptFileTmp)
+        Files.deleteIfExists(predefPlusScriptFileTmp)
     }
   }
 
