@@ -19,7 +19,7 @@ object Main {
     if (config.server) {
       ReplServer.startHttpServer(config)
     } else if (config.scriptFile.isDefined)
-      ScriptRunner.exec(config)
+      ScriptRunner.main(args)
     else 
       InteractiveShell.run(config)
   }

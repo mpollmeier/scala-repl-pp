@@ -14,6 +14,7 @@ import org.jline.reader.*
 
 import java.io.PrintStream
 import java.net.URL
+import java.nio.file.{Files, Path}
 import javax.naming.InitialContext
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -44,7 +45,7 @@ class ReplDriver(args: Array[String],
     def loop(using state: State)(): State = {
       Try {
         val inputLines = readLine(terminal, state)
-        interpretInput(inputLines, state, os.pwd)
+        interpretInput(inputLines, state, pwd)
       } match {
         case Success(newState) =>
           loop(using newState)()
@@ -78,7 +79,7 @@ class ReplDriver(args: Array[String],
     terminal.readLine(completer).linesIterator
   }
 
-  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: os.Path): State = {
+  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
     var resultingState = state
 
@@ -93,10 +94,10 @@ class ReplDriver(args: Array[String],
 
       // now read and interpret the given file
       val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
-      val file = resolveFile(currentFile, pathStr)
-      println(s"> importing $file")
-      val linesFromFile = os.read.lines(file)
-      resultingState = interpretInput(linesFromFile, resultingState, file)
+      val path = resolveFile(currentFile, pathStr)
+      val linesFromFile = Files.readAllLines(path).asScala
+      println(s"> importing $path (${linesFromFile.size} lines)")
+      resultingState = interpretInput(linesFromFile, resultingState, path)
     }
 
     for (line <- lines.iterator) {
