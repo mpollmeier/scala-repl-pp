@@ -1,14 +1,25 @@
 import java.io.File
 import java.lang.System.lineSeparator
 import java.net.URL
-import java.nio.file.Path
+import replpp.util.linesFromFile
+import java.nio.file.{Files, Path, Paths}
 import scala.annotation.tailrec
 import scala.collection.mutable
 
 package object replpp {
+  /* ":" on unix */
+  val pathSeparator = java.io.File.pathSeparator
+
   val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
-  lazy val globalPredefFile = os.home / ".scala-repl-pp.sc"
+
+  /** The user's home directory */
+  lazy val home: Path = Paths.get(System.getProperty("user.home"))
+
+  /** The current working directory for this process. */
+  lazy val pwd: Path = Paths.get(".").toAbsolutePath
+
+  lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
@@ -44,7 +55,7 @@ package object replpp {
 
   private def dependencyFiles(config: Config): Seq[File] = {
     val predefCode = allPredefCode(config)
-    val scriptCode = config.scriptFile.map(os.read).getOrElse("")
+    val scriptCode = config.scriptFile.map(Files.readString).getOrElse("")
     val allDependencies = config.dependencies ++
       UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
     Dependencies.resolve(allDependencies, config.resolvers).get
@@ -61,7 +72,7 @@ package object replpp {
 
   def allPredefCode(config: Config): String = {
     val resultLines = Seq.newBuilder[String]
-    val visited = mutable.Set.empty[os.Path]
+    val visited = mutable.Set.empty[Path]
 
     def handlePredefCodeWithoutPredefFiles() = {
       val codeLines =
@@ -69,9 +80,9 @@ package object replpp {
         lines(Option(System.getenv(PredefCodeEnvVar))) ++ // ~/.scala-repl-pp.sc file
         globalPredefFileLines                             // `SCALA_REPL_PP_PREDEF_CODE` env var
 
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(codeLines, os.pwd)
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(codeLines, pwd)
       importedFiles.foreach { file =>
-        resultLines ++= os.read.lines(file)
+        resultLines ++= linesFromFile(file)
       }
       visited ++= importedFiles
       resultLines ++= codeLines
@@ -82,10 +93,10 @@ package object replpp {
         val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
         visited ++= importedFiles
         importedFiles.foreach { file =>
-          resultLines ++= os.read.lines(file)
+          resultLines ++= linesFromFile(file)
         }
 
-        resultLines ++= os.read.lines(file)
+        resultLines ++= linesFromFile(file)
         visited += file
       }
     }
@@ -102,7 +113,7 @@ package object replpp {
       val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
       visited ++= importedFiles
       importedFiles.foreach { file =>
-        resultLines ++= os.read.lines(file)
+        resultLines ++= linesFromFile(file)
       }
     }
 
@@ -122,18 +133,16 @@ package object replpp {
     * - if given pathStr is an absolute path, just take that
     * - if it's a relative path, use given base path to resolve it to an absolute path
     */
-  def resolveFile(base: os.Path, pathStr: String): os.Path = {
-    if (Path.of(pathStr).isAbsolute) os.Path(pathStr)
-    else base / os.RelPath(pathStr)
+  def resolveFile(base: Path, pathStr: String): Path = {
+    val path = Paths.get(pathStr)
+    if (path.isAbsolute) path
+    else base.resolve(path)
   }
 
   private def globalPredefFileLines: Seq[String] = {
-    if (os.exists(globalPredefFile))
-      os.read.lines(globalPredefFile)
+    if (Files.exists(globalPredefFile))
+      linesFromFile(globalPredefFile)
     else
       Seq.empty
   }
-
-  // ":" on unix
-  val pathSeparator = java.io.File.pathSeparator
 }

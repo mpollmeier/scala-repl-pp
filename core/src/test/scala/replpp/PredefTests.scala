@@ -6,8 +6,8 @@ import org.scalatest.wordspec.AnyWordSpec
 class PredefTests extends AnyWordSpec with Matchers {
 
   "import predefCode before additionalFiles by default" in {
-    val predefFile1 = os.temp("val predefFile1 = 10")
-    val predefFile2 = os.temp("val predefFile2 = 20")
+    val predefFile1 = os.temp("val predefFile1 = 10").toNIO
+    val predefFile2 = os.temp("val predefFile2 = 20").toNIO
 
     allPredefCode(Config(
       predefCode = Some("val predefCode = 1"),
@@ -20,8 +20,8 @@ class PredefTests extends AnyWordSpec with Matchers {
   }
 
   "import predefCode last if configured to do so" in {
-    val predefFile1 = os.temp("val predefFile1 = 10")
-    val predefFile2 = os.temp("val predefFile2 = 20")
+    val predefFile1 = os.temp("val predefFile1 = 10").toNIO
+    val predefFile2 = os.temp("val predefFile2 = 20").toNIO
 
     allPredefCode(Config(
       predefCode = Some("val predefCode = 1"),

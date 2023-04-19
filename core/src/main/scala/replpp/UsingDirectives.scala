@@ -1,30 +1,32 @@
 package replpp
 
+import java.nio.file.{Files, Path}
 import scala.collection.mutable
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object UsingDirectives {
   val Prefix = "//> using"
   val LibDirective = s"$Prefix lib "
   val FileDirective = s"$Prefix file "
 
-  def findImportedFilesRecursively(file: os.Path, visited: Set[os.Path] = Set.empty): Seq[os.Path] = {
-    val rootDir: os.Path =
-      if (os.isDir(file)) file
-      else os.Path(file.toNIO.getParent)
+  def findImportedFilesRecursively(path: Path, visited: Set[Path] = Set.empty): Seq[Path] = {
+    val rootDir: Path =
+      if (Files.isDirectory(path)) path
+      else path.getParent
 
-    val importedFiles = findImportedFiles(os.read.lines(file), rootDir)
+    val importedFiles = findImportedFiles(Files.lines(path).iterator.asScala, rootDir)
     val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
       findImportedFilesRecursively(file, visited + file)
     }
     (importedFiles ++ recursivelyImportedFiles).distinct
   }
 
-  def findImportedFiles(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] =
+  def findImportedFiles(lines: IterableOnce[String], rootPath: Path): Seq[Path] =
     scanFor(FileDirective, lines).iterator.map(resolveFile(rootPath, _)).toSeq
     
-  def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: os.Path): Seq[os.Path] = {
-    val results = Seq.newBuilder[os.Path]
-    val visited = mutable.Set.empty[os.Path]
+  def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: Path): Seq[Path] = {
+    val results = Seq.newBuilder[Path]
+    val visited = mutable.Set.empty[Path]
 
     findImportedFiles(lines, rootPath).foreach { file =>
       results += file
