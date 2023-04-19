@@ -1,12 +1,16 @@
 package replpp
 
+import java.nio.file.Path
+
 // TODO split into repl|script|server config - with some options shared...
 case class Config(
   predefCode: Option[String] = None,
-  predefFiles: List[os.Path] = Nil,
+  predefFiles: Seq[Path] = Nil,
+  predefFilesBeforePredefCode: Boolean = false,
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
+  resolvers: Seq[String] = Seq.empty,
 
   // repl only
   prompt: Option[String] = None,
@@ -14,7 +18,7 @@ case class Config(
   onExitCode: Option[String] = None,
 
   // script only
-  scriptFile: Option[os.Path] = None,
+  scriptFile: Option[Path] = None,
   command: Option[String] = None,
   params: Map[String, String] = Map.empty,
 
@@ -24,14 +28,50 @@ case class Config(
   serverPort: Int = 8080,
   serverAuthUsername: String = "",
   serverAuthPassword: String = "",
-)
+) {
+
+  /** inverse of `Config.parse` */
+  lazy val asJavaArgs: Seq[String] = {
+    val args = Seq.newBuilder[String]
+    def add(entries: String*) = args.addAll(entries)
+
+    predefCode.foreach { code =>
+      // TODO maybe better to write to some file? at least for debugging this? attention: preserve same order as normally...
+      add("--predefCode", code)
+    }
+
+    predefFiles.foreach { predefFile =>
+      add("--predefFiles", predefFile.toString)
+    }
+
+    if (nocolors) add("--nocolors")
+    if (verbose) add("--verbose")
+
+    dependencies.foreach { dependency =>
+      add("--dependencies", dependency)
+    }
+
+    resolvers.foreach { resolver =>
+      add("--resolvers", resolver)
+    }
+
+    scriptFile.foreach(file => add("--script", file.toString))
+    command.foreach(cmd => add("--command", cmd))
+
+    if (params.nonEmpty) {
+      add("--params",
+        // ("k1=v1,k2=v2")
+        params.map { (key, value) => s"$key=$value" }.mkString(",")
+      )
+    }
+
+    args.result()
+  }
+}
 
 object Config {
   
   def parse(args: Array[String]): Config = {
-    implicit def pathRead: scopt.Read[os.Path] =
-      scopt.Read.stringRead.map(os.Path(_, os.pwd)) // support both relative and absolute paths
-
     val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
       override def errorOnUnknownArgument = false
 
@@ -40,10 +80,12 @@ object Config {
         .action((x, c) => c.copy(predefCode = Option(x)))
         .text("code to execute (quietly) on startup")
 
-      opt[Seq[os.Path]]("predefFiles")
-        .valueName("script1.sc,script2.sc,...")
-        .action((x, c) => c.copy(predefFiles = x.toList))
-        .text("import (and run) additional script(s) on startup")
+      opt[Path]("predefFiles")
+        .valueName("myScript.sc")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
+        .text("import (and run) additional script(s) on startup - may be passed multiple times")
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
@@ -53,10 +95,19 @@ object Config {
         .action((_, c) => c.copy(verbose = true))
         .text("enable verbose output (predef, resolved dependency jars, ...)")
 
-      opt[Seq[String]]("dependency")
-        .valueName("com.michaelpollmeier:versionsort:1.0.7,...")
-        .action((x, c) => c.copy(dependencies = x.toList))
-        .text("resolve dependency (and it's transitive dependencies) for given maven coordinate(s): comma-separated list. use `--verbose` to print resolved jars")
+      opt[String]("dependencies")
+        .valueName("com.michaelpollmeier:versionsort:1.0.7")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
+        .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s) - may be passed multiple times")
+
+      opt[String]("resolvers")
+        .valueName("https://repository.apache.org/content/groups/public/")
+        .unbounded()
+        .optional()
+        .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
+        .text("additional repositories to resolve dependencies - may be passed multiple times")
 
       note("REPL options")
 
@@ -76,7 +127,7 @@ object Config {
 
       note("Script execution")
 
-      opt[os.Path]("script")
+      opt[Path]("script")
         .action((x, c) => c.copy(scriptFile = Some(x)))
         .text("path to script file: will execute and exit")
 
