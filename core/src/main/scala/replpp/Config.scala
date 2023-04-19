@@ -81,7 +81,7 @@ object Config {
         .text("code to execute (quietly) on startup")
 
       opt[Path]("predefFiles")
-        .valueName("script1.sc,script2.sc,...")
+        .valueName("myScript.sc")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
