@@ -42,7 +42,7 @@ lazy val all = project.in(file("all"))
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-  "com.lihaoyi"   %% "os-lib"    % "0.8.1" % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
 )
 
 ThisBuild/Test/fork := false
