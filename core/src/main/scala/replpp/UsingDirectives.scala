@@ -40,15 +40,16 @@ object UsingDirectives {
     results.result().distinct
   }
 
-  def findDeclaredDependencies(source: String): IterableOnce[String] =
+  def findDeclaredDependencies(source: String): Seq[String] =
     scanFor(LibDirective, source.linesIterator)
 
-  private def scanFor(directive: String, lines: IterableOnce[String]): IterableOnce[String] = {
+  private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {
     lines
       .iterator
       .map(_.trim)
       .filter(_.startsWith(directive))
       .map(_.drop(directive.length).trim)
+      .toSeq
   }
 
 }
