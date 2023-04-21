@@ -64,4 +64,18 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
     results should not contain "commented:out:1.3"
   }
 
+  "find declared resolvers" in {
+    val source =
+      """
+        |//> using resolver https://repository.apache.org/content/groups/public
+        |//> using resolver https://shiftleft.jfrog.io/shiftleft/libs-release-local
+        |// //> using resolver https://commented.out/repo
+        |""".stripMargin
+
+    val results = UsingDirectives.findResolvers(source)
+    results should contain("https://repository.apache.org/content/groups/public")
+    results should contain("https://shiftleft.jfrog.io/shiftleft/libs-release-local")
+    results should not contain "https://commented.out/repo"
+  }
+
 }

@@ -51,18 +51,19 @@ object NonForkingScriptRunner {
     Files.writeString(predefPlusScriptFileTmp, scriptContent)
 
     val compilerArgs = replpp.compilerArgs(config) :+ "-nowarn"
+    val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(
       compilerArgs = compilerArgs,
       scriptFile = predefPlusScriptFileTmp,
       scriptArgs = scriptArgs.toArray,
-      verbose = replpp.verboseEnabled(config)
+      verbose = verboseEnabled
     ).compileAndRun() match {
       case Some(exception) =>
         System.err.println(s"error during script execution: ${exception.getMessage}")
         System.err.println(s"note: line numbers may not be accurate - to help with debugging, the final scriptContent is at $predefPlusScriptFileTmp")
         throw exception
       case None => // no exception, i.e. all is good
-        System.err.println(s"script finished successfully")
+        if (verboseEnabled) System.err.println(s"script finished successfully")
         // if the script failed, we don't want to delete the temporary file which includes the predef,
         // so that the line numbers are accurate and the user can properly debug
         Files.deleteIfExists(predefPlusScriptFileTmp)
