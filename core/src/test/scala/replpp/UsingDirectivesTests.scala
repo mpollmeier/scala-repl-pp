@@ -25,13 +25,29 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
   }
 
   "find imported files recursively from given source" in {
-    // TODO
-    ???
+    val script1 = os.temp("val foo = 42")
+    val script2 = os.temp(
+      s"""//> using file $script1
+         |val bar = 42""".stripMargin)
+
+    val rootPath = Paths.get(".")
+    val source = s"//> using file $script2"
+
+    val results = UsingDirectives.findImportedFilesRecursively(Seq(source), rootPath)
+    results should contain(script1.toNIO)
+    results should contain(script2.toNIO)
   }
 
   "find imported files recursively from given script" in {
-    // TODO
-    ???
+    val script1 = os.temp("val foo = 42")
+    val script2 = os.temp(
+      s"""//> using file $script1
+         |val bar = 42""".stripMargin)
+    val script3 = os.temp(s"//> using file $script2")
+
+    val results = UsingDirectives.findImportedFilesRecursively(script3.toNIO)
+    results should contain(script1.toNIO)
+    results should contain(script2.toNIO)
   }
 
   "find declared dependencies" in {
