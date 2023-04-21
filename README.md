@@ -100,6 +100,8 @@ scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
 
+Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
+
 ### Importing additional script files interactively
 ```
 echo 'val bar = foo' > myScript.sc
@@ -229,11 +231,24 @@ test-main-withargs.sc
 ```
 
 ## Additional dependency resolvers and credentials
+Via parameter on startup:
 ```bash
-./scala-repl-pp --resolvers "https://repository.apache.org/content/groups/public"
-
+./scala-repl-pp --resolvers "https://repo.gradle.org/gradle/libs-releases" --dependencies org.gradle:gradle-tooling-api:7.6.1
+scala> org.gradle.tooling.GradleConnector.newConnector()
 ```
 To add multiple dependency resolvers, you can specify this parameter multiple times.
+
+Or via `//> using resolver` directive as part of your script or predef code:
+
+script-with-resolver.sc
+```scala
+//> using resolver https://repo.gradle.org/gradle/libs-releases
+//> using lib org.gradle:gradle-tooling-api:7.6.1
+println(org.gradle.tooling.GradleConnector.newConnector())
+```
+```scala
+./scala-repl-pp --script script-with-resolver.sc
+```
 
 If one or multiple of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file):
 ```
