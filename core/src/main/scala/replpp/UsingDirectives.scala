@@ -5,9 +5,10 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object UsingDirectives {
-  val Prefix = "//> using"
-  val LibDirective = s"$Prefix lib "
-  val FileDirective = s"$Prefix file "
+  private val Prefix    = "//> using"
+  val LibDirective      = s"$Prefix lib "
+  val FileDirective     = s"$Prefix file "
+  val ResolverDirective = s"$Prefix resolver"
 
   def findImportedFilesRecursively(path: Path, visited: Set[Path] = Set.empty): Seq[Path] = {
     val rootDir: Path =
@@ -42,6 +43,9 @@ object UsingDirectives {
 
   def findDeclaredDependencies(source: String): Seq[String] =
     scanFor(LibDirective, source.linesIterator)
+
+  def findResolvers(source: String): Seq[String] =
+    scanFor(ResolverDirective, source.linesIterator)
 
   private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {
     lines

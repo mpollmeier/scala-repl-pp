@@ -38,7 +38,7 @@ package object replpp {
 
   def classpath(config: Config): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
-    val fromDependencies = dependencyFiles(config)
+    val fromDependencies = dependencyArtifacts(config)
 
     if (fromDependencies.nonEmpty) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
@@ -53,14 +53,19 @@ package object replpp {
     (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).mkString(pathSeparator)
   }
 
-  private def dependencyFiles(config: Config): Seq[File] = {
+  private def dependencyArtifacts(config: Config): Seq[File] = {
     val predefCode = allPredefCode(config)
     val scriptCode = config.scriptFile.map(Files.readString).getOrElse("")
+    val allCode = 
+      s"""$predefCode
+         |$scriptCode""".stripMargin
+      
+    val resolvers = config.resolvers ++ UsingDirectives.findResolvers(allCode)
     val allDependencies = config.dependencies ++
-      UsingDirectives.findDeclaredDependencies(s"$predefCode\n$scriptCode")
-    Dependencies.resolve(allDependencies, config.resolvers).get
+      UsingDirectives.findDeclaredDependencies(allCode)
+    Dependencies.resolve(allDependencies, resolvers).get
   }
-
+  
   private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
     classLoader match {
       case cl: java.net.URLClassLoader =>
