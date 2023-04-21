@@ -24,4 +24,28 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
     results should not contain Paths.get("./commented_out.sc")
   }
 
+  "find imported files recursively from given source" in {
+    // TODO
+    ???
+  }
+
+  "find imported files recursively from given script" in {
+    // TODO
+    ???
+  }
+
+  "find declared dependencies" in {
+    val source =
+      """
+        |//> using lib com.example:some-dependency:1.1
+        |//> using lib com.example::scala-dependency:1.2
+        |// //> using lib commented:out:1.3
+        |""".stripMargin
+
+    val results = UsingDirectives.findDeclaredDependencies(source)
+    results should contain("com.example:some-dependency:1.1")
+    results should contain("com.example::scala-dependency:1.2")
+    results should not contain "commented:out:1.3"
+  }
+
 }
