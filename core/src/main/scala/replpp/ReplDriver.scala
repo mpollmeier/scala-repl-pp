@@ -15,7 +15,7 @@ import org.jline.reader.*
 import java.io.PrintStream
 import java.lang.System.lineSeparator
 import java.net.URL
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import javax.naming.InitialContext
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -94,7 +94,7 @@ class ReplDriver(args: Array[String],
       // now read and interpret the given file
       val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
       val path = resolveFile(currentFile, pathStr)
-      val linesFromFile = Files.readAllLines(path).asScala
+      val linesFromFile = util.linesFromFile(path)
       println(s"> importing $path (${linesFromFile.size} lines)")
       resultingState = interpretInput(linesFromFile, resultingState, path)
     }

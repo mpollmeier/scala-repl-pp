@@ -2,7 +2,6 @@ package replpp
 
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object UsingDirectives {
   private val Prefix    = "//> using"
@@ -15,7 +14,7 @@ object UsingDirectives {
       if (Files.isDirectory(path)) path
       else path.getParent
 
-    val importedFiles = findImportedFiles(Files.lines(path).iterator.asScala, rootDir)
+    val importedFiles = findImportedFiles(util.linesFromFile(path), rootDir)
     val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
       findImportedFilesRecursively(file, visited + file)
     }
