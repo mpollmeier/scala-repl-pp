@@ -41,11 +41,11 @@ object UsingDirectives {
     results.result().distinct
   }
 
-  def findDeclaredDependencies(source: String): Seq[String] =
-    scanFor(LibDirective, source.linesIterator)
+  def findDeclaredDependencies(lines: IterableOnce[String]): Seq[String] =
+    scanFor(LibDirective, lines)
 
-  def findResolvers(source: String): Seq[String] =
-    scanFor(ResolverDirective, source.linesIterator)
+  def findResolvers(lines: IterableOnce[String]): Seq[String] =
+    scanFor(ResolverDirective, lines)
 
   private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {
     lines
