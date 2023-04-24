@@ -36,11 +36,11 @@ package object replpp {
     compilerArgs.result()
   }
 
-  def classpath(config: Config): String = {
+  def classpath(config: Config, quiet: Boolean = false): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyArtifacts(config)
 
-    if (fromDependencies.nonEmpty) {
+    if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
