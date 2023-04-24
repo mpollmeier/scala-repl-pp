@@ -6,7 +6,7 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 
 ## TOC
 <!-- generated with: -->
-<!-- markdown-toc --maxdepth 3 README.md -->
+<!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
 
 - [Benefits over / comparison with](#benefits-over--comparison-with)
   * [Regular Scala REPL](#regular-scala-repl)
@@ -33,7 +33,7 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 - [Verbose mode](#verbose-mode)
 - [Limitations / Debugging](#limitations--debugging)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
-
+- [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
 
 ## Benefits over / comparison with
 
@@ -82,9 +82,9 @@ val res0: Int = 42
 ```
 
 ### Add dependencies with maven coordinates
-Note: the dependencies must be known at startup time, either via `--dependencies` parameter...
+Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
-./scala-repl-pp --dependencies com.michaelpollmeier:versionsort:1.0.7
+./scala-repl-pp --dep com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
@@ -94,7 +94,7 @@ Alternatively, use the `//> using lib` directive in predef code or predef files:
 ```
 echo '//> using lib com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-./scala-repl-pp --predefFiles predef.sc
+./scala-repl-pp --predef predef.sc
 
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
@@ -160,7 +160,7 @@ val foo = "Hello, predef file"
 ```
 
 ```bash
-./scala-repl-pp --script test-predef.sc --predefFiles test-predef-file.sc
+./scala-repl-pp --script test-predef.sc --predef test-predef-file.sc
 ```
 To import multiple scripts, you can specify this parameter multiple times.
 
@@ -221,19 +221,19 @@ test-main.sc
 ### named parameters
 test-main-withargs.sc
 ```scala
-@main def main(name: String) = {
-  println(s"Hello, $name!")
+@main def main(first: String, last: String) = {
+  println(s"Hello, $first $last!")
 }
 ```
 
 ```bash
-./scala-repl-pp --script test-main-withargs.sc --params name=Michael
+./scala-repl-pp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
 
 ## Additional dependency resolvers and credentials
-Via parameter on startup:
+Via `--repo` parameter on startup:
 ```bash
-./scala-repl-pp --resolvers "https://repo.gradle.org/gradle/libs-releases" --dependencies org.gradle:gradle-tooling-api:7.6.1
+./scala-repl-pp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
 scala> org.gradle.tooling.GradleConnector.newConnector()
 ```
 To add multiple dependency resolvers, you can specify this parameter multiple times.
@@ -294,7 +294,7 @@ echo 'def baz = 91' > script1.sc
 echo 'def bam = 92' > script2.sc
 export SCALA_REPL_PP_PREDEF_CODE='def bax = 93'
 
-./scala-repl-pp --predefCode='def foo = 42' --predefFiles script1.sc --predefFiles script2.sc
+./scala-repl-pp --predefCode='def foo = 42' --predef script1.sc --predef script2.sc
 
 scala> foo
 val res0: Int = 42
@@ -325,3 +325,14 @@ A better approach would be to work with a separate compiler phase, similar to wh
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
 
+## Parameters cheat sheet: the most important ones
+Here's only the most important ones - run `scala-repl-pp --help` for all parameters.
+
+| parameter     | short         | description                           
+| ------------- | ------------- | --------------------------------------
+| `--predef`    | `-p`          | Import additional files
+| `--dep`       | `-d`          | Add dependencies via maven coordinates
+| `--repo`      | `-r`          | Add repositories to resolve dependencies
+| `--script`    |               | Execute given script
+| `--param`     | `-p`          | key/value pair for main function in script
+| `--verbose`   | `-v`          | Verbose mode

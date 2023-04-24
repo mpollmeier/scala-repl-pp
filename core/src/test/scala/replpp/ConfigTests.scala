@@ -19,23 +19,25 @@ class ConfigTests extends AnyWordSpec with Matchers {
       resolvers = Seq(apacheRepo, sonatypeRepo),
       scriptFile = Some(Paths.get("/some/script.sc")),
       command = Some("someCommand"),
-      params = Map("param1" -> "value1", "param2" -> "222")
+      params = Map("param1" -> "value1", "param2" -> "222", "someEquation" -> "40 + 2 = 42"),
     )
 
     val javaArgs = config.asJavaArgs
     javaArgs shouldBe Seq(
       "--predefCode", "val predefCode = 42",
-      "--predefFiles", "/some/path/predefFile1",
-      "--predefFiles", "/some/path/predefFile2",
+      "--predef", "/some/path/predefFile1",
+      "--predef", "/some/path/predefFile2",
       "--nocolors",
       "--verbose",
-      "--dependencies", "com.michaelpollmeier:versionsort:1.0.7",
-      "--dependencies", "foo:bar:1.2.3",
-      "--resolvers", apacheRepo,
-      "--resolvers", sonatypeRepo,
+      "--dep", "com.michaelpollmeier:versionsort:1.0.7",
+      "--dep", "foo:bar:1.2.3",
+      "--repo", apacheRepo,
+      "--repo", sonatypeRepo,
       "--script", "/some/script.sc",
       "--command", "someCommand",
-      "--params", "param1=value1,param2=222"
+      "--param", "param1=value1",
+      "--param", "param2=222",
+      "--param", "someEquation=40 + 2 = 42",
     )
 
     // round trip
