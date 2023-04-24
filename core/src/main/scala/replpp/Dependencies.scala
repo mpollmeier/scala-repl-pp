@@ -2,6 +2,7 @@ package replpp
 
 import coursier.Dependency
 import coursier.cache.FileCache
+import coursier.cache.loggers.RefreshLogger
 import coursier.core.Repository
 import coursier.parse.{DependencyParser, RepositoryParser}
 
@@ -16,8 +17,11 @@ object Dependencies {
       repositories <- parseRepositories(additionalRepositories)
       dependencies <- parseDependencies(coordinates)
     } yield {
+      // the default cache throws away the credentials... see PlatformCacheCompanion.scala
+      val cache = FileCache().withLogger(RefreshLogger.create())
+
       coursier.Fetch()
-        .withCache(FileCache()) // the default cache throws away the credentials... see PlatformCacheCompanion.scala
+        .withCache(cache)
         .addRepositories(repositories: _*)
         .addDependencies(dependencies: _*)
         .run()
