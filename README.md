@@ -334,5 +334,5 @@ Here's only the most important ones - run `scala-repl-pp --help` for all paramet
 | `--dep`       | `-d`          | Add dependencies via maven coordinates
 | `--repo`      | `-r`          | Add repositories to resolve dependencies
 | `--script`    |               | Execute given script
-| `--param`     | `-p`          | key/value pair for main function in script
+| `--param`     |               | key/value pair for main function in script
 | `--verbose`   | `-v`          | Verbose mode

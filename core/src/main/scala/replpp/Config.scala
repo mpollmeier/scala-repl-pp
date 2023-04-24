@@ -129,7 +129,7 @@ object Config {
         .action((x, c) => c.copy(command = Some(x)))
         .text("command to execute, in case there are multiple @main entrypoints")
 
-      opt[String]('p', "param")
+      opt[String]("param")
         .valueName("param1=value1")
         .unbounded()
         .optional()
