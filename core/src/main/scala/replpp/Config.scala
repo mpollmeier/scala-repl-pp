@@ -2,7 +2,6 @@ package replpp
 
 import java.nio.file.Path
 
-// TODO split into repl|script|server config - with some options shared...
 case class Config(
   predefCode: Option[String] = None,
   predefFiles: Seq[Path] = Nil,
@@ -29,40 +28,35 @@ case class Config(
   serverAuthUsername: String = "",
   serverAuthPassword: String = "",
 ) {
-
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
     def add(entries: String*) = args.addAll(entries)
 
     predefCode.foreach { code =>
-      // TODO maybe better to write to some file? at least for debugging this? attention: preserve same order as normally...
       add("--predefCode", code)
     }
 
     predefFiles.foreach { predefFile =>
-      add("--predefFiles", predefFile.toString)
+      add("--predef", predefFile.toString)
     }
 
     if (nocolors) add("--nocolors")
     if (verbose) add("--verbose")
 
     dependencies.foreach { dependency =>
-      add("--dependencies", dependency)
+      add("--dep", dependency)
     }
 
     resolvers.foreach { resolver =>
-      add("--resolvers", resolver)
+      add("--repo", resolver)
     }
 
     scriptFile.foreach(file => add("--script", file.toString))
     command.foreach(cmd => add("--command", cmd))
 
-    if (params.nonEmpty) {
-      add("--params",
-        // ("k1=v1,k2=v2")
-        params.map { (key, value) => s"$key=$value" }.mkString(",")
-      )
+    params.foreach { case (key, value) =>
+      add("--param", s"$key=$value")
     }
 
     args.result()
@@ -80,29 +74,29 @@ object Config {
         .action((x, c) => c.copy(predefCode = Option(x)))
         .text("code to execute (quietly) on startup")
 
-      opt[Path]("predefFiles")
+      opt[Path]('p', "predef")
         .valueName("myScript.sc")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
-        .text("import (and run) additional script(s) on startup - may be passed multiple times")
+        .text("import additional script files on startup - may be passed multiple times")
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
         .text("turn off colors")
 
-      opt[Unit]("verbose")
+      opt[Unit]('v', "verbose")
         .action((_, c) => c.copy(verbose = true))
         .text("enable verbose output (predef, resolved dependency jars, ...)")
 
-      opt[String]("dependencies")
+      opt[String]('d', "dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
-        .text("resolve dependencies (including transitive dependencies) for given maven coordinate(s) - may be passed multiple times")
+        .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times")
 
-      opt[String]("resolvers")
+      opt[String]('r', "repo")
         .valueName("https://repository.apache.org/content/groups/public/")
         .unbounded()
         .optional()
@@ -135,10 +129,17 @@ object Config {
         .action((x, c) => c.copy(command = Some(x)))
         .text("command to execute, in case there are multiple @main entrypoints")
 
-      opt[Map[String, String]]('p', "params")
-        .valueName("k1=v1,k2=v2")
-        .action((x, c) => c.copy(params = x))
-        .text("parameter values for main function in script")
+      opt[String]("param")
+        .valueName("param1=value1")
+        .unbounded()
+        .optional()
+        .action { (x, c) =>
+          x.split("=", 2) match {
+            case Array(key, value) => c.copy(params = c.params + (key -> value))
+            case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
+          }
+        }
+        .text("key/value pair for main function in script - may be passed multiple times")
 
       note("REST server mode")
 
