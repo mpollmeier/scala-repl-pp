@@ -13,8 +13,9 @@ import dotty.tools.repl.*
 import org.jline.reader.*
 
 import java.io.PrintStream
+import java.lang.System.lineSeparator
 import java.net.URL
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import javax.naming.InitialContext
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -28,8 +29,6 @@ class ReplDriver(args: Array[String],
                  prompt: String,
                  maxPrintElements: Int,
                  classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
-
-  lazy val lineSeparator = System.getProperty("line.separator")
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
@@ -95,7 +94,7 @@ class ReplDriver(args: Array[String],
       // now read and interpret the given file
       val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
       val path = resolveFile(currentFile, pathStr)
-      val linesFromFile = Files.readAllLines(path).asScala
+      val linesFromFile = util.linesFromFile(path)
       println(s"> importing $path (${linesFromFile.size} lines)")
       resultingState = interpretInput(linesFromFile, resultingState, path)
     }

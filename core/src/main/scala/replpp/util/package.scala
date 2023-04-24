@@ -2,8 +2,9 @@ package replpp
 
 import java.nio.file.{Files, Path}
 import scala.collection.immutable.Seq
+import scala.io.Source
 import scala.jdk.CollectionConverters.*
-import scala.util.Try
+import scala.util.{Try, Using}
 
 package object util {
   
@@ -18,10 +19,7 @@ package object util {
   }
 
   def linesFromFile(path: Path): Seq[String] =
-    linesStreamFromFile(path).iterator.toSeq
-
-  def linesStreamFromFile(path: Path): IterableOnce[String] =
-    Files.lines(path).iterator().asScala
+    Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
 
   def deleteRecursively(path: Path): Unit = {
     if (Files.isDirectory(path))

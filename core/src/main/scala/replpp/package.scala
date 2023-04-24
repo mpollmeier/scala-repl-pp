@@ -1,10 +1,13 @@
+import replpp.util.linesFromFile
+
 import java.io.File
 import java.lang.System.lineSeparator
 import java.net.URL
-import replpp.util.linesFromFile
 import java.nio.file.{Files, Path, Paths}
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.io.Source
+import scala.util.Using
 
 package object replpp {
   /* ":" on unix */
@@ -36,11 +39,11 @@ package object replpp {
     compilerArgs.result()
   }
 
-  def classpath(config: Config): String = {
+  def classpath(config: Config, quiet: Boolean = false): String = {
     val fromJavaClassPathProperty = System.getProperty("java.class.path")
     val fromDependencies = dependencyArtifacts(config)
 
-    if (fromDependencies.nonEmpty) {
+    if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
@@ -54,15 +57,13 @@ package object replpp {
   }
 
   private def dependencyArtifacts(config: Config): Seq[File] = {
-    val predefCode = allPredefCode(config)
-    val scriptCode = config.scriptFile.map(Files.readString).getOrElse("")
-    val allCode = 
-      s"""$predefCode
-         |$scriptCode""".stripMargin
-      
-    val resolvers = config.resolvers ++ UsingDirectives.findResolvers(allCode)
-    val allDependencies = config.dependencies ++
-      UsingDirectives.findDeclaredDependencies(allCode)
+    val scriptLines = config.scriptFile.map { path =>
+       Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
+    }.getOrElse(Seq.empty)
+    val allLines = allPredefLines(config) ++ scriptLines
+
+    val resolvers = config.resolvers ++ UsingDirectives.findResolvers(allLines)
+    val allDependencies = config.dependencies ++ UsingDirectives.findDeclaredDependencies(allLines)
     Dependencies.resolve(allDependencies, resolvers).get
   }
   
@@ -75,7 +76,10 @@ package object replpp {
     }
   }
 
-  def allPredefCode(config: Config): String = {
+  def allPredefCode(config: Config): String =
+    allPredefLines(config).mkString(lineSeparator)
+
+  def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
 
@@ -122,9 +126,7 @@ package object replpp {
       }
     }
 
-    resultLines.result()
-      .filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
-      .mkString(lineSeparator)
+    resultLines.result().filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
   }
 
   private def lines(str: String): Seq[String] =

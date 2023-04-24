@@ -58,7 +58,7 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
         |// //> using lib commented:out:1.3
         |""".stripMargin
 
-    val results = UsingDirectives.findDeclaredDependencies(source)
+    val results = UsingDirectives.findDeclaredDependencies(source.linesIterator)
     results should contain("com.example:some-dependency:1.1")
     results should contain("com.example::scala-dependency:1.2")
     results should not contain "commented:out:1.3"
@@ -72,7 +72,7 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
         |// //> using resolver https://commented.out/repo
         |""".stripMargin
 
-    val results = UsingDirectives.findResolvers(source)
+    val results = UsingDirectives.findResolvers(source.linesIterator)
     results should contain("https://repository.apache.org/content/groups/public")
     results should contain("https://shiftleft.jfrog.io/shiftleft/libs-release-local")
     results should not contain "https://commented.out/repo"
