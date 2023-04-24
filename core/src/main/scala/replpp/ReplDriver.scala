@@ -13,6 +13,7 @@ import dotty.tools.repl.*
 import org.jline.reader.*
 
 import java.io.PrintStream
+import java.lang.System.lineSeparator
 import java.net.URL
 import java.nio.file.{Files, Path}
 import javax.naming.InitialContext
@@ -28,8 +29,6 @@ class ReplDriver(args: Array[String],
                  prompt: String,
                  maxPrintElements: Int,
                  classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
-
-  lazy val lineSeparator = System.getProperty("line.separator")
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
