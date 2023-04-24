@@ -51,7 +51,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-parameter"
   }
 
-  "--predefCode" in {
+  "predefCode" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
@@ -60,7 +60,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-predefCode"
   }
 
-  "--predefCode imports" in {
+  "predefCode imports" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-import-" + MaxValue)""".stripMargin,
@@ -69,7 +69,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-predefCode-import-127"
   }
 
-  "--predefCode imports in additionalScripts" in {
+  "predefCode imports in additionalScripts" in {
     execTest { testOutputPath =>
       val additionalScript = os.temp()
       os.write.over(additionalScript, "def foo = MaxValue")
@@ -82,7 +82,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-predefCode-using-file-import:127"
   }
 
-  "--predefFiles" in {
+  "predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp("val bar = \"iwashere-predefFile\"").toNIO
       TestSetup(
@@ -92,7 +92,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-predefFile"
   }
 
-  "--predefFiles imports are available" in {
+  "predefFiles imports are available" in {
     execTest { testOutputPath =>
       val predefFile = os.temp("import Byte.MaxValue").toNIO
       TestSetup(
@@ -102,7 +102,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-predefFile-127"
   }
 
-  "additional dependencies via --dependency" in {
+  "additional dependencies" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
@@ -113,11 +113,11 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-dependency-param:1"
   }
 
-  "additional dependencies via `//> using lib` in script" in {
+  "additional dependencies via `//> using dep` in script" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""
-           |//> using lib com.michaelpollmeier:versionsort:1.0.7
+           |//> using dep com.michaelpollmeier:versionsort:1.0.7
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
            |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-script:" + compareResult)
            |""".stripMargin
@@ -125,21 +125,21 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-dependency-using-script:1"
   }
 
-  "additional dependencies via `//> using lib` in --predefCode" in {
+  "additional dependencies via `//> using dep` in predefCode" in {
     execTest { testOutputPath =>
       TestSetup(
         s"""
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
            |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-predefCode:" + compareResult)
            |""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("//> using lib com.michaelpollmeier:versionsort:1.0.7"))
+        adaptConfig = _.copy(predefCode = Some("//> using dep com.michaelpollmeier:versionsort:1.0.7"))
       )
     }.get shouldBe "iwashere-dependency-using-predefCode:1"
   }
 
-  "additional dependencies via `//> using lib` in --predefFiles" in {
+  "additional dependencies via `//> using dep` in predefFiles" in {
     execTest { testOutputPath =>
-      val predefFile = os.temp("//> using lib com.michaelpollmeier:versionsort:1.0.7").toNIO
+      val predefFile = os.temp("//> using dep com.michaelpollmeier:versionsort:1.0.7").toNIO
       TestSetup(
         s"""
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
@@ -162,7 +162,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-using-file-test1:99"
   }
 
-  "import additional files via `//> using file` via --predefCode" in {
+  "import additional files via `//> using file` via predefCode" in {
     execTest { testOutputPath =>
       val additionalScript = os.temp()
       os.write.over(additionalScript, "def foo = 99")
@@ -175,7 +175,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-using-file-test2:99"
   }
 
-  "import additional files via `//> using file` via --predefFiles" in {
+  "import additional files via `//> using file` via predefFiles" in {
     execTest { testOutputPath =>
       val additionalScript = os.temp("def foo = 99")
       val predefFile = os.temp(s"//> using file $additionalScript").toNIO

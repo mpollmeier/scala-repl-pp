@@ -90,9 +90,9 @@ val res0: Int = 1
 ```
 To add multiple dependencies, you can specify this parameter multiple times.
 
-Alternatively, use the `//> using lib` directive in predef code or predef files:
+Alternatively, use the `//> using dep` directive in predef code or predef files:
 ```
-echo '//> using lib com.michaelpollmeier:versionsort:1.0.7' > predef.sc
+echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
 ./scala-repl-pp --predef predef.sc
 
@@ -181,11 +181,11 @@ println(foo)
 ```
 
 ### Dependencies
-Dependencies can be added via `//> using lib` syntax (like in scala-cli).
+Dependencies can be added via `//> using dep` syntax (like in scala-cli).
 
 test-dependencies.sc:
 ```scala
-//> using lib com.michaelpollmeier:versionsort:1.0.7
+//> using dep com.michaelpollmeier:versionsort:1.0.7
 
 val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
 assert(compareResult == 1,
@@ -243,7 +243,7 @@ Or via `//> using resolver` directive as part of your script or predef code:
 script-with-resolver.sc
 ```scala
 //> using resolver https://repo.gradle.org/gradle/libs-releases
-//> using lib org.gradle:gradle-tooling-api:7.6.1
+//> using dep org.gradle:gradle-tooling-api:7.6.1
 println(org.gradle.tooling.GradleConnector.newConnector())
 ```
 ```scala

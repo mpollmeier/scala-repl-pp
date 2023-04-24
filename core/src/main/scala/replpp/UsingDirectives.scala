@@ -5,7 +5,7 @@ import scala.collection.mutable
 
 object UsingDirectives {
   private val Prefix    = "//> using"
-  val LibDirective      = s"$Prefix lib "
+  val LibDirective      = s"$Prefix dep "
   val FileDirective     = s"$Prefix file "
   val ResolverDirective = s"$Prefix resolver"
 

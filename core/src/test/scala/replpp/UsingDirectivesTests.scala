@@ -53,9 +53,9 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
   "find declared dependencies" in {
     val source =
       """
-        |//> using lib com.example:some-dependency:1.1
-        |//> using lib com.example::scala-dependency:1.2
-        |// //> using lib commented:out:1.3
+        |//> using dep com.example:some-dependency:1.1
+        |//> using dep com.example::scala-dependency:1.2
+        |// //> using dep commented:out:1.3
         |""".stripMargin
 
     val results = UsingDirectives.findDeclaredDependencies(source.linesIterator)
