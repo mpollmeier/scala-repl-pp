@@ -13,8 +13,7 @@ object PPrinter {
     new pprint.PPrinter(
       defaultHeight = 99999,
       colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
-      colorApplyPrefix = fansi.Attrs.Empty,
-      additionalHandlers = handleProduct(pprint.PPrinter.BlackWhite)) {
+      colorApplyPrefix = fansi.Attrs.Empty) {
 
       override def tokenize(x: Any,
                             width: Int = defaultWidth,
@@ -55,23 +54,5 @@ object PPrinter {
         "\u001b\\[[00]+;0?(\\d+);0?(\\d+);0?(\\d+)m",
         "\u001b[$1;$2;$3m"
       ) // `[00;38;05;70m` is encoded as `[38;5;70m` in fansi - 8bit color encoding
-
-  private def handleProduct(original: pprint.PPrinter): PartialFunction[Any, Tree] = {
-    case product: Product =>
-      Tree.Apply(
-        product.productPrefix,
-        Iterator.range(0, product.productArity).map { elementIdx =>
-          val elementValueTree = original.treeify(
-            product.productElement(elementIdx),
-            escapeUnicode = original.defaultEscapeUnicode,
-            showFieldNames = original.defaultShowFieldNames
-          )
-          product.productElementName(elementIdx) match {
-            case "" => elementValueTree
-            case name => Tree.Infix(Tree.Literal(name), "->", elementValueTree)
-          }
-        }
-      )
-  }
 
 }
