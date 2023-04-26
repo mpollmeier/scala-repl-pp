@@ -14,6 +14,29 @@ class PPrinterTests extends AnyWordSpec with Matchers {
   val FBold              = "\u001b[01mF\u001b[m"
   val X8bit              = "\u001b[00;38;05;70mX\u001b[m"
 
+  "print some common datastructures" in {
+    PPrinter(List(1,2)) shouldBe "List(1, 2)"
+    PPrinter((1,2,"three"))  shouldBe """(1, 2, "three")"""
+
+    case class A(i: Int, s: String)
+    PPrinter(A(42, "foo bar"))  shouldBe """A(i = 42, s = "foo bar")"""
+
+    PPrinter(new Product {
+      override def productPrefix = "Foo"
+      def productArity = 2
+      override def productElementName(n: Int) =
+        n match {
+          case 0 => "first"
+          case 1 => "second"
+        }
+      def productElement(n: Int) = n match {
+        case 0 => "one"
+        case 1 => "two"
+      }
+      def canEqual(that: Any): Boolean = ???
+    }) shouldBe """Foo(first = "one", second = "two")"""
+  }
+
   "fansi encoding fix" must {
     "handle different ansi encoding termination" in {
       // encoding ends with [39m for fansi instead of [m
