@@ -38,6 +38,11 @@ class ReplDriver(args: Array[String],
       override protected def promptStr = prompt
     }
     initializeRenderer()
+    val initialState0: State = {
+      val ctx = initialState.context
+      val ctx2 = ctx.fresh.setSetting(ctx.settings.color, "never")
+      State(0, 0, Map.empty, Set.empty, ctx2)
+    }
     greeting.foreach(out.println)
 
     @tailrec
@@ -60,7 +65,7 @@ class ReplDriver(args: Array[String],
       }
     }
 
-    try runBody { loop(using initialState)() }
+    try runBody { loop(using initialState0)() }
     finally terminal.close()
   }
 

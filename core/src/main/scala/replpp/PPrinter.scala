@@ -12,8 +12,9 @@ object PPrinter {
   private def create(): pprint.PPrinter = {
     new pprint.PPrinter(
       defaultHeight = 99999,
-      colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
-      colorApplyPrefix = fansi.Attrs.Empty) {
+//      colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
+//      colorApplyPrefix = fansi.Attrs.Empty
+    ) {
 
       override def tokenize(x: Any,
                             width: Int = defaultWidth,
