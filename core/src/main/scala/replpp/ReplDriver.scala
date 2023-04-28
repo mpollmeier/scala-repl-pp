@@ -9,7 +9,7 @@ import dotty.tools.dotc.core.Comments.{ContextDoc, ContextDocstrings}
 import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx, explore}
 import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
-import dotty.tools.repl.*
+import dotty.tools.repl.{ParseResult, State}
 import org.jline.reader.*
 
 import java.io.PrintStream
