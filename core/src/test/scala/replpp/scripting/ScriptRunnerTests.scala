@@ -2,8 +2,7 @@ package replpp.scripting
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import replpp.{Config, PredefCodeEnvVar}
-
+import replpp.Config
 import scala.util.{Failure, Success, Try}
 
 
@@ -51,37 +50,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-parameter"
   }
 
-  "predefCode" in {
-    execTest { testOutputPath =>
-      TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("val bar = \"iwashere-predefCode\""))
-      )
-    }.get shouldBe "iwashere-predefCode"
-  }
-
-  "predefCode imports" in {
-    execTest { testOutputPath =>
-      TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-import-" + MaxValue)""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
-      )
-    }.get shouldBe "iwashere-predefCode-import-127"
-  }
-
-  "predefCode imports in additionalScripts" in {
-    execTest { testOutputPath =>
-      val additionalScript = os.temp()
-      os.write.over(additionalScript, "def foo = MaxValue")
-      TestSetup(
-        s"""//> using file $additionalScript
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-predefCode-using-file-import:" + foo)
-           |""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("import Byte.MaxValue"))
-      )
-    }.get shouldBe "iwashere-predefCode-using-file-import:127"
-  }
-
   "predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp("val bar = \"iwashere-predefFile\"").toNIO
@@ -125,18 +93,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     }.get shouldBe "iwashere-dependency-using-script:1"
   }
 
-  "additional dependencies via `//> using dep` in predefCode" in {
-    execTest { testOutputPath =>
-      TestSetup(
-        s"""
-           |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-predefCode:" + compareResult)
-           |""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some("//> using dep com.michaelpollmeier:versionsort:1.0.7"))
-      )
-    }.get shouldBe "iwashere-dependency-using-predefCode:1"
-  }
-
   "additional dependencies via `//> using dep` in predefFiles" in {
     execTest { testOutputPath =>
       val predefFile = os.temp("//> using dep com.michaelpollmeier:versionsort:1.0.7").toNIO
@@ -160,19 +116,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
            |""".stripMargin
       )
     }.get shouldBe "iwashere-using-file-test1:99"
-  }
-
-  "import additional files via `//> using file` via predefCode" in {
-    execTest { testOutputPath =>
-      val additionalScript = os.temp()
-      os.write.over(additionalScript, "def foo = 99")
-      TestSetup(
-        s"""
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test2:" + foo)
-           |""".stripMargin,
-        adaptConfig = _.copy(predefCode = Some(s"//> using file $additionalScript"))
-      )
-    }.get shouldBe "iwashere-using-file-test2:99"
   }
 
   "import additional files via `//> using file` via predefFiles" in {
@@ -248,12 +191,12 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   type TestOutputPath = String
   type TestOutput = String
-  case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity, predefCodeViaEnvVar: String = "")
+  case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)
   private def execTest(setupTest: TestOutputPath => TestSetup): Try[TestOutput] = {
     val testOutputFile = os.temp()
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
 
-    val TestSetup(scriptSrc, adaptConfig, predefCodeViaEnvVar) = setupTest(testOutputPath)
+    val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
     val scriptFile = os.temp(scriptSrc).toNIO
     val config = adaptConfig(Config(scriptFile = Some(scriptFile), verbose = false))
     ScriptRunner.exec(config).map{_ => os.read(testOutputFile)}

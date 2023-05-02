@@ -18,9 +18,7 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
-  * [Predef code for script](#predef-code-for-script)
-  * [Predef code via environment variable](#predef-code-via-environment-variable)
-  * [Predef file(s)](#predef-files)
+  * [Predef file(s) used in script](#predef-files-used-in-script)
   * [Importing files / scripts](#importing-files--scripts)
   * [Dependencies](#dependencies)
   * [@main entrypoints](#main-entrypoints)
@@ -29,7 +27,7 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 - [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
-- [Predef code and scripts](#predef-code-and-scripts)
+- [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
 - [Verbose mode](#verbose-mode)
 - [Limitations / Debugging](#limitations--debugging)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
@@ -75,8 +73,10 @@ Generally speaking, `--help` is your friend!
 # customize prompt, greeting and exit code
 ./scala-repl-pp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
 
-# pass some predef code
-./scala-repl-pp --predefCode 'def foo = 42'
+# pass some predef code in file(s)
+echo 'def foo = 42' > foo.sc
+
+./scala-repl-pp --predef foo.sc
 scala> foo
 val res0: Int = 42
 ```
@@ -127,28 +127,7 @@ println("Hello!")
 ./scala-repl-pp --script test-simple.sc
 ```
 
-### Predef code for script
-test-predef.sc
-```scala
-println(foo)
-```
-
-```bash
-./scala-repl-pp --script test-predef.sc --predefCode 'val foo = "Hello, predef!"'
-```
-
-### Predef code via environment variable
-test-predef.sc
-```scala
-println(foo)
-```
-
-```bash
-export SCALA_REPL_PP_PREDEF_CODE='val foo = "Hello, predef!"'
-./scala-repl-pp --script test-predef.sc
-```
-
-### Predef file(s)
+### Predef file(s) used in script
 test-predef.sc
 ```scala
 println(foo)
@@ -285,31 +264,24 @@ stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
 ```
 
-## Predef code and scripts
-There's a variety of ways to define predef code, i.e. code that is being run before any given script:
+## Global predef file: `~/.scala-repl-pp.sc`
+Code that should be available across all scala-repl-pp sessions can be written into your local `~/.scala-repl-pp.sc`. 
 
 ```
 echo 'def bar = 90' > ~/.scala-repl-pp.sc
 echo 'def baz = 91' > script1.sc
 echo 'def bam = 92' > script2.sc
-export SCALA_REPL_PP_PREDEF_CODE='def bax = 93'
 
-./scala-repl-pp --predefCode='def foo = 42' --predef script1.sc --predef script2.sc
-
-scala> foo
-val res0: Int = 42
+./scala-repl-pp --predef script1.sc --predef script2.sc
 
 scala> bar
-val res1: Int = 90
+val res0: Int = 90
 
 scala> baz
-val res2: Int = 91
+val res1: Int = 91
 
 scala> bam
-val res3: Int = 92
-
-scala> bax
-val res4: Int = 93
+val res2: Int = 92
 ```
 
 ## Verbose mode

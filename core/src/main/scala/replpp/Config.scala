@@ -3,9 +3,7 @@ package replpp
 import java.nio.file.Path
 
 case class Config(
-  predefCode: Option[String] = None,
   predefFiles: Seq[Path] = Nil,
-  predefFilesBeforePredefCode: Boolean = false,
   nocolors: Boolean = false,
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
@@ -32,10 +30,6 @@ case class Config(
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
     def add(entries: String*) = args.addAll(entries)
-
-    predefCode.foreach { code =>
-      add("--predefCode", code)
-    }
 
     predefFiles.foreach { predefFile =>
       add("--predef", predefFile.toString)
@@ -68,11 +62,6 @@ object Config {
   def parse(args: Array[String]): Config = {
     val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
       override def errorOnUnknownArgument = false
-
-      opt[String]("predefCode")
-        .valueName("def foo = 42")
-        .action((x, c) => c.copy(predefCode = Option(x)))
-        .text("code to execute (quietly) on startup")
 
       opt[Path]('p', "predef")
         .valueName("myScript.sc")
