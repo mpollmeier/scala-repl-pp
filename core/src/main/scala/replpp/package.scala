@@ -106,9 +106,6 @@ package object replpp {
     resultLines.result().filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
   }
 
-  private def lines(str: String): Seq[String] =
-    str.split(lineSeparator)
-
   /**
     * resolve absolute or relative paths to an absolute path
     * - if given pathStr is an absolute path, just take that
