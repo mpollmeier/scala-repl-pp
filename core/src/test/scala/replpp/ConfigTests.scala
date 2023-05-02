@@ -11,7 +11,6 @@ class ConfigTests extends AnyWordSpec with Matchers {
 
   "asJavaArgs (inverse of Config.parse) for ScriptingDriver" in {
     val config = Config(
-      predefCode = Some("val predefCode = 42"),
       predefFiles = List(Paths.get("/some/path/predefFile1"), Paths.get("/some/path/predefFile2")),
       nocolors = true,
       verbose = true,
@@ -24,7 +23,6 @@ class ConfigTests extends AnyWordSpec with Matchers {
 
     val javaArgs = config.asJavaArgs
     javaArgs shouldBe Seq(
-      "--predefCode", "val predefCode = 42",
       "--predef", "/some/path/predefFile1",
       "--predef", "/some/path/predefFile2",
       "--nocolors",

@@ -13,7 +13,6 @@ package object replpp {
   /* ":" on unix */
   val pathSeparator = java.io.File.pathSeparator
 
-  val PredefCodeEnvVar = "SCALA_REPL_PP_PREDEF_CODE"
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
 
   /** The user's home directory */
@@ -23,6 +22,7 @@ package object replpp {
   lazy val pwd: Path = Paths.get(".").toAbsolutePath
 
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
+  lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
@@ -79,43 +79,20 @@ package object replpp {
   def allPredefCode(config: Config): String =
     allPredefLines(config).mkString(lineSeparator)
 
-  def allPredefLines(config: Config): Seq[String] = {
+  private def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
 
-    def handlePredefCodeWithoutPredefFiles() = {
-      val codeLines =
-        lines(config.predefCode) ++                       // `--predefCode` parameter
-        lines(Option(System.getenv(PredefCodeEnvVar))) ++ // ~/.scala-repl-pp.sc file
-        globalPredefFileLines                             // `SCALA_REPL_PP_PREDEF_CODE` env var
-
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(codeLines, pwd)
+    val allPredefFiles = globalPredefFileMaybe ++ config.predefFiles
+    allPredefFiles.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
+      visited ++= importedFiles
       importedFiles.foreach { file =>
         resultLines ++= linesFromFile(file)
       }
-      visited ++= importedFiles
-      resultLines ++= codeLines
-    }
 
-    def handlePredefFiles() = {
-      config.predefFiles.foreach { file =>
-        val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-        visited ++= importedFiles
-        importedFiles.foreach { file =>
-          resultLines ++= linesFromFile(file)
-        }
-
-        resultLines ++= linesFromFile(file)
-        visited += file
-      }
-    }
-
-    if (config.predefFilesBeforePredefCode) {
-      handlePredefFiles()
-      handlePredefCodeWithoutPredefFiles()
-    } else {
-      handlePredefCodeWithoutPredefFiles()
-      handlePredefFiles()
+      resultLines ++= linesFromFile(file)
+      visited += file
     }
 
     config.scriptFile.foreach { file =>
@@ -132,9 +109,6 @@ package object replpp {
   private def lines(str: String): Seq[String] =
     str.split(lineSeparator)
 
-  private def lines(strMaybe: Option[String]): Seq[String] =
-    strMaybe.map(lines).getOrElse(Seq.empty)
-
   /**
     * resolve absolute or relative paths to an absolute path
     * - if given pathStr is an absolute path, just take that
@@ -146,10 +120,4 @@ package object replpp {
     else base.resolve(path)
   }
 
-  private def globalPredefFileLines: Seq[String] = {
-    if (Files.exists(globalPredefFile))
-      linesFromFile(globalPredefFile)
-    else
-      Seq.empty
-  }
 }
