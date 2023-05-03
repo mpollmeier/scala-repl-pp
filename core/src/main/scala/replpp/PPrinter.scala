@@ -11,7 +11,7 @@ object PPrinter {
 
   private def create(): pprint.PPrinter = {
     new pprint.PPrinter(
-      defaultHeight = 99999,
+      defaultHeight = Int.MaxValue,
       colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
       colorApplyPrefix = fansi.Attrs.Empty) {
 
