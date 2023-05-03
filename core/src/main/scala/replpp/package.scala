@@ -37,10 +37,7 @@ package object replpp {
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
 
-    // don't truncate output by default
-    compilerArgs ++= Array("-Vrepl-max-print-characters", s"${config.maxPrintCharacters.getOrElse(-1)}")
-
-  compilerArgs.result()
+    compilerArgs.result()
   }
 
   def classpath(config: Config, quiet: Boolean = false): String = {

@@ -13,7 +13,7 @@ case class Config(
   prompt: Option[String] = None,
   greeting: String = "Welcome to scala-repl-pp!",
   onExitCode: Option[String] = None,
-  maxPrintCharacters: Option[Int] = None,
+  maxHeight: Option[Int] = None,
 
   // script only
   scriptFile: Option[Path] = None,
@@ -47,8 +47,8 @@ case class Config(
       add("--repo", resolver)
     }
 
-    maxPrintCharacters.foreach { value =>
-      add("--Vrepl-max-print-characters", s"$value")
+    maxHeight.foreach { value =>
+      add("--maxHeight", s"$value")
     }
 
     scriptFile.foreach(file => add("--script", file.toString))
@@ -113,10 +113,9 @@ object Config {
         .valueName("""println("bye!")""")
         .action((x, c) => c.copy(onExitCode = Option(x)))
 
-      // replicates and controls dotty.tools.dotc.config.ScalaSettings.VreplMaxPrintCharacters
-      opt[Int]("Vrepl-max-print-characters")
-        .action((x, c) => c.copy(maxPrintCharacters = Some(x)))
-        .text("Number of characters to be printed before output is truncated (disabled by default)")
+      opt[Int]("maxHeight")
+        .action((x, c) => c.copy(maxHeight = Some(x)))
+        .text("Maximum number lines to print before output gets truncated (default: no limit)")
 
       note("Script execution")
 

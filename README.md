@@ -115,11 +115,15 @@ println(bar) //1
 
 ### Rendering of output
 
-Unlike the stock Scala REPL, scala-repl-pp does _not_ truncate the output by default. You can enable truncation to get the same behaviour though:
+Unlike the stock Scala REPL, scala-repl-pp does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
 ```
-./scala-repl-pp --Vrepl-max-print-characters 10
-scala> "abcdefghijklmnop"
-val res0: String = "abcdefghi ... large output truncated, print value to show all
+./scala-repl-pp --maxHeight 5
+scala> (1 to 100000).toSeq
+val res0: scala.collection.immutable.Range.Inclusive = Range(
+  1,
+  2,
+  3,
+...
 ```
 
 ## Scripting

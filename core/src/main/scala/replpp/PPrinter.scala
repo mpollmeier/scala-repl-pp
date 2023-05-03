@@ -4,14 +4,24 @@ import pprint.{PPrinter, Renderer, Result, Tree, Truncated}
 import scala.util.matching.Regex
 
 object PPrinter {
-  private val pprinter = create()
+  private var pprinter: pprint.PPrinter = null
+  private var maxHeight: Int = Int.MaxValue
 
-  def apply(obj: Object): String =
-    pprinter(obj).toString
+  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue): String = {
+    val _pprinter = this.synchronized {
+      // initialise on first use and whenever the maxHeight setting changed
+      if (pprinter == null || this.maxHeight != maxHeight) {
+        pprinter = create(maxHeight)
+        this.maxHeight = maxHeight
+      }
+      pprinter
+    }
+    _pprinter.apply(objectToRender).render
+  }
 
-  private def create(): pprint.PPrinter = {
+  private def create(maxHeight: Int): pprint.PPrinter = {
     new pprint.PPrinter(
-      defaultHeight = Int.MaxValue,
+      defaultHeight = maxHeight,
       colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
       colorApplyPrefix = fansi.Attrs.Empty) {
 

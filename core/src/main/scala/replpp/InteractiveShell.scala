@@ -16,7 +16,8 @@ object InteractiveShell {
       compilerArgs,
       onExitCode = config.onExitCode,
       greeting = Option(config.greeting),
-      prompt = config.prompt.getOrElse("scala")
+      prompt = config.prompt.getOrElse("scala"),
+      maxHeight = config.maxHeight
     )
 
     val initialState: State = replDriver.initialState
