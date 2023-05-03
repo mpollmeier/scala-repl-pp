@@ -5,9 +5,9 @@ import scala.util.matching.Regex
 
 object PPrinter {
   private var pprinter: pprint.PPrinter = null
-  private var maxHeight: Int = Int.MaxValue
+  private var maxHeight: Option[Int] = None
 
-  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue): String = {
+  def apply(objectToRender: Object, maxHeight: Option[Int] = None): String = {
     val _pprinter = this.synchronized {
       // initialise on first use and whenever the maxHeight setting changed
       if (pprinter == null || this.maxHeight != maxHeight) {
@@ -19,9 +19,9 @@ object PPrinter {
     _pprinter.apply(objectToRender).render
   }
 
-  private def create(maxHeight: Int): pprint.PPrinter = {
+  private def create(maxHeight: Option[Int] = None): pprint.PPrinter = {
     new pprint.PPrinter(
-      defaultHeight = maxHeight,
+      defaultHeight = maxHeight.getOrElse(Int.MaxValue),
       colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
       colorApplyPrefix = fansi.Attrs.Empty) {
 

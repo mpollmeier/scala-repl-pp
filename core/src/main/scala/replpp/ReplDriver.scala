@@ -37,7 +37,11 @@ class ReplDriver(args: Array[String],
     val terminal = new JLineTerminal {
       override protected def promptStr = prompt
     }
-    initializeRenderer()
+
+    // configure rendering to use our pprinter for displaying results
+    rendering.myReplStringOf = (objectToRender: Object, maxElements: Int, maxCharacters: Int) =>
+      PPrinter.apply(objectToRender, maxHeight)
+
     greeting.foreach(out.println)
 
     @tailrec
@@ -116,12 +120,5 @@ class ReplDriver(args: Array[String],
 
   private def parseInput(input: String, state: State): ParseResult =
     ParseResult(input)(using state)
-
-  /** configure rendering to use our pprinter for displaying results */
-  private def initializeRenderer() = {
-    rendering.myReplStringOf = (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
-      PPrinter.apply(objectToRender, maxHeight.getOrElse(Int.MaxValue))
-    }
-  }
 
 }
