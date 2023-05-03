@@ -36,6 +36,7 @@ package object replpp {
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
+
     compilerArgs.result()
   }
 

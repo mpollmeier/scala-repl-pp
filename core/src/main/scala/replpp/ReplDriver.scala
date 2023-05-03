@@ -27,7 +27,7 @@ class ReplDriver(args: Array[String],
                  onExitCode: Option[String] = None,
                  greeting: Option[String],
                  prompt: String,
-                 maxPrintElements: Int,
+                 maxHeight: Option[Int] = None,
                  classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
@@ -124,9 +124,10 @@ class ReplDriver(args: Array[String],
       // classloader, so we use reflection instead of simply calling `replpp.PPrinter:apply`.
       // This is analogous to what happens in dotty.tools.repl.Rendering.
       val pprinter = Class.forName("replpp.PPrinter", true, rendering.myClassLoader)
-      val renderer = pprinter.getMethod("apply", classOf[Object])
-      (value: Object, maxElements: Int, maxCharacters: Int) =>
-        renderer.invoke(null, value).asInstanceOf[String].take(maxCharacters)
+      val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int])
+      (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
+        renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue)).asInstanceOf[String]
+      }
     }
   }
 
