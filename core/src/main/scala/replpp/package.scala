@@ -36,7 +36,11 @@ package object replpp {
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
-    compilerArgs.result()
+
+    // don't truncate output by default
+    compilerArgs ++= Array("-Vrepl-max-print-characters", s"${config.maxPrintCharacters.getOrElse(-1)}")
+
+  compilerArgs.result()
   }
 
   def classpath(config: Config, quiet: Boolean = false): String = {

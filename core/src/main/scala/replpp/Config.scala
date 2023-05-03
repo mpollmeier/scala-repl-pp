@@ -11,8 +11,9 @@ case class Config(
 
   // repl only
   prompt: Option[String] = None,
-  greeting: String = "Welcome to the scala-repl-pp!",
+  greeting: String = "Welcome to scala-repl-pp!",
   onExitCode: Option[String] = None,
+  maxPrintCharacters: Option[Int] = None,
 
   // script only
   scriptFile: Option[Path] = None,
@@ -44,6 +45,10 @@ case class Config(
 
     resolvers.foreach { resolver =>
       add("--repo", resolver)
+    }
+
+    maxPrintCharacters.foreach { value =>
+      add("--Vrepl-max-print-characters", s"$value")
     }
 
     scriptFile.foreach(file => add("--script", file.toString))
@@ -100,13 +105,18 @@ object Config {
         .text("specify a custom prompt")
 
       opt[String]("greeting")
-        .valueName("Welcome to the scala-repl-pp!")
+        .valueName("Welcome to scala-repl-pp!")
         .action((x, c) => c.copy(greeting = x))
         .text("specify a custom greeting")
 
       opt[String]("onExitCode")
         .valueName("""println("bye!")""")
         .action((x, c) => c.copy(onExitCode = Option(x)))
+
+      // replicates and controls dotty.tools.dotc.config.ScalaSettings.VreplMaxPrintCharacters
+      opt[Int]("Vrepl-max-print-characters")
+        .action((x, c) => c.copy(maxPrintCharacters = Some(x)))
+        .text("Number of characters to be printed before output is truncated (disabled by default)")
 
       note("Script execution")
 

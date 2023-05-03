@@ -16,6 +16,7 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 - [REPL](#repl)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
+  * [Rendering of output](#rendering-of-output)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
   * [Predef file(s) used in script](#predef-files-used-in-script)
@@ -32,7 +33,6 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 - [Limitations / Debugging](#limitations--debugging)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
-
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -111,6 +111,15 @@ echo 'val bar = foo' > myScript.sc
 val foo = 1
 //> using file myScript.sc
 println(bar) //1
+```
+
+### Rendering of output
+
+Unlike the stock Scala REPL, scala-repl-pp does _not_ truncate the output by default. You can enable truncation to get the same behaviour though:
+```
+./scala-repl-pp --Vrepl-max-print-characters 10
+scala> "abcdefghijklmnop"
+val res0: String = "abcdefghi ... large output truncated, print value to show all
 ```
 
 ## Scripting
