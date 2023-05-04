@@ -6,105 +6,84 @@ import org.slf4j.{Logger, LoggerFactory}
 import java.io.{BufferedReader, InputStream, InputStreamReader, PipedInputStream, PipedOutputStream, PrintStream, PrintWriter}
 import java.util.UUID
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, Semaphore}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
+import java.util.concurrent.Executors
+import scala.concurrent.impl.Promise
+import scala.util.{Failure, Success}
 
 /** Result of executing a query, containing in particular output received on standard out. */
-case class QueryResult(out: String, uuid: UUID) extends HasUUID
+case class QueryResult(out: String, uuid: UUID, isSuccessful: Boolean) extends HasUUID
 
 trait HasUUID {
   def uuid: UUID
 }
 
-private[server] case class Job(uuid: UUID, query: String, observer: QueryResult => Unit)
+//private[server] case class Job(uuid: UUID, query: String, observer: QueryResult => Unit)
 
-class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
+class EmbeddedRepl(predefCode: IterableOnce[String], verbose: Boolean = false) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  val jobQueue: BlockingQueue[Job] = new LinkedBlockingQueue[Job]()
+  private val singleThreadedJobExecutor: ExecutionContextExecutorService =
+    ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
-  val (inStream, toStdin)     = pipePair()
-  val (fromStdout, outStream) = pipePair()
+  private val replDriver = {
+    val inheritedClasspath = System.getProperty("java.class.path")
+    val compilerArgs = Array(
+      "-classpath", inheritedClasspath,
+      "-explain", // verbose scalac error messages
+      "-deprecation",
+      "-color", "never"
+    )
 
-  val writer    = new PrintWriter(toStdin)
-  val reader    = new BufferedReader(new InputStreamReader(fromStdout))
-
-  val userThread = new Thread(new UserRunnable(jobQueue, writer, reader, verbose))
-
-  val shellThread = new Thread(
-    new Runnable {
-      override def run(): Unit = {
-        val inheritedClasspath = System.getProperty("java.class.path")
-        val compilerArgs = Array(
-          "-classpath", inheritedClasspath,
-          "-explain", // verbose scalac error messages
-          "-deprecation",
-          "-color", "never"
-        )
-
-        val replDriver = new ReplDriver(compilerArgs, inStream, new PrintStream(outStream))
-        val initialState: State = replDriver.initialState
-        val state: State =
-          if (verbose) {
-            println(predefCode)
-            replDriver.run(predefCode)(using initialState)
-          } else {
-            replDriver.runQuietly(predefCode)(using initialState)
-          }
-
-        replDriver.runUntilQuit()
-      }
-    })
-
-  private def pipePair(): (PipedInputStream, PipedOutputStream) = {
-    val out = new PipedOutputStream()
-    val in  = new PipedInputStream()
-    in.connect(out)
-    (in, out)
+    // TODO pass our own outStream that we can parse
+//    new ReplDriver(compilerArgs, new PrintStream(outStream))
+    new ReplDriver(compilerArgs, System.out)
   }
 
-  def start(): Unit = {
-    shellThread.start()
-    userThread.start()
+  private var state: State = {
+    println("XXX2a: prefore predef println")
+    logger.info("XXX2a: prefore predef")
+    val ret = replDriver.execute(predefCode)(using replDriver.initialState)
+    println("XXX2b println: predef executed: objIndex=" + ret.objectIndex)
+    logger.info("XXX2b: predef executed: objIndex=" + ret.objectIndex)
+    ret
   }
+
+  // TODO bring back jobqueue thread that submits jobs: start and stop
+
 
   /** Submit query `q` to shell and call `observer` when the result is ready.
     */
-  def queryAsync(q: String)(observer: QueryResult => Unit): UUID = {
+  def queryAsync(inputLines: IterableOnce[String]): (UUID, Future[String]) = {
     val uuid = UUID.randomUUID()
-    jobQueue.add(Job(uuid, q, observer))
-    uuid
+    val future = Future {
+      // TODO handle nicer, e.g. abstract in separate ReplDriver that handles input, state, output
+      state = replDriver.execute(inputLines)(using state)
+      "TODO get rendered output"
+    }(using singleThreadedJobExecutor)
+
+    (uuid, future)
   }
 
   /** Submit query `q` to the shell and return result.
     */
   def query(q: String): QueryResult = {
-    val mutex               = new Semaphore(0)
-    var result: QueryResult = null
-    queryAsync(q) { r =>
-      result = r
-      mutex.release()
-    }
-    mutex.acquire()
-    result
+    ???
+//    val mutex               = new Semaphore(0)
+//    var result: QueryResult = null
+//    queryAsync(q) { r =>
+//      result = r
+//      mutex.release()
+//    }
+//    mutex.acquire()
+//    result
   }
 
   /** Shutdown the embedded shell and associated threads.
     */
   def shutdown(): Unit = {
-    logger.info("Trying to shutdown shell and writer thread")
-    shutdownShellThread()
-    logger.info("Shell terminated gracefully")
-    shutdownWriterThread()
-    logger.info("Writer thread terminated gracefully")
-
-    def shutdownWriterThread(): Unit = {
-      jobQueue.add(Job(null, null, null))
-      userThread.join()
-    }
-    def shutdownShellThread(): Unit = {
-      writer.println(":exit")
-      writer.close()
-      shellThread.join()
-    }
+    logger.info("shutting down")
+    singleThreadedJobExecutor.shutdown()
   }
 
 }

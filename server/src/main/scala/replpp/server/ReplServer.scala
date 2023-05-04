@@ -3,17 +3,20 @@ package replpp.server
 import cask.model.{Request, Response}
 import cask.model.Response.Raw
 import cask.router.Result
+import org.slf4j.{Logger, LoggerFactory}
+
 import java.util.concurrent.ConcurrentHashMap
 import java.util.{Base64, UUID}
-import replpp.{Config, allPredefCode}
+import replpp.{Config, allPredefCode, allPredefLines}
 import ujson.Obj
+
+import scala.util.{Failure, Success}
 
 object ReplServer {
 
   def startHttpServer(config: Config): Unit = {
-    val predef = allPredefCode(config)
+    val predef = allPredefLines(config)
     val embeddedRepl = new EmbeddedRepl(predef, replpp.verboseEnabled(config))
-    embeddedRepl.start()
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       println("Shutting down server...")
       embeddedRepl.shutdown()
@@ -58,16 +61,28 @@ class ReplServer(repl: EmbeddedRepl,
 
   @basicAuth()
   @cask.get("/result/:uuidParam")
-  override def getResult(uuidParam: String)(isAuthorized: Boolean): Response[Obj] =
-    super.getResult(uuidParam)(isAuthorized)
+  override def getResult(uuidParam: String)(isAuthorized: Boolean): Response[Obj] = {
+    val response = super.getResult(uuidParam)(isAuthorized)
+    logger.debug(s"GET /result/$uuidParam: statusCode=${response.statusCode}")
+    response
+  }
 
   @basicAuth()
   @cask.postJson("/query")
   def postQuery(query: String)(isAuthorized: Boolean): Response[Obj] = {
     if (!isAuthorized) unauthorizedResponse
     else {
-      val uuid = repl.queryAsync(query) { result =>
-        returnResult(result)
+      logger.debug(s"POST /query query.length=${query.length}")
+      // TODO handle (UUID, Future) -> return uuid, put future as result into response queue
+      val (uuid, resultFuture) = repl.queryAsync(query.linesIterator)
+      resultFuture.onComplete {
+        case Success(output) =>
+          logger.debug(s"query[uuid=$uuid]: got result (length=${output.length})")
+          returnResult(QueryResult(output, uuid, isSuccessful = true))
+        case Failure(exception) =>
+          logger.info(s"query[uuid=$uuid] failed with $exception")
+          // TODO send error back to client also...
+          ???
       }
       Response(ujson.Obj("success" -> true, "uuid" -> uuid.toString), 200)
     }
@@ -78,7 +93,9 @@ class ReplServer(repl: EmbeddedRepl,
   def postQuerySimple(query: String)(isAuthorized: Boolean): Response[Obj] = {
     if (!isAuthorized) unauthorizedResponse
     else {
+      logger.debug(s"POST /query-sync query.length=${query.length}")
       val result = repl.query(query)
+      logger.debug(s"query-sync: got result: length=${result.out.length}")
       Response(ujson.Obj("success" -> true, "out" -> result.out, "uuid" -> result.uuid.toString), 200)
     }
   }
@@ -86,6 +103,7 @@ class ReplServer(repl: EmbeddedRepl,
   override def resultToJson(result: QueryResult, success: Boolean): Obj = {
     ujson.Obj("success" -> success, "uuid" -> result.uuid.toString, "stdout" -> result.out)
   }
+
 
   initialize()
 }
@@ -96,6 +114,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
   serverAuthUsername: String = "",
   serverAuthPassword: String = ""
 ) extends cask.MainRoutes {
+  protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   class basicAuth extends cask.RawDecorator {
 
@@ -140,7 +159,6 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
 
   def handler(): cask.WebsocketResult = {
     cask.WsHandler { connection =>
-      // TODO this can't be called from scala3 because it's using scala2 macros...
       connection.send(cask.Ws.Text("connected"))
       openConnections += connection
       cask.WsActor {

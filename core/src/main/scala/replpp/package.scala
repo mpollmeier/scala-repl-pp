@@ -80,7 +80,7 @@ package object replpp {
   def allPredefCode(config: Config): String =
     allPredefLines(config).mkString(lineSeparator)
 
-  private def allPredefLines(config: Config): Seq[String] = {
+  def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
 
