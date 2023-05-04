@@ -10,7 +10,7 @@ import java.util.{Base64, UUID}
 import replpp.{Config, allPredefCode, allPredefLines}
 import ujson.Obj
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object ReplServer {
 
@@ -173,28 +173,19 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
   }
 
   def getResult(uuidParam: String)(isAuthorized: Boolean): Response[Obj] = {
-    val res = if (!isAuthorized) {
+    if (!isAuthorized) {
       unauthorizedResponse
     } else {
-      val uuid =
-        try {
-          UUID.fromString(uuidParam)
-        } catch {
-          case _: IllegalArgumentException => null
-        }
-      val finalRes = if (uuid == null) {
-        ujson.Obj("success" -> false, "err" -> "UUID parameter is incorrectly formatted")
-      } else {
-        val resFromMap = resultMap.remove(uuid)
-        if (resFromMap == null) {
-          ujson.Obj("success" -> false, "err" -> "No result found for specified UUID")
-        } else {
-          resultToJson(resFromMap._1, resFromMap._2)
-        }
+      Try(UUID.fromString(uuidParam)) match {
+        case Success(uuid) if !resultMap.containsKey(uuid) =>
+          Response(ujson.Obj("success" -> false, "err" -> "No result (yet?) found for specified UUID"), 200)
+        case Success(uuid) =>
+          val (result, success) = resultMap.remove(uuid)
+          Response(resultToJson(result, success), 200)
+        case Failure(_) =>
+          Response(ujson.Obj("success" -> false, "err" -> "UUID parameter is incorrectly formatted"), 200)
       }
-      Response(finalRes, 200)
     }
-    res
   }
 
   def returnResult(result: T): Unit = {
@@ -205,7 +196,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
     Response(ujson.Obj("success" -> true, "uuid" -> result.uuid.toString), 200)
   }
 
-  def resultToJson(result: T, b: Boolean): Obj
+  def resultToJson(result: T, success: Boolean): Obj
 
   initialize()
 }
