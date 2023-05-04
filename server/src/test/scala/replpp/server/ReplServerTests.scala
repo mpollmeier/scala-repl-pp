@@ -318,28 +318,29 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 object Fixture {
 
   def apply[T]()(f: String => T): T = {
-    val embeddedRepl = new EmbeddedRepl()
-    embeddedRepl.start()
-
-    val host = "localhost"
-    val port = 8081
-    val authUsername = "username"
-    val authPassword = "password"
-    val httpEndpoint = "http://" + host + ":" + port.toString
-    val replServer = new ReplServer(embeddedRepl, host, port, authUsername, authPassword)
-    val server = io.undertow.Undertow.builder
-      .addHttpListener(replServer.port, replServer.host)
-      .setHandler(replServer.defaultHandler)
-      .build
-    server.start()
-    val res =
-      try {
-        f(httpEndpoint)
-      }
-      finally {
-        server.stop()
-        embeddedRepl.shutdown()
-      }
-    res
+//    val embeddedRepl = new EmbeddedRepl()
+//    embeddedRepl.start()
+//
+//    val host = "localhost"
+//    val port = 8081
+//    val authUsername = "username"
+//    val authPassword = "password"
+//    val httpEndpoint = "http://" + host + ":" + port.toString
+//    val replServer = new ReplServer(embeddedRepl, host, port, authUsername, authPassword)
+//    val server = io.undertow.Undertow.builder
+//      .addHttpListener(replServer.port, replServer.host)
+//      .setHandler(replServer.defaultHandler)
+//      .build
+//    server.start()
+//    val res =
+//      try {
+//        f(httpEndpoint)
+//      }
+//      finally {
+//        server.stop()
+//        embeddedRepl.shutdown()
+//      }
+//    res
+    ???
   }
 }

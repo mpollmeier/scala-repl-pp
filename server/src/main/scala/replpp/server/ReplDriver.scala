@@ -11,6 +11,7 @@ import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
 import org.jline.reader.*
+import org.slf4j.{Logger, LoggerFactory}
 import replpp.{UsingDirectives, pwd, resolveFile, util}
 
 import java.io.PrintStream
@@ -23,39 +24,11 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
-class ReplDriver(args: Array[String],
-                 out: PrintStream = scala.Console.out,
-                 classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
+class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  rendering.myReplStringOf = (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
-    val output = s"XXX0 rendering: $objectToRender"
-    println("XXX1")
-    output
-  }
-
-  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State = {
+  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
      interpretInput(inputLines, state, pwd)
-//    @tailrec
-//    def loop(using state: State)(): State = {
-//      Try {
-//        interpretInput(inputLines, state, pwd)
-//      } match {
-//        case Success(newState) =>
-//          loop(using newState)()
-//        case Failure(_: EndOfFileException) =>
-//          // Ctrl+D -> user wants to quit
-//          onExitCode.foreach(code => run(code)(using state))
-//          state
-//        case Failure(_: UserInterruptException) =>
-//          // Ctrl+C -> swallow, do nothing
-//          loop(using state)()
-//        case Failure(exception) =>
-//          throw exception
-//      }
-//    }
-//
-//    try runBody { loop(using initialState)() }
-  }
 
   private def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
@@ -86,7 +59,9 @@ class ReplDriver(args: Array[String],
     }
 
     val parseResult = parseInput(parsedLines.result(), resultingState)
+    logger.debug(s"parsed input: $parseResult")
     resultingState = interpret(parseResult)(using resultingState)
+    logger.info(s"interpreted input - resultingState.objectIndex=${resultingState.objectIndex}")
     resultingState
   }
 

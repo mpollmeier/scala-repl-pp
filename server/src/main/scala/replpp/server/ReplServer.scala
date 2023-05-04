@@ -1,24 +1,24 @@
 package replpp.server
 
-import cask.model.{Request, Response}
 import cask.model.Response.Raw
+import cask.model.{Request, Response}
 import cask.router.Result
 import org.slf4j.{Logger, LoggerFactory}
-
-import java.util.concurrent.ConcurrentHashMap
-import java.util.{Base64, UUID}
 import replpp.{Config, allPredefCode, allPredefLines}
 import ujson.Obj
 
+import java.io.{PrintWriter, StringWriter}
+import java.util.concurrent.ConcurrentHashMap
+import java.util.{Base64, UUID}
 import scala.util.{Failure, Success, Try}
 
 object ReplServer {
+  protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def startHttpServer(config: Config): Unit = {
-    val predef = allPredefLines(config)
-    val embeddedRepl = new EmbeddedRepl(predef, replpp.verboseEnabled(config))
+    val embeddedRepl = new EmbeddedRepl(config)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
-      println("Shutting down server...")
+      logger.info("Shutting down server...")
       embeddedRepl.shutdown()
     }))
 
@@ -34,13 +34,11 @@ object ReplServer {
       server.main(Array.empty)
     } catch {
       case _: java.net.BindException =>
-        println(s"Could not bind socket on port ${config.serverPort} - exiting.")
+        logger.error(s"Could not bind socket on port ${config.serverPort} - exiting.")
         embeddedRepl.shutdown()
         System.exit(1)
       case e: Throwable =>
-        println("Unhandled exception thrown while attempting to start server: ")
-        println(e.getMessage)
-        println("Exiting.")
+        logger.error("Unhandled exception thrown while attempting to start server - exiting", e)
 
         embeddedRepl.shutdown()
         System.exit(1)
@@ -72,17 +70,15 @@ class ReplServer(repl: EmbeddedRepl,
   def postQuery(query: String)(isAuthorized: Boolean): Response[Obj] = {
     if (!isAuthorized) unauthorizedResponse
     else {
-      logger.debug(s"POST /query query.length=${query.length}")
-      // TODO handle (UUID, Future) -> return uuid, put future as result into response queue
       val (uuid, resultFuture) = repl.queryAsync(query.linesIterator)
+      logger.debug(s"query[uuid=$uuid, length=${query.length}]: submitted to queue")
       resultFuture.onComplete {
         case Success(output) =>
           logger.debug(s"query[uuid=$uuid]: got result (length=${output.length})")
-          returnResult(QueryResult(output, uuid, isSuccessful = true))
+          returnResult(QueryResult(output, uuid, success = true))
         case Failure(exception) =>
           logger.info(s"query[uuid=$uuid] failed with $exception")
-          // TODO send error back to client also...
-          ???
+          returnResult(QueryResult(render(exception), uuid, success = false))
       }
       Response(ujson.Obj("success" -> true, "uuid" -> uuid.toString), 200)
     }
@@ -94,16 +90,21 @@ class ReplServer(repl: EmbeddedRepl,
     if (!isAuthorized) unauthorizedResponse
     else {
       logger.debug(s"POST /query-sync query.length=${query.length}")
-      val result = repl.query(query)
-      logger.debug(s"query-sync: got result: length=${result.out.length}")
-      Response(ujson.Obj("success" -> true, "out" -> result.out, "uuid" -> result.uuid.toString), 200)
+      val result = repl.query(query.linesIterator)
+      logger.debug(s"query-sync: got result: length=${result.output.length}")
+      Response(ujson.Obj("success" -> true, "out" -> result.output, "uuid" -> result.uuid.toString), 200)
     }
   }
 
   override def resultToJson(result: QueryResult, success: Boolean): Obj = {
-    ujson.Obj("success" -> success, "uuid" -> result.uuid.toString, "stdout" -> result.out)
+    ujson.Obj("success" -> success, "uuid" -> result.uuid.toString, "stdout" -> result.output)
   }
 
+  private def render(throwable: Throwable): String = {
+    val sw = new StringWriter
+    throwable.printStackTrace(new PrintWriter(sw))
+    throwable.getMessage() + System.lineSeparator() + sw.toString()
+  }
 
   initialize()
 }
@@ -163,10 +164,10 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
       openConnections += connection
       cask.WsActor {
         case cask.Ws.Error(e) =>
-          println("Connection error: " + e.getMessage)
+          logger.error("Connection error: " + e.getMessage)
           openConnections -= connection
         case cask.Ws.Close(_, _) | cask.Ws.ChannelClosed() =>
-          println("Connection closed.")
+          logger.debug("Connection closed.")
           openConnections -= connection
       }
     }
