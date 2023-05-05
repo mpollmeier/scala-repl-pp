@@ -1,4 +1,4 @@
-package replpp.server
+package replpp
 
 import dotty.tools.MainGenericCompiler.classpathSeparator
 import dotty.tools.dotc.Run
@@ -12,7 +12,6 @@ import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
 import org.jline.reader.*
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.{UsingDirectives, pwd, resolveFile, util}
 
 import java.io.PrintStream
 import java.lang.System.lineSeparator
@@ -24,23 +23,20 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
-class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
-  private val logger: Logger = LoggerFactory.getLogger(getClass)
+abstract class ReplDriverBase(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
+  extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
 
-  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
-     interpretInput(inputLines, state, pwd)
-
-  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
+  protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
-    var resultingState = state
+    var currentState = state
 
     def handleImportFileDirective(line: String) = {
       val linesBeforeUsingFileDirective = parsedLines.result()
       parsedLines.clear()
       if (linesBeforeUsingFileDirective.nonEmpty) {
         // interpret everything until here
-        val parseResult = parseInput(linesBeforeUsingFileDirective, resultingState)
-        resultingState = interpret(parseResult)(using resultingState)
+        val parseResult = parseInput(linesBeforeUsingFileDirective, currentState)
+        currentState = interpret(parseResult)(using currentState)
       }
 
       // now read and interpret the given file
@@ -48,7 +44,7 @@ class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[Clas
       val path = resolveFile(currentFile, pathStr)
       val linesFromFile = util.linesFromFile(path)
       println(s"> importing $path (${linesFromFile.size} lines)")
-      resultingState = interpretInput(linesFromFile, resultingState, path)
+      currentState = interpretInput(linesFromFile, currentState, path)
     }
 
     for (line <- lines.iterator) {
@@ -58,11 +54,8 @@ class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[Clas
         parsedLines.addOne(line)
     }
 
-    val parseResult = parseInput(parsedLines.result(), resultingState)
-    logger.debug(s"parsed input: $parseResult")
-    resultingState = interpret(parseResult)(using resultingState)
-    logger.info(s"interpreted input - resultingState.objectIndex=${resultingState.objectIndex}")
-    resultingState
+    val parseResult = parseInput(parsedLines.result(), currentState)
+    interpret(parseResult)(using currentState)
   }
 
   private def parseInput(lines: IterableOnce[String], state: State): ParseResult =

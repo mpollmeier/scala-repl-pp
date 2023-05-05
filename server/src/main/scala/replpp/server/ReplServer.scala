@@ -29,7 +29,7 @@ object ReplServer {
       config.serverAuthUsername,
       config.serverAuthPassword
     )
-    println("Starting REPL server ...")
+    logger.info("Starting REPL server ...")
     try {
       server.main(Array.empty)
     } catch {
