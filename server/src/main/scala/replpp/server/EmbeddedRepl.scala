@@ -80,10 +80,6 @@ class EmbeddedRepl(config: Config) {
   }
 }
 
-/** Result of executing a query, containing in particular output received on standard out. */
-case class QueryResult(output: String, uuid: UUID, success: Boolean) extends HasUUID
-trait HasUUID { def uuid: UUID }
-
 class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
   extends ReplDriverBase(args, out, classLoader) {
   def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
