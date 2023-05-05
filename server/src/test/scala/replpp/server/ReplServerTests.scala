@@ -322,14 +322,12 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     "synchronous api" should {
       "work for simple case" in Fixture() { url =>
         val response = postQuerySync(url, "1")
-        println(response)
         response.obj.keySet should contain("success")
         response("stdout").str shouldBe "val res0: Int = 1\n"
       }
 
       "using predef code" in Fixture("val predefCode = 2") { url =>
         val response = postQuerySync(url, "val foo = predefCode + 40")
-        println(response)
         response.obj.keySet should contain("success")
         response("stdout").str shouldBe "val foo: Int = 42\n"
       }
