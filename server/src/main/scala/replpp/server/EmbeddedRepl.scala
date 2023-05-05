@@ -3,7 +3,7 @@ package replpp.server
 import dotty.tools.dotc.config.Printers.config
 import dotty.tools.repl.State
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.{Config, ReplDriverBase, allPredefLines, pwd}
+import replpp.{Config, ReplDriverBase, pwd}
 
 import java.io.*
 import java.nio.charset.StandardCharsets
@@ -13,7 +13,7 @@ import scala.concurrent.impl.Promise
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.util.{Failure, Success}
 
-class EmbeddedRepl(config: Config) {
+class EmbeddedRepl(predefLines: IterableOnce[String]) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
@@ -31,7 +31,7 @@ class EmbeddedRepl(config: Config) {
   }
 
   private var state: State = {
-    val state = replDriver.execute(allPredefLines(config))(using replDriver.initialState)
+    val state = replDriver.execute(predefLines)(using replDriver.initialState)
     val output = readAndResetReplOutputStream()
     if (output.nonEmpty)
       logger.info(output)

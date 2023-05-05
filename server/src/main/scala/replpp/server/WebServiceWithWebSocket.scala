@@ -24,12 +24,16 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
     def wrapFunction(request: Request, delegate: Delegate): Result[Raw] = {
       val isAuthorized = authenticationMaybe match {
         case None => true // no authorization required
-        case Some(requiredAuth) => requiredAuth == parseAuthentication(request)
+        case Some(requiredAuth) =>
+          parseAuthentication(request) match {
+            case None => false // no authentication provided
+            case Some(providedAuth) =>  providedAuth == requiredAuth
+          }
       }
       delegate(Map("isAuthorized" -> isAuthorized))
     }
 
-    private def parseAuthentication(request: Request): Option[UsernamePasswordAuth] = {
+    private def parseAuthentication(request: Request): Option[UsernamePasswordAuth] =
       Try {
         val authHeader = request.exchange.getRequestHeaders.get("authorization").getFirst
         val strippedHeader = authHeader.replaceFirst("Basic ", "")
@@ -38,8 +42,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
           case Array(username, password) => Some(UsernamePasswordAuth(username, password))
           case _ => None
         }
-      }
-    }.toOption.flatten
+      }.toOption.flatten
   }
 
   private var openConnections                     = Set.empty[cask.WsChannelActor]

@@ -1,9 +1,10 @@
 package replpp.server
 
-import cask.util.Logger.Console._
+import cask.util.Logger.Console.*
 import castor.Context.Simple.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.Config
 import requests.RequestFailedException
 import ujson.Value.Value
 
@@ -11,8 +12,8 @@ import java.net.URLEncoder
 import java.util.UUID
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 import scala.collection.mutable.ListBuffer
-import scala.concurrent._
-import scala.concurrent.duration._
+import scala.concurrent.*
+import scala.concurrent.duration.*
 
 class ReplServerTests extends AnyWordSpec with Matchers {
   private val ValidBasicAuthHeaderVal: String = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
@@ -318,29 +319,24 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 object Fixture {
 
   def apply[T]()(f: String => T): T = {
-//    val embeddedRepl = new EmbeddedRepl()
-//    embeddedRepl.start()
-//
-//    val host = "localhost"
-//    val port = 8081
-//    val authUsername = "username"
-//    val authPassword = "password"
-//    val httpEndpoint = "http://" + host + ":" + port.toString
-//    val replServer = new ReplServer(embeddedRepl, host, port, authUsername, authPassword)
-//    val server = io.undertow.Undertow.builder
-//      .addHttpListener(replServer.port, replServer.host)
-//      .setHandler(replServer.defaultHandler)
-//      .build
-//    server.start()
-//    val res =
-//      try {
-//        f(httpEndpoint)
-//      }
-//      finally {
-//        server.stop()
-//        embeddedRepl.shutdown()
-//      }
-//    res
-    ???
+    val embeddedRepl = new EmbeddedRepl(
+//      predefLines = Seq("val foo = 42")
+      predefLines = Nil
+    )
+
+    val host = "localhost"
+    val port = 8081
+    val replServer = new ReplServer(embeddedRepl, host, port, Some(UsernamePasswordAuth("username", "password")))
+    val server = io.undertow.Undertow.builder
+      .addHttpListener(replServer.port, replServer.host)
+      .setHandler(replServer.defaultHandler)
+      .build
+    server.start()
+    try {
+      f(s"http://$host:$port")
+    } finally {
+      server.stop()
+      embeddedRepl.shutdown()
+    }
   }
 }

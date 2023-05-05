@@ -2,7 +2,7 @@ package replpp.server
 
 import cask.model.{Request, Response}
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.Config
+import replpp.{Config, allPredefLines}
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
@@ -21,7 +21,7 @@ object ReplServer {
       password <-config.serverAuthPassword
     } yield UsernamePasswordAuth(username, password)
 
-    val embeddedRepl = new EmbeddedRepl(config)
+    val embeddedRepl = new EmbeddedRepl(allPredefLines(config))
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()
