@@ -19,26 +19,6 @@ class ReplServerTests extends AnyWordSpec with Matchers {
   private val ValidBasicAuthHeaderVal: String = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
   private val DefaultPromiseAwaitTimeout: FiniteDuration = Duration(10, SECONDS)
 
-  private def postQuery(host: String, query: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
-    val postResponse = requests.post(
-      s"$host/query",
-      data = ujson.Obj("query" -> query).toString,
-      headers = Seq("authorization" -> authHeaderVal)
-    )
-    val res =
-      if (postResponse.bytes.length > 0)
-        ujson.read(postResponse.bytes)
-      else
-        ujson.Obj()
-    res
-  }
-
-  private def getResponse(host: String, uuidParam: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
-    val uri = s"$host/result/${URLEncoder.encode(uuidParam, "utf-8")}"
-    val getResponse = requests.get(uri, headers = Seq("authorization" -> authHeaderVal))
-    ujson.read(getResponse.bytes)
-  }
-
   /** These tests happen to fail on github actions for the windows runner with the following output: WARNING: Unable to
     * create a system terminal, creating a dumb terminal (enable debug logging for more information) Apr 21, 2022
     * 3:08:54 PM org.jboss.threads.Version <clinit> INFO: JBoss Threads version 3.1.0.Final Apr 21, 2022 3:08:55 PM
@@ -82,14 +62,14 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
     "return a valid JSON response when trying to retrieve the result of a query without a connection" in Fixture() {
       host =>
-        val postQueryResponse = postQuery(host, "1")
+        val postQueryResponse = postQuery(host, "val x = 10")
         postQueryResponse.obj.keySet should contain("uuid")
         val UUIDResponse = postQueryResponse("uuid").str
-        val getResultResponse = getResponse(host, UUIDResponse)
-        getResultResponse.obj.keySet should contain("success")
-        getResultResponse.obj.keySet should contain("err")
-        getResultResponse("success").bool shouldBe false
-        getResultResponse("err").str.length should not be 0
+        val response = getResponse(host, UUIDResponse)
+        response.obj.keySet should contain("success")
+        response.obj.keySet should contain("err")
+        response("success").bool shouldBe false
+        response("err").str.length should not be 0
     }
 
     "allow fetching the result of a completed query using its UUID" in Fixture() { host =>
@@ -114,6 +94,30 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       getResultResponse("uuid").str shouldBe queryResultWSMessage
       getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
     }
+
+    "use predefined code" in Fixture("val foo = 40") { host =>
+      val wsMsgPromise = scala.concurrent.Promise[String]()
+      val connectedPromise = scala.concurrent.Promise[String]()
+      cask.util.WsClient.connect(s"$host/connect") {
+        case cask.Ws.Text(msg) if msg == "connected" =>
+          connectedPromise.success(msg)
+        case cask.Ws.Text(msg) =>
+          wsMsgPromise.success(msg)
+      }
+      Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+      val postQueryResponse = postQuery(host, "val bar = foo + 2")
+      val queryUUID = postQueryResponse("uuid").str
+      queryUUID.length should not be 0
+
+      val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+      queryResultWSMessage.length should not be 0
+
+      val getResultResponse = getResponse(host, queryUUID)
+      getResultResponse.obj.keySet should contain("success")
+      getResultResponse("uuid").str shouldBe queryResultWSMessage
+      getResultResponse("stdout").str shouldBe "val bar: Int = 42\n"
+    }
+
 
     "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { host =>
       val wsMsgPromise = scala.concurrent.Promise[String]()
@@ -314,15 +318,31 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       wsUUIDs.toSet should be(postQueriesResponseUUIDs.toSet)
     }
   }
+
+  private def postQuery(host: String, query: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
+    val postResponse = requests.post(
+      s"$host/query",
+      data = ujson.Obj("query" -> query).toString,
+      headers = Seq("authorization" -> authHeaderVal)
+    )
+    if (postResponse.bytes.length > 0)
+      ujson.read(postResponse.bytes)
+    else
+      ujson.Obj()
+  }
+
+  private def getResponse(host: String, uuidParam: String, authHeaderVal: String = ValidBasicAuthHeaderVal): Value = {
+    val uri = s"$host/result/${URLEncoder.encode(uuidParam, "utf-8")}"
+    val getResponse = requests.get(uri, headers = Seq("authorization" -> authHeaderVal))
+    ujson.read(getResponse.bytes)
+  }
+
 }
 
 object Fixture {
 
-  def apply[T]()(f: String => T): T = {
-    val embeddedRepl = new EmbeddedRepl(
-//      predefLines = Seq("val foo = 42")
-      predefLines = Nil
-    )
+  def apply[T](predefCode: String = "")(f: String => T): T = {
+    val embeddedRepl = new EmbeddedRepl(predefLines = predefCode.linesIterator)
 
     val host = "localhost"
     val port = 8081

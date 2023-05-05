@@ -45,9 +45,9 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
       }.toOption.flatten
   }
 
-  private var openConnections                     = Set.empty[cask.WsChannelActor]
-  private val resultMap                           = new ConcurrentHashMap[UUID, (T, Boolean)]()
-  protected val unauthorizedResponse: Response[Obj] = Response(ujson.Obj(), 401, headers = Seq("WWW-Authenticate" -> "Basic"))
+  private var openConnections        = Set.empty[cask.WsChannelActor]
+  private val resultMap              = new ConcurrentHashMap[UUID, (T, Boolean)]()
+  protected val unauthorizedResponse = Response(ujson.Obj(), 401, headers = Seq("WWW-Authenticate" -> "Basic"))
 
   def handler(): cask.WebsocketResult = {
     cask.WsHandler { connection =>
