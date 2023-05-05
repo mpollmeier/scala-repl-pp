@@ -24,8 +24,8 @@ case class Config(
   server: Boolean = false,
   serverHost: String = "localhost",
   serverPort: Int = 8080,
-  serverAuthUsername: String = "",
-  serverAuthPassword: String = "",
+  serverAuthUsername: Option[String] = None,
+  serverAuthPassword: Option[String] = None,
 ) {
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
@@ -154,11 +154,11 @@ object Config {
         .text("Port on which to expose the REPL server")
 
       opt[String]("server-auth-username")
-        .action((x, c) => c.copy(serverAuthUsername = x))
+        .action((x, c) => c.copy(serverAuthUsername = Option(x)))
         .text("Basic auth username for the REPL server")
 
       opt[String]("server-auth-password")
-        .action((x, c) => c.copy(serverAuthPassword = x))
+        .action((x, c) => c.copy(serverAuthPassword = Option(x)))
         .text("Basic auth password for the REPL server")
 
       help("help")

@@ -4,62 +4,47 @@ import cask.model.Response.Raw
 import cask.model.{Request, Response}
 import cask.router.Result
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.{Config, allPredefCode, allPredefLines}
 import ujson.Obj
 
-import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.{Base64, UUID}
 import scala.util.{Failure, Success, Try}
 
-
 trait HasUUID { def uuid: UUID }
 
+case class UsernamePasswordAuth(username: String, password: String)
+
 abstract class WebServiceWithWebSocket[T <: HasUUID](
-                                                      serverHost: String,
-                                                      serverPort: Int,
-                                                      serverAuthUsername: String = "",
-                                                      serverAuthPassword: String = ""
-                                                    ) extends cask.MainRoutes {
+  override val host: String,
+  override val port: Int,
+  authenticationMaybe: Option[UsernamePasswordAuth] = None) extends cask.MainRoutes {
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   class basicAuth extends cask.RawDecorator {
-    def wrapFunction(ctx: Request, delegate: Delegate): Result[Raw] = {
-      val authString                           = requestToAuthString(ctx)
-      val Array(user, password): Array[String] = authStringToUserAndPwd(authString)
-      val isAuthorized =
-        if (serverAuthUsername == "" && serverAuthPassword == "")
-          true
-        else
-          user == serverAuthUsername && password == serverAuthPassword
+    def wrapFunction(request: Request, delegate: Delegate): Result[Raw] = {
+      val isAuthorized = authenticationMaybe match {
+        case None => true // no authorization required
+        case Some(requiredAuth) => requiredAuth == parseAuthentication(request)
+      }
       delegate(Map("isAuthorized" -> isAuthorized))
     }
 
-    private def requestToAuthString(ctx: Request): String = {
-      try {
-        val authHeader     = ctx.exchange.getRequestHeaders.get("authorization").getFirst
+    private def parseAuthentication(request: Request): Option[UsernamePasswordAuth] = {
+      Try {
+        val authHeader = request.exchange.getRequestHeaders.get("authorization").getFirst
         val strippedHeader = authHeader.replaceFirst("Basic ", "")
-        new String(Base64.getDecoder.decode(strippedHeader))
-      } catch {
-        case _: Exception => ""
+        val authString = new String(Base64.getDecoder.decode(strippedHeader))
+        authString.split(":", 2) match {
+          case Array(username, password) => Some(UsernamePasswordAuth(username, password))
+          case _ => None
+        }
       }
-    }
-
-    private def authStringToUserAndPwd(authString: String): Array[String] = {
-      authString.split(":", 2) match {
-        case array if array.length == 2 => array
-        case _ => Array("", "")
-      }
-    }
+    }.toOption.flatten
   }
 
-  override def port: Int = serverPort
-
-  override def host: String = serverHost
-
-  var openConnections                     = Set.empty[cask.WsChannelActor]
-  val resultMap                           = new ConcurrentHashMap[UUID, (T, Boolean)]()
-  val unauthorizedResponse: Response[Obj] = Response(ujson.Obj(), 401, headers = Seq("WWW-Authenticate" -> "Basic"))
+  private var openConnections                     = Set.empty[cask.WsChannelActor]
+  private val resultMap                           = new ConcurrentHashMap[UUID, (T, Boolean)]()
+  protected val unauthorizedResponse: Response[Obj] = Response(ujson.Obj(), 401, headers = Seq("WWW-Authenticate" -> "Basic"))
 
   def handler(): cask.WebsocketResult = {
     cask.WsHandler { connection =>

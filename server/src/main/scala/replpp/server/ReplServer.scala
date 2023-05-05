@@ -1,37 +1,33 @@
 package replpp.server
 
-import cask.model.Response.Raw
 import cask.model.{Request, Response}
-import cask.router.Result
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.{Config, allPredefCode, allPredefLines}
+import replpp.Config
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
-import java.util.concurrent.ConcurrentHashMap
 import java.util.{Base64, UUID}
 import scala.util.{Failure, Success, Try}
 
-object ReplServer {
-  /** Result of executing a query, containing in particular output received on standard out. */
-  case class QueryResult(output: String, uuid: UUID, success: Boolean) extends HasUUID
+/** Result of executing a query, containing in particular output received on standard out. */
+case class QueryResult(output: String, uuid: UUID, success: Boolean) extends HasUUID
 
+object ReplServer {
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def startHttpServer(config: Config): Unit = {
+    val authenticationMaybe = for {
+      username <- config.serverAuthUsername
+      password <-config.serverAuthPassword
+    } yield UsernamePasswordAuth(username, password)
+
     val embeddedRepl = new EmbeddedRepl(config)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()
     }))
 
-    val server = new ReplServer(
-      embeddedRepl,
-      config.serverHost,
-      config.serverPort,
-      config.serverAuthUsername,
-      config.serverAuthPassword
-    )
+    val server = new ReplServer(embeddedRepl, config.serverHost, config.serverPort, authenticationMaybe)
     logger.info("Starting REPL server ...")
     try {
       server.main(Array.empty)
@@ -50,11 +46,10 @@ object ReplServer {
 }
 
 class ReplServer(repl: EmbeddedRepl,
-                 serverHost: String,
-                 serverPort: Int,
-                 serverAuthUsername: String = "",
-                 serverAuthPassword: String = ""
-) extends WebServiceWithWebSocket[QueryResult](serverHost, serverPort, serverAuthUsername, serverAuthPassword) {
+                 host: String,
+                 port: Int,
+                 authenticationMaybe: Option[UsernamePasswordAuth] = None)
+  extends WebServiceWithWebSocket[QueryResult](host, port, authenticationMaybe) {
 
   @cask.websocket("/connect")
   override def handler(): cask.WebsocketResult = super.handler()
@@ -110,4 +105,3 @@ class ReplServer(repl: EmbeddedRepl,
 
   initialize()
 }
-
