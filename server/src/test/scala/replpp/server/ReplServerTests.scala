@@ -307,12 +307,8 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         }
         Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
 
-        val postQueriesResponseUUIDs = {
-          queries
-            .map(q => {
-              val res = postQueryAsync(url, q)
-              res("uuid").str
-            })
+        val postQueriesResponseUUIDs = queries.map { query =>
+          postQueryAsync(url, query)("uuid").str
         }
         Await.result(correctNumberOfUUIDsReceived.future, DefaultPromiseAwaitTimeout * queries.size.toLong)
         wsUUIDs.toSet should be(postQueriesResponseUUIDs.toSet)
