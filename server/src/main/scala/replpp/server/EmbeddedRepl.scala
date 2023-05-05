@@ -14,7 +14,7 @@ import scala.concurrent.impl.Promise
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.util.{Failure, Success}
 
-class EmbeddedRepl(predefLines: IterableOnce[String]) {
+class EmbeddedRepl(predefLines: IterableOnce[String] = Seq.empty) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
@@ -43,6 +43,10 @@ class EmbeddedRepl(predefLines: IterableOnce[String]) {
     ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
   /** Execute `inputLines` in REPL (in single threaded ExecutorService) and provide Future for result callback */
+  def queryAsync(code: String): (UUID, Future[String]) =
+    queryAsync(code.linesIterator)
+
+  /** Execute `inputLines` in REPL (in single threaded ExecutorService) and provide Future for result callback */
   def queryAsync(inputLines: IterableOnce[String]): (UUID, Future[String]) = {
     val uuid = UUID.randomUUID()
     val future = Future {
@@ -58,6 +62,10 @@ class EmbeddedRepl(predefLines: IterableOnce[String]) {
     replOutputStream.reset()
     result
   }
+
+  /** Submit query to the repl, await and return results. */
+  def query(code: String): QueryResult =
+    query(code.linesIterator)
 
   /** Submit query to the repl, await and return results. */
   def query(inputLines: IterableOnce[String]): QueryResult = {
