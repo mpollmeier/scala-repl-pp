@@ -89,7 +89,7 @@ class ReplServer(repl: EmbeddedRepl,
       logger.debug(s"POST /query-sync query.length=${query.length}")
       val result = repl.query(query.linesIterator)
       logger.debug(s"query-sync: got result: length=${result.output.length}")
-      Response(ujson.Obj("success" -> true, "out" -> result.output, "uuid" -> result.uuid.toString), 200)
+      Response(ujson.Obj("success" -> true, "stdout" -> result.output, "uuid" -> result.uuid.toString), 200)
     }
   }
 

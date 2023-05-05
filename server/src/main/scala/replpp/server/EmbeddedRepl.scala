@@ -9,8 +9,9 @@ import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue, Semaphore}
+import scala.concurrent.duration.Duration
 import scala.concurrent.impl.Promise
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.util.{Failure, Success}
 
 class EmbeddedRepl(predefLines: IterableOnce[String]) {
@@ -58,18 +59,11 @@ class EmbeddedRepl(predefLines: IterableOnce[String]) {
     result
   }
 
-  /** Submit query `q` to the shell and return result.
-    */
+  /** Submit query to the repl, await and return results. */
   def query(inputLines: IterableOnce[String]): QueryResult = {
-//    val mutex               = new Semaphore(0)
-//    var result: QueryResult = null
-//    queryAsync(q) { r =>
-//      result = r
-//      mutex.release()
-//    }
-//    mutex.acquire()
-//    result
-    ???
+    val (uuid, futureResult) = queryAsync(inputLines)
+    val result = Await.result(futureResult, Duration.Inf)
+    QueryResult(result, uuid, success = true)
   }
 
   /** Shutdown the embedded shell and associated threads.
