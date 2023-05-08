@@ -23,7 +23,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   class basicAuth extends cask.RawDecorator {
-    lazy val utf8 = StandardCharsets.UTF_8
+    private lazy val utf8 = StandardCharsets.UTF_8
     def wrapFunction(request: Request, delegate: Delegate): Result[Raw] = {
       val isAuthorized = authenticationMaybe match {
         case None => true // no authorization required
@@ -48,19 +48,8 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
       }.toOption.flatten
 
     /* constant-time comparison that prevents leaking the expected password through a timing side-channel */
-    private def areEqual(providedAuth: UsernamePasswordAuth, expectedAuth: UsernamePasswordAuth): Boolean = {
-      val md = MessageDigest.getInstance("SHA-256")
-      md.update(providedAuth.username.getBytes(utf8))
-      md.update(providedAuth.password.getBytes(utf8))
-      val providedAuthDigest = md.digest()
-
-      md.reset()
-      md.update(expectedAuth.username.getBytes(utf8))
-      md.update(expectedAuth.password.getBytes(utf8))
-      val expectedAuthDigest = md.digest()
-
-      MessageDigest.isEqual(providedAuthDigest, expectedAuthDigest)
-    }
+    private def areEqual(providedAuth: UsernamePasswordAuth, expectedAuth: UsernamePasswordAuth): Boolean =
+      MessageDigest.isEqual(providedAuth.toString.getBytes(utf8), expectedAuth.toString.getBytes(utf8))
   }
 
   private var openConnections        = Set.empty[cask.WsChannelActor]
