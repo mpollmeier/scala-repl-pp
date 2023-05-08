@@ -22,16 +22,14 @@ lazy val core = project.in(file("core")).settings(
 
 lazy val server = project.in(file("server"))
   .dependsOn(core)
-  .configs(IntegrationTest)
   .settings(
     name := "scala-repl-pp-server",
-    Defaults.itSettings,
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
       "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
-      "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
+      "org.scalatest" %% "scalatest"    % ScalaTestVersion,
     )
   )
 
