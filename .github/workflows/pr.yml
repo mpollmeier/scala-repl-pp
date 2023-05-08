@@ -1,7 +1,7 @@
 name: pr
 on: pull_request
 jobs:
-  pr:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
