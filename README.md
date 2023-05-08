@@ -264,7 +264,43 @@ The prefix is arbitrary and is only used to specify several credentials in a sin
 ./scala-repl-pp --server
 
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
+# {"success":true,"stdout":"val foo: Int = 42\n",...}
+
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}'
+# {"success":true,"stdout":"val bar: Int = 43\n",...}
+
+curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote code execution!!1!\")"}'
+# {"success":true,"stdout":"",...}%
+```
+
+Predef code works with server as well:
+```
+echo val foo = 99 > foo.sc
+./scala-repl-pp --server --predef foo.sc
+
+curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
+# {"success":true,"stdout":"val baz: Int = 100\n",...}
+```
+
+There's also has an asynchronous mode:
+```
+./scala-repl-pp --server
+
+curl http://localhost:8080/query -X POST -d '{"query": "val baz = 93"}'
+# {"success":true,"uuid":"e2640fcb-3193-4386-8e05-914b639c3184"}%
+
+curl http://localhost:8080/result/e2640fcb-3193-4386-8e05-914b639c3184
+{"success":true,"uuid":"e2640fcb-3193-4386-8e05-914b639c3184","stdout":"val baz: Int = 93\n"}%
+```
+
+And there's even a websocket channel that allows you to get notified when the query has finished. For more details and other use cases check out [ReplServerTests.scala](server/src/test/scala/replpp/server/ReplServerTests.scala)
+
+Server-specific configuration options as per `scala-repl-pp --help`:
+```
+--server-host <value>    Hostname on which to expose the REPL server
+--server-port <value>    Port on which to expose the REPL server
+--server-auth-username <value> Basic auth username for the REPL server
+--server-auth-password <value> Basic auth password for the REPL server
 ```
 
 ## Embed into your own project

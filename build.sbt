@@ -38,7 +38,10 @@ lazy val server = project.in(file("server"))
 lazy val all = project.in(file("all"))
   .dependsOn(core, server)
   .enablePlugins(JavaAppPackaging)
-  .settings(name := "scala-repl-pp-all")
+  .settings(
+    name := "scala-repl-pp-all",
+    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7" % Optional,
+  )
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,

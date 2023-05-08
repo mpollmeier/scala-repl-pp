@@ -28,7 +28,7 @@ class ReplDriver(args: Array[String],
                  greeting: Option[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
-                 classLoader: Option[ClassLoader] = None) extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
+                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
@@ -81,44 +81,5 @@ class ReplDriver(args: Array[String],
     }
     terminal.readLine(completer).linesIterator
   }
-
-  private def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
-    val parsedLines = Seq.newBuilder[String]
-    var resultingState = state
-
-    def handleImportFileDirective(line: String) = {
-      val linesBeforeUsingFileDirective = parsedLines.result()
-      parsedLines.clear()
-      if (linesBeforeUsingFileDirective.nonEmpty) {
-        // interpret everything until here
-        val parseResult = parseInput(linesBeforeUsingFileDirective, resultingState)
-        resultingState = interpret(parseResult)(using resultingState)
-      }
-
-      // now read and interpret the given file
-      val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
-      val path = resolveFile(currentFile, pathStr)
-      val linesFromFile = util.linesFromFile(path)
-      println(s"> importing $path (${linesFromFile.size} lines)")
-      resultingState = interpretInput(linesFromFile, resultingState, path)
-    }
-
-    for (line <- lines.iterator) {
-      if (line.trim.startsWith(UsingDirectives.FileDirective))
-        handleImportFileDirective(line)
-      else
-        parsedLines.addOne(line)
-    }
-
-    val parseResult = parseInput(parsedLines.result(), resultingState)
-    resultingState = interpret(parseResult)(using resultingState)
-    resultingState
-  }
-
-  private def parseInput(lines: IterableOnce[String], state: State): ParseResult =
-    parseInput(lines.iterator.mkString(lineSeparator), state)
-
-  private def parseInput(input: String, state: State): ParseResult =
-    ParseResult(input)(using state)
 
 }

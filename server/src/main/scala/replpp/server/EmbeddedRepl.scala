@@ -1,110 +1,89 @@
 package replpp.server
 
+import dotty.tools.dotc.config.Printers.config
 import dotty.tools.repl.State
 import org.slf4j.{Logger, LoggerFactory}
+import replpp.{Config, ReplDriverBase, pwd}
 
-import java.io.{BufferedReader, InputStream, InputStreamReader, PipedInputStream, PipedOutputStream, PrintStream, PrintWriter}
+import java.io.*
+import java.nio.charset.StandardCharsets
 import java.util.UUID
-import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, Semaphore}
+import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue, Semaphore}
+import scala.concurrent.duration.Duration
+import scala.concurrent.impl.Promise
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.util.{Failure, Success}
 
-/** Result of executing a query, containing in particular output received on standard out. */
-case class QueryResult(out: String, uuid: UUID) extends HasUUID
-
-trait HasUUID {
-  def uuid: UUID
-}
-
-private[server] case class Job(uuid: UUID, query: String, observer: QueryResult => Unit)
-
-class EmbeddedRepl(predefCode: String = "", verbose: Boolean = false) {
+class EmbeddedRepl(predefLines: IterableOnce[String] = Seq.empty) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  val jobQueue: BlockingQueue[Job] = new LinkedBlockingQueue[Job]()
+  /** repl and compiler output ends up in this replOutputStream */
+  private val replOutputStream = new ByteArrayOutputStream()
 
-  val (inStream, toStdin)     = pipePair()
-  val (fromStdout, outStream) = pipePair()
-
-  val writer    = new PrintWriter(toStdin)
-  val reader    = new BufferedReader(new InputStreamReader(fromStdout))
-
-  val userThread = new Thread(new UserRunnable(jobQueue, writer, reader, verbose))
-
-  val shellThread = new Thread(
-    new Runnable {
-      override def run(): Unit = {
-        val inheritedClasspath = System.getProperty("java.class.path")
-        val compilerArgs = Array(
-          "-classpath", inheritedClasspath,
-          "-explain", // verbose scalac error messages
-          "-deprecation",
-          "-color", "never"
-        )
-
-        val replDriver = new ReplDriver(compilerArgs, inStream, new PrintStream(outStream))
-        val initialState: State = replDriver.initialState
-        val state: State =
-          if (verbose) {
-            println(predefCode)
-            replDriver.run(predefCode)(using initialState)
-          } else {
-            replDriver.runQuietly(predefCode)(using initialState)
-          }
-
-        replDriver.runUntilQuit()
-      }
-    })
-
-  private def pipePair(): (PipedInputStream, PipedOutputStream) = {
-    val out = new PipedOutputStream()
-    val in  = new PipedInputStream()
-    in.connect(out)
-    (in, out)
+  private val replDriver: ReplDriver = {
+    val inheritedClasspath = System.getProperty("java.class.path")
+    val compilerArgs = Array(
+      "-classpath", inheritedClasspath,
+      "-explain", // verbose scalac error messages
+      "-deprecation",
+      "-color", "never"
+    )
+    new ReplDriver(compilerArgs, new PrintStream(replOutputStream), classLoader = None)
   }
 
-  def start(): Unit = {
-    shellThread.start()
-    userThread.start()
+  private var state: State = {
+    val state = replDriver.execute(predefLines)(using replDriver.initialState)
+    val output = readAndResetReplOutputStream()
+    if (output.nonEmpty)
+      logger.info(output)
+    state
   }
 
-  /** Submit query `q` to shell and call `observer` when the result is ready.
-    */
-  def queryAsync(q: String)(observer: QueryResult => Unit): UUID = {
+  private val singleThreadedJobExecutor: ExecutionContextExecutorService =
+    ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+
+  /** Execute `inputLines` in REPL (in single threaded ExecutorService) and provide Future for result callback */
+  def queryAsync(code: String): (UUID, Future[String]) =
+    queryAsync(code.linesIterator)
+
+  /** Execute `inputLines` in REPL (in single threaded ExecutorService) and provide Future for result callback */
+  def queryAsync(inputLines: IterableOnce[String]): (UUID, Future[String]) = {
     val uuid = UUID.randomUUID()
-    jobQueue.add(Job(uuid, q, observer))
-    uuid
+    val future = Future {
+      state = replDriver.execute(inputLines)(using state)
+      readAndResetReplOutputStream()
+    } (using singleThreadedJobExecutor)
+
+    (uuid, future)
   }
 
-  /** Submit query `q` to the shell and return result.
-    */
-  def query(q: String): QueryResult = {
-    val mutex               = new Semaphore(0)
-    var result: QueryResult = null
-    queryAsync(q) { r =>
-      result = r
-      mutex.release()
-    }
-    mutex.acquire()
+  private def readAndResetReplOutputStream(): String = {
+    val result = replOutputStream.toString(StandardCharsets.UTF_8)
+    replOutputStream.reset()
     result
+  }
+
+  /** Submit query to the repl, await and return results. */
+  def query(code: String): QueryResult =
+    query(code.linesIterator)
+
+  /** Submit query to the repl, await and return results. */
+  def query(inputLines: IterableOnce[String]): QueryResult = {
+    val (uuid, futureResult) = queryAsync(inputLines)
+    val result = Await.result(futureResult, Duration.Inf)
+    QueryResult(result, uuid, success = true)
   }
 
   /** Shutdown the embedded shell and associated threads.
     */
   def shutdown(): Unit = {
-    logger.info("Trying to shutdown shell and writer thread")
-    shutdownShellThread()
-    logger.info("Shell terminated gracefully")
-    shutdownWriterThread()
-    logger.info("Writer thread terminated gracefully")
-
-    def shutdownWriterThread(): Unit = {
-      jobQueue.add(Job(null, null, null))
-      userThread.join()
-    }
-    def shutdownShellThread(): Unit = {
-      writer.println(":exit")
-      writer.close()
-      shellThread.join()
-    }
+    logger.info("shutting down")
+    singleThreadedJobExecutor.shutdown()
   }
+}
 
+class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
+  extends ReplDriverBase(args, out, classLoader) {
+  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
+    interpretInput(inputLines, state, pwd)
 }
