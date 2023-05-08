@@ -6,6 +6,8 @@ import cask.router.Result
 import org.slf4j.{Logger, LoggerFactory}
 import ujson.Obj
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.{Base64, UUID}
 import scala.util.{Failure, Success, Try}
@@ -21,13 +23,14 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   class basicAuth extends cask.RawDecorator {
+    lazy val utf8 = StandardCharsets.UTF_8
     def wrapFunction(request: Request, delegate: Delegate): Result[Raw] = {
       val isAuthorized = authenticationMaybe match {
         case None => true // no authorization required
         case Some(requiredAuth) =>
           parseAuthentication(request) match {
             case None => false // no authentication provided
-            case Some(providedAuth) =>  providedAuth == requiredAuth
+            case Some(providedAuth) => areEqual(providedAuth, requiredAuth)
           }
       }
       delegate(Map("isAuthorized" -> isAuthorized))
@@ -43,6 +46,21 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
           case _ => None
         }
       }.toOption.flatten
+
+    /* constant-time comparison that prevents leaking the expected password through a timing side-channel */
+    private def areEqual(providedAuth: UsernamePasswordAuth, expectedAuth: UsernamePasswordAuth): Boolean = {
+      val md = MessageDigest.getInstance("SHA-256")
+      md.update(providedAuth.username.getBytes(utf8))
+      md.update(providedAuth.password.getBytes(utf8))
+      val providedAuthDigest = md.digest()
+
+      md.reset()
+      md.update(expectedAuth.username.getBytes(utf8))
+      md.update(expectedAuth.password.getBytes(utf8))
+      val expectedAuthDigest = md.digest()
+
+      MessageDigest.isEqual(providedAuthDigest, expectedAuthDigest)
+    }
   }
 
   private var openConnections        = Set.empty[cask.WsChannelActor]
