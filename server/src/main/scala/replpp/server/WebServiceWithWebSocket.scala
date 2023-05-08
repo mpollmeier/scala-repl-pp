@@ -55,7 +55,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
       openConnections += connection
       cask.WsActor {
         case cask.Ws.Error(e) =>
-          logger.error("Connection error: " + e.getMessage)
+          logger.error("Connection error", e)
           openConnections -= connection
         case cask.Ws.Close(_, _) | cask.Ws.ChannelClosed() =>
           logger.debug("Connection closed.")
