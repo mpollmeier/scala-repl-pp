@@ -37,11 +37,7 @@ class ReplDriver(args: Array[String],
     val terminal = new JLineTerminal {
       override protected def promptStr = prompt
     }
-
-    // configure rendering to use our pprinter for displaying results
-    rendering.myReplStringOf = (objectToRender: Object, maxElements: Int, maxCharacters: Int) =>
-      PPrinter.apply(objectToRender, maxHeight)
-
+    initializeRenderer()
     greeting.foreach(out.println)
 
     @tailrec
@@ -80,6 +76,20 @@ class ReplDriver(args: Array[String],
       candidates.addAll(comps.asJava)
     }
     terminal.readLine(completer).linesIterator
+  }
+
+  /** configure rendering to use our pprinter for displaying results */
+  private def initializeRenderer() = {
+    rendering.myReplStringOf = {
+      // We need to use the PPrinter class from the on the user classpath, and not the one available in the current
+      // classloader, so we use reflection instead of simply calling `replpp.PPrinter:apply`.
+      // This is analogous to what happens in dotty.tools.repl.Rendering.
+      val pprinter = Class.forName("replpp.PPrinter", true, rendering.myClassLoader)
+      val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int])
+      (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
+        renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue)).asInstanceOf[String]
+      }
+    }
   }
 
 }
