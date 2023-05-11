@@ -40,33 +40,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 import scala.util.Using
 
-/** The state of the REPL contains necessary bindings instead of having to have
- *  mutation
- *
- *  The compiler in the REPL needs to do some wrapping in order to compile
- *  valid code. This wrapping occurs when a single `MemberDef` that cannot be
- *  top-level needs to be compiled. In order to do this, we need some unique
- *  identifier for each of these wrappers. That identifier is `objectIndex`.
- *
- *  Free expressions such as `1 + 1` needs to have an assignment in order to be
- *  of use. These expressions are therefore given a identifier on the format
- *  `resX` where `X` starts at 0 and each new expression that needs an
- *  identifier is given the increment of the old identifier. This identifier is
- *  `valIndex`.
- *
- *  @param objectIndex the index of the next wrapper
- *  @param valIndex    the index of next value binding for free expressions
- *  @param imports     a map from object index to the list of user defined imports
- *  @param invalidObjectIndexes the set of object indexes that failed to initialize
- *  @param context     the latest compiler context
- */
-case class State(objectIndex: Int,
-                 valIndex: Int,
-                 imports: Map[Int, List[tpd.Import]],
-                 invalidObjectIndexes: Set[Int],
-                 context: Context):
-  def validObjectIndexes = (1 to objectIndex).filterNot(invalidObjectIndexes.contains(_))
-
 /** Main REPL instance, orchestrating input, compilation and presentation */
 class ReplDriver(settings: Array[String],
                  out: PrintStream = Console.out,
