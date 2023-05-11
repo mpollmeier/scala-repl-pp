@@ -12,7 +12,9 @@ import util.StackTraceOps.*
 
 import scala.util.control.NonFatal
 
-/** This rendering object uses `ClassLoader`s to accomplish crossing the 4th
+/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/Rendering.scala
+ *
+ * This rendering object uses `ClassLoader`s to accomplish crossing the 4th
  *  wall (i.e. fetching back values from the compiled class files put into a
  *  specific class loader capable of loading from memory) and rendering them.
  *

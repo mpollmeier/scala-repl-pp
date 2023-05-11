@@ -40,8 +40,10 @@ import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 import scala.util.Using
 
-/** Main REPL instance, orchestrating input, compilation and presentation */
-class ReplDriver(settings: Array[String],
+/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/ReplDriver.scala
+ * Main REPL instance, orchestrating input, compilation and presentation
+ * */
+class DottyReplDriver(settings: Array[String],
                  out: PrintStream = Console.out,
                  classLoader: Option[ClassLoader] = None) extends Driver:
 
@@ -512,4 +514,4 @@ class ReplDriver(settings: Array[String],
     case interfaces.Diagnostic.INFO => out.println(dia.msg) // print REPL's special info diagnostics directly to out
     case _                          => ReplConsoleReporter.doReport(dia)(using state.context)
 
-end ReplDriver
+end DottyReplDriver
