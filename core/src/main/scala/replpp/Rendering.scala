@@ -1,9 +1,10 @@
-package dotty.tools
-package repl
+package replpp
 
 import scala.language.unsafeNulls
 
-import dotc.*, core.*
+import dotty.tools.dotc.*
+import dotty.tools.dotc.core.*
+import dotty.tools.repl.AbstractFileClassLoader
 import Contexts.*, Denotations.*, Flags.*, NameOps.*, StdNames.*, Symbols.*
 import printing.ReplPrinter
 import reporting.Diagnostic
@@ -22,7 +23,7 @@ import scala.util.control.NonFatal
  *       `ReplDriver#resetToInitial` is called, the accompanying instance of
  *       `Rendering` is no longer valid.
  */
-private[repl] class Rendering(parentClassLoader: Option[ClassLoader] = None):
+private[replpp] class Rendering(parentClassLoader: Option[ClassLoader] = None):
 
   import Rendering._
 
@@ -32,7 +33,7 @@ private[repl] class Rendering(parentClassLoader: Option[ClassLoader] = None):
   var myReplStringOf: (Object, Int, Int) => String = _
 
   /** Class loader used to load compiled code */
-  private[repl] def classLoader()(using Context) =
+  private[replpp] def classLoader()(using Context) =
     if (myClassLoader != null && myClassLoader.root == ctx.settings.outputDir.value) myClassLoader
     else {
       val parent = Option(myClassLoader).orElse(parentClassLoader).getOrElse {
@@ -86,13 +87,13 @@ private[repl] class Rendering(parentClassLoader: Option[ClassLoader] = None):
       myClassLoader
     }
 
-  private[repl] def truncate(str: String, maxPrintCharacters: Int)(using ctx: Context): String =
+  private[replpp] def truncate(str: String, maxPrintCharacters: Int)(using ctx: Context): String =
     val ncp = str.codePointCount(0, str.length) // to not cut inside code point
     if ncp <= maxPrintCharacters then str
     else str.substring(0, str.offsetByCodePoints(0, maxPrintCharacters - 1))
 
   /** Return a String representation of a value we got from `classLoader()`. */
-  private[repl] def replStringOf(value: Object)(using Context): String =
+  private[replpp] def replStringOf(value: Object)(using Context): String =
     assert(myReplStringOf != null,
       "replStringOf should only be called on values creating using `classLoader()`, but `classLoader()` has not been called so far")
     val maxPrintElements = ctx.settings.VreplMaxPrintElements.valueIn(ctx.settingsState)
