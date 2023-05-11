@@ -7,11 +7,11 @@ object PPrinter {
   private var pprinter: pprint.PPrinter = null
   private var maxHeight: Int = Int.MaxValue
 
-  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue): String = {
+  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue, noColors: Boolean = false): String = {
     val _pprinter = this.synchronized {
       // initialise on first use and whenever the maxHeight setting changed
       if (pprinter == null || this.maxHeight != maxHeight) {
-        pprinter = create(maxHeight)
+        pprinter = create(maxHeight, noColors)
         this.maxHeight = maxHeight
       }
       pprinter
@@ -19,11 +19,15 @@ object PPrinter {
     _pprinter.apply(objectToRender).render
   }
 
-  private def create(maxHeight: Int): pprint.PPrinter = {
+  private def create(maxHeight: Int, nocolors: Boolean): pprint.PPrinter = {
+    val (colorLiteral, colorApplyPrefix) =
+      if (nocolors) (fansi.Attrs.Empty, fansi.Attrs.Empty)
+      else (fansi.Color.Green, fansi.Color.Yellow)
+
     new pprint.PPrinter(
       defaultHeight = maxHeight,
-      colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
-      colorApplyPrefix = fansi.Attrs.Empty) {
+      colorLiteral = colorLiteral,
+      colorApplyPrefix = colorApplyPrefix) {
 
       override def tokenize(x: Any,
                             width: Int = defaultWidth,
@@ -33,7 +37,7 @@ object PPrinter {
                             escapeUnicode: Boolean,
                             showFieldNames: Boolean): Iterator[fansi.Str] = {
         val tree = this.treeify(x, escapeUnicode = escapeUnicode, showFieldNames = showFieldNames)
-        val renderer = new Renderer(width, colorApplyPrefix, colorLiteral, indent) {
+        val renderer = new Renderer(width, this.colorApplyPrefix, this.colorLiteral, indent) {
           override def rec(x: Tree, leftOffset: Int, indentCount: Int): Result = x match {
             case Tree.Literal(body) if isAnsiEncoded(body) =>
               // this is the part we're overriding, everything else is just boilerplate
