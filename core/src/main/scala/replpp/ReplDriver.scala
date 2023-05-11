@@ -29,7 +29,7 @@ class ReplDriver(args: Array[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
                  nocolors: Boolean = false,
-                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, classLoader) {
+                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, maxHeight, nocolors, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
@@ -38,7 +38,6 @@ class ReplDriver(args: Array[String],
     val terminal = new JLineTerminal {
       override protected def promptStr = prompt
     }
-    initializeRenderer()
     greeting.foreach(out.println)
 
     @tailrec
@@ -77,20 +76,6 @@ class ReplDriver(args: Array[String],
       candidates.addAll(comps.asJava)
     }
     terminal.readLine(completer).linesIterator
-  }
-
-  /** configure rendering to use our pprinter for displaying results */
-  private def initializeRenderer() = {
-    rendering.myReplStringOf = {
-      // We need to use the PPrinter class from the on the user classpath, and not the one available in the current
-      // classloader, so we use reflection instead of simply calling `replpp.PPrinter:apply`.
-      // This is analogous to what happens in dotty.tools.repl.Rendering.
-      val pprinter = Class.forName("replpp.PPrinter", true, rendering.myClassLoader)
-      val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int], classOf[Boolean])
-      (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
-        renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue), nocolors).asInstanceOf[String]
-      }
-    }
   }
 
 }
