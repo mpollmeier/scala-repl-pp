@@ -406,7 +406,6 @@ class DottyReplDriver(settings: Array[String],
             if newState.invalidObjectIndexes.contains(state.objectIndex) then Seq.empty
             else typeDefs(wrapperModule.symbol)
           val highlighted = (formattedTypeDefs ++ formattedMembers)
-//            .map(d => new Diagnostic(d.msg.mapMsg(SyntaxHighlighting.highlight), d.pos, d.level))
           // TODO refactor
             .map(d => new Diagnostic(d.msg.mapMsg { msg =>
               if (PPrinter.isAnsiEncoded(msg)) {
@@ -416,12 +415,12 @@ class DottyReplDriver(settings: Array[String],
 
                 val pprinted = fansi.Str(msg)
                 val dottyHighlighted = fansi.Str(SyntaxHighlighting.highlight(pprinted.plainText))
-                assert(pprinted.length == dottyHighlighted.length, s"something went wrong, the length of the string changed...")
+                // TODO remove assertion, but code more defensive below
+                assert(pprinted.length == dottyHighlighted.length,
+                  s"something went wrong, the length of the highlighted messages must be identical .  m...")
 
                 val coloredCharRangesInOriginal: Seq[Range] = {
-                  val coloredPositions = pprinted.getColors.zipWithIndex.collect {
-                    case (color, index) if color != 0 => index
-                  }
+                  val coloredPositions = pprinted.getColors.zipWithIndex.collect { case (color, index) if color != 0 => index }
                   findAdjacentNumberRanges(coloredPositions)
                 }
 
@@ -432,9 +431,6 @@ class DottyReplDriver(settings: Array[String],
                 var pprintedBuffer = pprinted
                 var dottyBuffer = dottyHighlighted
                 var currentIndex = 0
-                println("pprinted: " + pprinted)
-                println("dottyHighlighted: " + dottyHighlighted)
-                println("coloredRanges: " + coloredCharRangesInOriginal)
                 coloredCharRangesInOriginal.foreach { case Range(from, to) =>
                   if (from > currentIndex) {
                     // first take from dottyHighlighted until `range.from`
@@ -457,35 +453,11 @@ class DottyReplDriver(settings: Array[String],
                 }
                 result = result ++ dottyBuffer
 
-//                var result = dottyHighlighted
-//                println(pprinted.getColors.toSeq)
-//
-//                // reapply previous colors
-//                // TODO refactor: build Seq[Attr] for overlays and call dottyHighlighted.overlayAll
-//                // scanWhile, takeWhile, partition, ...
-//                // dottyHighlighted.overlayAll()
-//                for (idx <- 0 until pprinted.length) {
-//                  val colorAtIdx = pprinted.getColor(idx)
-//                  if (colorAtIdx != 0L) {
-//                    // TODO get the right color here...
-//                    // understand where that color is coming from...
-////                    val green = fansi.Color.Red
-////                    val x0 = fansi.Color.mask
-////                    val x1 = fansi.Color.makeAttr("abc", colorAtIdx)
-////                    val x2 = fansi.Color.makeNoneAttr(colorAtIdx)
-//                    val ansiCodes = fansi.Attrs.emitAnsiCodes(pprinted.getColor(idx - 1), colorAtIdx)
-//                    // idea: with this one could manually stitch together then result string... that's a workaround if we don't find the fansi method to do this nicely
-//                    result = result.overlay(fansi.Color.Green, idx, idx + 1)
-//                  }
-//                }
-
                 result.render
-//                dottyHighlighted.render
               } else {
                 SyntaxHighlighting.highlight(msg)
               }
             }, d.pos, d.level))
-          // TODO debug code end
           (newState, highlighted)
         }
         .getOrElse {

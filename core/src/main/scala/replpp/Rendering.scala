@@ -59,10 +59,6 @@ private[replpp] class Rendering(maxHeight: Option[Int],
           **/
         val pprinter = Class.forName("replpp.PPrinter", true, myClassLoader)
         val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int], classOf[Boolean])
-        // TODO only for testing - dont commit
-//        val scalaRuntime = Class.forName("scala.runtime.ScalaRunTime", true, myClassLoader)
-//        val renderer = "stringOf"
-//        val renderingMethod  = scalaRuntime.getMethod(renderer, classOf[Object], classOf[Int])
         (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
           renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue), nocolors).asInstanceOf[String]
         }
