@@ -7,7 +7,33 @@ import scala.jdk.CollectionConverters.*
 import scala.util.{Try, Using}
 
 package object util {
-  
+
+  /** `to` is included in this Range */
+  case class Range(from: Int, to: Int)
+
+  def findAdjacentNumberRanges(numbers: Seq[Int]): Seq[Range] = {
+    if (numbers.isEmpty) {
+      Seq.empty
+    } else {
+      var start = numbers(0)
+      var end = numbers(0)
+      val ranges = Seq.newBuilder[Range]
+
+      for (i <- 1 until numbers.length) {
+        if (numbers(i) == end + 1) {
+          end = numbers(i)
+        } else {
+          ranges += Range(start, end)
+          start = numbers(i)
+          end = numbers(i)
+        }
+      }
+
+      ranges += Range(start, end)
+      ranges.result()
+    }
+  }
+
   def sequenceTry[A](tries: Seq[Try[A]]): Try[Seq[A]] = {
     tries.foldRight(Try(Seq.empty[A])) {
       case (next, accumulator) => 
