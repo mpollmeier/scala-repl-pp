@@ -414,35 +414,58 @@ class DottyReplDriver(settings: Array[String],
                 // SyntaxHighlighting, so we'll remember the used colors here, reset the color coding of the input,
                 // and reapply those old colors in the end
 
-                val original = fansi.Str(msg)
-                val dottyHighlighted = fansi.Str(SyntaxHighlighting.highlight(original.plainText))
-                assert(original.length == dottyHighlighted.length, s"something went wrong, the length of the string changed...")
+                val pprinted = fansi.Str(msg)
+                val dottyHighlighted = fansi.Str(SyntaxHighlighting.highlight(pprinted.plainText))
+                assert(pprinted.length == dottyHighlighted.length, s"something went wrong, the length of the string changed...")
 
-                // merge the two fansi.Str - prefer the original where it's color coded, otherwise take the dottyHighlighted
                 val coloredCharRangesInOriginal: Seq[Range] = {
-                  val coloredPositions = original.getColors.zipWithIndex.collect {
+                  val coloredPositions = pprinted.getColors.zipWithIndex.collect {
                     case (color, index) if color != 0 => index
                   }
                   findAdjacentNumberRanges(coloredPositions)
                 }
 
-                coloredCharRangesInOriginal.foreach(println)
-                val result = fansi.Str()
-//                for (idx <- 0 until original.length) {
-//
-//                }
+                // merge the two fansi.Str - prefer the pprinted where it's color coded, otherwise take the dottyHighlighted
+                // TODO refactor: extract method, variable wording, extract 'scanLeft' or 'takeUntil'
+                // TODO add unit tests for all combinations: color only in dotty, color only in pprinted, color first in pprinted, color first in dotty
+                var result = fansi.Str()
+                var pprintedBuffer = pprinted
+                var dottyBuffer = dottyHighlighted
+                var currentIndex = 0
+                println("pprinted: " + pprinted)
+                println("dottyHighlighted: " + dottyHighlighted)
+                println("coloredRanges: " + coloredCharRangesInOriginal)
+                coloredCharRangesInOriginal.foreach { case Range(from, to) =>
+                  if (from > currentIndex) {
+                    // first take from dottyHighlighted until `range.from`
+                    val splitPosition = from - currentIndex
+                    val (takenFromDotty, dottyRemainder) = dottyBuffer.splitAt(splitPosition)
+                    result = result ++ takenFromDotty
+                    dottyBuffer = dottyRemainder
+                    pprintedBuffer = pprintedBuffer.substring(start = splitPosition)
+                    currentIndex = from
+                  }
 
-//                original.splitAt()
+                  // then take range length from pprinted (either way)
+                  val splitPosition = to + 1 - currentIndex
+                  val (takenFromPPrinted, pprintedRemainder) = pprintedBuffer.splitAt(splitPosition)
+                  result = result ++ takenFromPPrinted
+                  pprintedBuffer = pprintedRemainder
+                  dottyBuffer = dottyBuffer.substring(start = splitPosition)
+
+                  currentIndex = to + 1
+                }
+                result = result ++ dottyBuffer
 
 //                var result = dottyHighlighted
-//                println(original.getColors.toSeq)
+//                println(pprinted.getColors.toSeq)
 //
 //                // reapply previous colors
 //                // TODO refactor: build Seq[Attr] for overlays and call dottyHighlighted.overlayAll
 //                // scanWhile, takeWhile, partition, ...
 //                // dottyHighlighted.overlayAll()
-//                for (idx <- 0 until original.length) {
-//                  val colorAtIdx = original.getColor(idx)
+//                for (idx <- 0 until pprinted.length) {
+//                  val colorAtIdx = pprinted.getColor(idx)
 //                  if (colorAtIdx != 0L) {
 //                    // TODO get the right color here...
 //                    // understand where that color is coming from...
@@ -450,7 +473,7 @@ class DottyReplDriver(settings: Array[String],
 ////                    val x0 = fansi.Color.mask
 ////                    val x1 = fansi.Color.makeAttr("abc", colorAtIdx)
 ////                    val x2 = fansi.Color.makeNoneAttr(colorAtIdx)
-//                    val ansiCodes = fansi.Attrs.emitAnsiCodes(original.getColor(idx - 1), colorAtIdx)
+//                    val ansiCodes = fansi.Attrs.emitAnsiCodes(pprinted.getColor(idx - 1), colorAtIdx)
 //                    // idea: with this one could manually stitch together then result string... that's a workaround if we don't find the fansi method to do this nicely
 //                    result = result.overlay(fansi.Color.Green, idx, idx + 1)
 //                  }
