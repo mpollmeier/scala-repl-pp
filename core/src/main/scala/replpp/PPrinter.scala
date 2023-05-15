@@ -51,9 +51,8 @@ object PPrinter {
     }
   }
 
-  val AnsiEncodedRegexp: Regex = "\u001b\\[[\\d;]+m".r
-  def isAnsiEncoded(s: String): Boolean =
-    AnsiEncodedRegexp.findFirstIn(s).isDefined
+  def isAnsiEncoded(string: String): Boolean =
+    string.exists(c => c == '\u001b' || c == '\u009b')
 
   /** We use source-highlight to encode source as ansi strings, e.g. the .dump step Ammonite uses fansi for it's
     * colour-coding, and while both pledge to follow the ansi codec, they aren't compatible TODO: PR for fansi to
