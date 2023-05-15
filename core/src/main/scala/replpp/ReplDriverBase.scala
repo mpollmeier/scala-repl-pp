@@ -24,7 +24,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
 abstract class ReplDriverBase(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
-  extends dotty.tools.repl.ReplDriver(args, out, classLoader) {
+  extends DottyReplDriver(args, out, classLoader) {
 
   protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
