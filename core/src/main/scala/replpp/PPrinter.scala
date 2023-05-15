@@ -6,13 +6,15 @@ import scala.util.matching.Regex
 object PPrinter {
   private var pprinter: pprint.PPrinter = null
   private var maxHeight: Int = Int.MaxValue
+  private var nocolors: Boolean = false
 
-  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue, noColors: Boolean = false): String = {
+  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue, nocolors: Boolean = false): String = {
     val _pprinter = this.synchronized {
       // initialise on first use and whenever the maxHeight setting changed
-      if (pprinter == null || this.maxHeight != maxHeight) {
-        pprinter = create(maxHeight, noColors)
+      if (pprinter == null || this.maxHeight != maxHeight || this.nocolors != nocolors) {
+        pprinter = create(maxHeight, nocolors)
         this.maxHeight = maxHeight
+        this.nocolors = nocolors
       }
       pprinter
     }

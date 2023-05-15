@@ -8,33 +8,46 @@ import org.scalatest.wordspec.AnyWordSpec
   * these standard encodings out of the box
   */
 class PPrinterTests extends AnyWordSpec with Matchers {
-  // ansi colour-encoded strings as source-highlight produces them
-  val IntGreenForeground = "\u001b[32mint\u001b[m"
-  val IfBlueBold         = "\u001b[01;34mif\u001b[m"
-  val FBold              = "\u001b[01mF\u001b[m"
-  val X8bit              = "\u001b[00;38;05;70mX\u001b[m"
 
   "print some common datastructures" in {
-    PPrinter(List(1,2)) shouldBe "List(1, 2)"
-    PPrinter((1,2,"three"))  shouldBe """(1, 2, "three")"""
+    PPrinter(List(1, 2), nocolors = true) shouldBe "List(1, 2)"
+    replaceColorEncodingForTest(
+      PPrinter(List(1,2))
+    ) shouldBe "<Y|List>(<G|1>, <G|2>)"
+
+    PPrinter((1,2,"three"), nocolors = true)  shouldBe """(1, 2, "three")"""
+    replaceColorEncodingForTest(
+      PPrinter((1, 2, "three"))
+    ) shouldBe """(<G|1>, <G|2>, <G|"three">)"""
 
     case class A(i: Int, s: String)
-    PPrinter(A(42, "foo bar"))  shouldBe """A(i = 42, s = "foo bar")"""
+    PPrinter(A(42, "foo bar"), nocolors = true)  shouldBe """A(i = 42, s = "foo bar")"""
+    replaceColorEncodingForTest(
+      PPrinter(A(42, "foo bar"))
+    ) shouldBe """<Y|A>(i = <G|42>, s = <G|"foo bar">)"""
 
-    PPrinter(new Product {
+    val productWithLabels = new Product {
       override def productPrefix = "Foo"
+
       def productArity = 2
+
       override def productElementName(n: Int) =
         n match {
           case 0 => "first"
           case 1 => "second"
         }
+
       def productElement(n: Int) = n match {
         case 0 => "one"
         case 1 => "two"
       }
+
       def canEqual(that: Any): Boolean = ???
-    }) shouldBe """Foo(first = "one", second = "two")"""
+    }
+    PPrinter(productWithLabels, nocolors = true) shouldBe """Foo(first = "one", second = "two")"""
+    replaceColorEncodingForTest(
+      PPrinter(productWithLabels)
+    )shouldBe """<Y|Foo>(first = <G|"one">, second = <G|"two">)"""
   }
 
   "fansi encoding fix" must {
@@ -65,6 +78,22 @@ class PPrinterTests extends AnyWordSpec with Matchers {
       fixedForFansi shouldBe "\u001b[38;5;70mX\u001b[39m"
       fansi.Str(fixedForFansi) shouldBe fansi.Color.Full(70)("X")
     }
+
+    // ansi colour-encoded strings as source-highlight produces them
+    lazy val IntGreenForeground = "\u001b[32mint\u001b[m"
+    lazy val IfBlueBold = "\u001b[01;34mif\u001b[m"
+    lazy val FBold = "\u001b[01mF\u001b[m"
+    lazy val X8bit = "\u001b[00;38;05;70mX\u001b[m"
   }
 
+  // adapted from dotty SyntaxHighlightingTests
+  private def replaceColorEncodingForTest(s: String): String = {
+    val res = s
+      .replace(Console.RESET, ">")
+      .replace(fansi.Color.Reset.escape, ">")
+      .replace(Console.YELLOW, "<Y|")
+      .replace(Console.RED, "<R|")
+      .replace(Console.GREEN, "<G|")
+    res
+  }
 }
