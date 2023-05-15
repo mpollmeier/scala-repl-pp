@@ -10,21 +10,24 @@ import org.scalatest.wordspec.AnyWordSpec
 class PPrinterTests extends AnyWordSpec with Matchers {
 
   "print some common datastructures" in {
-    PPrinter(List(1, 2), nocolors = true) shouldBe "List(1, 2)"
-    replaceColorEncodingForTest(
-      PPrinter(List(1,2))
-    ) shouldBe "<Y|List>(<G|1>, <G|2>)"
+    testRendering(
+      List(1, 2),
+      expectedUncolored = "List(1, 2)",
+      expectedColored = "<Y|List>(<G|1>, <G|2>)"
+    )
 
-    PPrinter((1,2,"three"), nocolors = true)  shouldBe """(1, 2, "three")"""
-    replaceColorEncodingForTest(
-      PPrinter((1, 2, "three"))
-    ) shouldBe """(<G|1>, <G|2>, <G|"three">)"""
+    testRendering(
+      (1,2,"three"),
+      expectedUncolored = """(1, 2, "three")""",
+      expectedColored = """(<G|1>, <G|2>, <G|"three">)"""
+    )
 
     case class A(i: Int, s: String)
-    PPrinter(A(42, "foo bar"), nocolors = true)  shouldBe """A(i = 42, s = "foo bar")"""
-    replaceColorEncodingForTest(
-      PPrinter(A(42, "foo bar"))
-    ) shouldBe """<Y|A>(i = <G|42>, s = <G|"foo bar">)"""
+    testRendering(
+      A(42, "foo bar"),
+      expectedUncolored = """A(i = 42, s = "foo bar")""",
+      expectedColored = """<Y|A>(i = <G|42>, s = <G|"foo bar">)"""
+    )
 
     val productWithLabels = new Product {
       override def productPrefix = "Foo"
@@ -44,10 +47,12 @@ class PPrinterTests extends AnyWordSpec with Matchers {
 
       def canEqual(that: Any): Boolean = ???
     }
-    PPrinter(productWithLabels, nocolors = true) shouldBe """Foo(first = "one", second = "two")"""
-    replaceColorEncodingForTest(
-      PPrinter(productWithLabels)
-    )shouldBe """<Y|Foo>(first = <G|"one">, second = <G|"two">)"""
+
+    testRendering(
+      productWithLabels,
+      expectedUncolored = """Foo(first = "one", second = "two")""",
+      expectedColored = """<Y|Foo>(first = <G|"one">, second = <G|"two">)"""
+    )
   }
 
   "fansi encoding fix" must {
@@ -84,6 +89,13 @@ class PPrinterTests extends AnyWordSpec with Matchers {
     lazy val IfBlueBold = "\u001b[01;34mif\u001b[m"
     lazy val FBold = "\u001b[01mF\u001b[m"
     lazy val X8bit = "\u001b[00;38;05;70mX\u001b[m"
+  }
+
+  def testRendering(value: AnyRef, expectedUncolored: String, expectedColored: String): Unit = {
+    PPrinter(value, nocolors = true) shouldBe expectedUncolored
+
+    val resultColored = PPrinter(value)
+    replaceColorEncodingForTest(resultColored) shouldBe expectedColored
   }
 
   // adapted from dotty SyntaxHighlightingTests
