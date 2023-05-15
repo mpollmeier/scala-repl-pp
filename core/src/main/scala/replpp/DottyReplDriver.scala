@@ -406,7 +406,6 @@ class DottyReplDriver(settings: Array[String],
             if newState.invalidObjectIndexes.contains(state.objectIndex) then Seq.empty
             else typeDefs(wrapperModule.symbol)
           val highlighted = (formattedTypeDefs ++ formattedMembers)
-          // TODO refactor
             .map(d => new Diagnostic(d.msg.mapMsg { msg =>
               if (PPrinter.isAnsiEncoded(msg)) {
                 // `msg` already contains ansi color encodings - that's going to mess with the Scanner used by
@@ -416,48 +415,11 @@ class DottyReplDriver(settings: Array[String],
                 // just highlighting the result string. That way we have all type information, product element labels
                 // etc still available... my intention is to create a PR on the dotty repo for that, but first need
                 // to iron out things here.
-
-                val pprinted = fansi.Str(msg)
-                val dottyHighlighted = fansi.Str(SyntaxHighlighting.highlight(pprinted.plainText))
-                // TODO remove assertion, but code more defensive below
-                assert(pprinted.length == dottyHighlighted.length,
-                  s"something went wrong, the length of the highlighted messages must be identical .  m...")
-
-                val coloredCharRangesInOriginal: Seq[Range] = {
-                  val coloredPositions = pprinted.getColors.zipWithIndex.collect { case (color, index) if color != 0 => index }
-                  findAdjacentNumberRanges(coloredPositions)
-                }
-
-                // merge the two fansi.Str - prefer the pprinted where it's color coded, otherwise take the dottyHighlighted
-                // TODO refactor: extract method, variable wording, extract 'scanLeft' or 'takeUntil'
-                // TODO add unit tests for all combinations: color only in dotty, color only in pprinted, color first in pprinted, color first in dotty
-                var result = fansi.Str()
-                var pprintedBuffer = pprinted
-                var dottyBuffer = dottyHighlighted
-                var currentIndex = 0
-                coloredCharRangesInOriginal.foreach { case Range(from, to) =>
-                  if (from > currentIndex) {
-                    // first take from dottyHighlighted until `range.from`
-                    val splitPosition = from - currentIndex
-                    val (takenFromDotty, dottyRemainder) = dottyBuffer.splitAt(splitPosition)
-                    result = result ++ takenFromDotty
-                    dottyBuffer = dottyRemainder
-                    pprintedBuffer = pprintedBuffer.substring(start = splitPosition)
-                    currentIndex = from
-                  }
-
-                  // then take range length from pprinted (either way)
-                  val splitPosition = to + 1 - currentIndex
-                  val (takenFromPPrinted, pprintedRemainder) = pprintedBuffer.splitAt(splitPosition)
-                  result = result ++ takenFromPPrinted
-                  pprintedBuffer = pprintedRemainder
-                  dottyBuffer = dottyBuffer.substring(start = splitPosition)
-
-                  currentIndex = to + 1
-                }
-                result = result ++ dottyBuffer
-
-                result.render
+                val previouslyHighlighted = fansi.Str(msg)
+                enrichWithDottyHighlighting(
+                  previouslyHighlighted = previouslyHighlighted,
+                  dottyHighlighted = SyntaxHighlighting.highlight(previouslyHighlighted.plainText)
+                ).render
               } else {
                 SyntaxHighlighting.highlight(msg)
               }
@@ -469,6 +431,50 @@ class DottyReplDriver(settings: Array[String],
           (state, Seq.empty)
         }
     }
+  }
+
+  /**
+   * for a given previously highlighted (i.e. ansi encoded) string, add dotty's syntax highlighting.
+   * the previous highlighting has precedence, i.e. the dotty highlighting is only added for the not-yet-colored
+   * parts of the string
+   */
+  private def enrichWithDottyHighlighting(previouslyHighlighted: fansi.Str, dottyHighlighted: fansi.Str): fansi.Str = {
+    assert(previouslyHighlighted.length == dottyHighlighted.length,
+      s"something went wrong in SyntaxHighlighting.highlight, the length of the highlighted messages must be identical but isn't: ${previouslyHighlighted.length} (previously) vs ${dottyHighlighted.length} (dotty highlighted)")
+
+    val coloredCharRangesInOriginal: Seq[Range] = {
+      val coloredPositions = previouslyHighlighted.getColors.zipWithIndex.collect { case (color, index) if color != 0 => index }
+      findAdjacentNumberRanges(coloredPositions)
+    }
+
+    // now merge the two fansi.Str - prefer the previously hightlighted where it's color coded, otherwise take the dottyHighlighted
+    var result = fansi.Str()
+    var previouslyHighlightedBuffer = previouslyHighlighted
+    var dottyBuffer = dottyHighlighted
+    var currentIndex = 0
+    coloredCharRangesInOriginal.foreach { case Range(from, to) =>
+      if (from > currentIndex) {
+        // first take from dottyHighlighted until `range.from`
+        val splitPosition = from - currentIndex
+        val (takenFromDotty, dottyRemainder) = dottyBuffer.splitAt(splitPosition)
+        result = result ++ takenFromDotty
+        dottyBuffer = dottyRemainder
+        previouslyHighlightedBuffer = previouslyHighlightedBuffer.substring(start = splitPosition)
+        currentIndex = from
+      }
+
+      // then take range length from previously highlighted (either way)
+      val splitPosition = to + 1 - currentIndex
+      val (takenFromPreviouslyHighlighted, previouslyHighlightedRemainder) = previouslyHighlightedBuffer.splitAt(splitPosition)
+      result = result ++ takenFromPreviouslyHighlighted
+      previouslyHighlightedBuffer = previouslyHighlightedRemainder
+      dottyBuffer = dottyBuffer.substring(start = splitPosition)
+
+      currentIndex = to + 1
+    }
+    result = result ++ dottyBuffer
+
+    result.render
   }
 
   /** Interpret `cmd` to action and propagate potentially new `state` */
