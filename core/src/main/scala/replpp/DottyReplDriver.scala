@@ -409,9 +409,13 @@ class DottyReplDriver(settings: Array[String],
           // TODO refactor
             .map(d => new Diagnostic(d.msg.mapMsg { msg =>
               if (PPrinter.isAnsiEncoded(msg)) {
-                // output already contains ansi color encodings - that's going to mess with the Scanner used by
+                // `msg` already contains ansi color encodings - that's going to mess with the Scanner used by
                 // SyntaxHighlighting, so we'll remember the used colors here, reset the color coding of the input,
-                // and reapply those old colors in the end
+                // and reapply those old colors in the end.
+                // Going forward it'd be much better if the dotty repl was rendering the objects directly, rather than
+                // just highlighting the result string. That way we have all type information, product element labels
+                // etc still available... my intention is to create a PR on the dotty repo for that, but first need
+                // to iron out things here.
 
                 val pprinted = fansi.Str(msg)
                 val dottyHighlighted = fansi.Str(SyntaxHighlighting.highlight(pprinted.plainText))
