@@ -55,6 +55,7 @@ ThisBuild / javacOptions ++= Seq(
 
 ThisBuild / scalacOptions ++= Seq(
   "-release", "11",
+  "-deprecation",
   "-feature",
 )
 
