@@ -2,7 +2,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
 
 ## scala-repl-pp
-Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. 
+Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. Runs on JDK11+.
 
 ## TOC
 <!-- generated with: -->
