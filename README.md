@@ -30,9 +30,11 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 - [Embed into your own project](#embed-into-your-own-project)
 - [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
 - [Verbose mode](#verbose-mode)
-- [Limitations / Debugging](#limitations--debugging)
-  * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
+- [FAQ](#faq)
+  * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
+  * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -341,15 +343,6 @@ val res2: Int = 92
 If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
 To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
 
-## Limitations / Debugging
-
-### Why are script line numbers incorrect?
-Scala-REPL-PP currently uses a simplistic model for predef code|files and additionally imported files, and just copies everything into one large script. That simplicity naturally comes with a few limitations, e.g. line numbers may be different from the input script(s). 
-
-A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
-
-If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
-
 ## Parameters cheat sheet: the most important ones
 Here's only the most important ones - run `scala-repl-pp --help` for all parameters.
 
@@ -361,3 +354,19 @@ Here's only the most important ones - run `scala-repl-pp --help` for all paramet
 | `--script`    |               | Execute given script
 | `--param`     |               | key/value pair for main function in script
 | `--verbose`   | `-v`          | Verbose mode
+
+## FAQ
+
+### Is this an extension of the stock REPL or a fork?
+Technically it is a fork, i.e. we copied parts of the ReplDriver to make some adjustments. 
+However, semantically, Scala-REPL-PP can be considered an extension of the stock repl. We don't want to create and maintain a competing REPL implementation, 
+instead the idea is to provide a space for exploring new ideas and bringing them back into the dotty codebase. 
+[When we forked](https://github.com/mpollmeier/scala-repl-pp/commit/eb2bf9a3bed681bffa945f657ada14781c6a7a14) the stock ReplDriver, we made sure to separate the commits into bitesized chunks so we can easily rebase. The changes are clearly marked, and whenever there's a new dotty version we're bringing in the relevant changes here (`git diff 3.3.0-RC5..3.3.0-RC6 compiler/src/dotty/tools/repl/`).
+
+### Why are script line numbers incorrect?
+Scala-REPL-PP currently uses a simplistic model for predef code|files and additionally imported files, and just copies everything into one large script. That simplicity naturally comes with a few limitations, e.g. line numbers may be different from the input script(s). 
+
+A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
+
+If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
+
