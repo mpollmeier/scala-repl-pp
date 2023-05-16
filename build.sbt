@@ -48,6 +48,17 @@ ThisBuild / libraryDependencies ++= Seq(
   "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
 )
 
+ThisBuild / javacOptions ++= Seq(
+  "-g", //debug symbols
+  "--release", "11"
+)
+
+ThisBuild / scalacOptions ++= Seq(
+  "-release", "11",
+  "-deprecation",
+  "-feature",
+)
+
 ThisBuild/Test/fork := false
 
 ThisBuild/resolvers += Resolver.mavenLocal

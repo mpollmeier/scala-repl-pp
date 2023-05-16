@@ -36,6 +36,7 @@ import DottyRandomStuff.newStoreReporter
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
 
