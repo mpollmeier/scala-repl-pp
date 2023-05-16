@@ -52,10 +52,16 @@ private[replpp] class Rendering(maxHeight: Option[Int],
 
       myClassLoader = new AbstractFileClassLoader(ctx.settings.outputDir.value, parent)
       myReplStringOf = {
-        /** this part was rewritten for replpp: use our very own pprinter for displaying results
-          * We need to use the PPrinter class from the on the user classpath, and not the one available in the current
-          * classloader, so we use reflection instead of simply calling `replpp.PPrinter:apply`.
-          * This is analogous to what happens in dotty.tools.repl.Rendering.
+        /**
+          * The stock Scala REPL's rendering is suboptimal:
+          * - it doesn't format the output for better readability
+          * - the color highlighting is based on the string representation, i.e. a lot of information
+          *   about the value it wants to render is lost, such as product labels, type information etc. 
+          * Therefor this part was rewritten for replpp. 
+          * 
+          * Just like in the regular REPL (see dotty.tools.repl.Rendering), we need to use the PPrinter class
+          * from the on the user classpath, and not the one available in the current classloader, so we
+          * use reflection instead of simply calling `replpp.PPrinter:apply`.
           **/
         val pprinter = Class.forName("replpp.PPrinter", true, myClassLoader)
         val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int], classOf[Boolean])
