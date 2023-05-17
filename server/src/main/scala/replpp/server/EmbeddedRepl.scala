@@ -83,7 +83,7 @@ class EmbeddedRepl(predefLines: IterableOnce[String] = Seq.empty) {
 }
 
 class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
-  extends ReplDriverBase(args, out, classLoader) {
+  extends ReplDriverBase(args, out, maxHeight = None, nocolors = true, classLoader) {
   def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
     interpretInput(inputLines, state, pwd)
 }

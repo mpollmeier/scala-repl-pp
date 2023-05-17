@@ -5,25 +5,31 @@ import scala.util.matching.Regex
 
 object PPrinter {
   private var pprinter: pprint.PPrinter = null
-  private var maxHeight: Option[Int] = None
+  private var maxHeight: Int = Int.MaxValue
+  private var nocolors: Boolean = false
 
-  def apply(objectToRender: Object, maxHeight: Option[Int] = None): String = {
+  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue, nocolors: Boolean = false): String = {
     val _pprinter = this.synchronized {
       // initialise on first use and whenever the maxHeight setting changed
-      if (pprinter == null || this.maxHeight != maxHeight) {
-        pprinter = create(maxHeight)
+      if (pprinter == null || this.maxHeight != maxHeight || this.nocolors != nocolors) {
+        pprinter = create(maxHeight, nocolors)
         this.maxHeight = maxHeight
+        this.nocolors = nocolors
       }
       pprinter
     }
     _pprinter.apply(objectToRender).render
   }
 
-  private def create(maxHeight: Option[Int] = None): pprint.PPrinter = {
+  private def create(maxHeight: Int, nocolors: Boolean): pprint.PPrinter = {
+    val (colorLiteral, colorApplyPrefix) =
+      if (nocolors) (fansi.Attrs.Empty, fansi.Attrs.Empty)
+      else (fansi.Color.Green, fansi.Color.Yellow)
+
     new pprint.PPrinter(
-      defaultHeight = maxHeight.getOrElse(Int.MaxValue),
-      colorLiteral = fansi.Attrs.Empty, // leave color highlighting to the repl
-      colorApplyPrefix = fansi.Attrs.Empty) {
+      defaultHeight = maxHeight,
+      colorLiteral = colorLiteral,
+      colorApplyPrefix = colorApplyPrefix) {
 
       override def tokenize(x: Any,
                             width: Int = defaultWidth,
@@ -33,7 +39,7 @@ object PPrinter {
                             escapeUnicode: Boolean,
                             showFieldNames: Boolean): Iterator[fansi.Str] = {
         val tree = this.treeify(x, escapeUnicode = escapeUnicode, showFieldNames = showFieldNames)
-        val renderer = new Renderer(width, colorApplyPrefix, colorLiteral, indent) {
+        val renderer = new Renderer(width, this.colorApplyPrefix, this.colorLiteral, indent) {
           override def rec(x: Tree, leftOffset: Int, indentCount: Int): Result = x match {
             case Tree.Literal(body) if isAnsiEncoded(body) =>
               // this is the part we're overriding, everything else is just boilerplate
@@ -47,9 +53,8 @@ object PPrinter {
     }
   }
 
-  val AnsiEncodedRegexp: Regex = "\u001b\\[[\\d;]+m".r
-  def isAnsiEncoded(s: String): Boolean =
-    AnsiEncodedRegexp.findFirstIn(s).isDefined
+  def isAnsiEncoded(string: String): Boolean =
+    string.exists(c => c == '\u001b' || c == '\u009b')
 
   /** We use source-highlight to encode source as ansi strings, e.g. the .dump step Ammonite uses fansi for it's
     * colour-coding, and while both pledge to follow the ansi codec, they aren't compatible TODO: PR for fansi to

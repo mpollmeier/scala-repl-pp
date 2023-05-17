@@ -23,7 +23,9 @@ import scala.util.control.NonFatal
  *       `ReplDriver#resetToInitial` is called, the accompanying instance of
  *       `Rendering` is no longer valid.
  */
-private[replpp] class Rendering(parentClassLoader: Option[ClassLoader] = None):
+private[replpp] class Rendering(maxHeight: Option[Int],
+                                nocolors: Boolean,
+                                parentClassLoader: Option[ClassLoader] = None):
 
   import Rendering._
 
@@ -50,47 +52,25 @@ private[replpp] class Rendering(parentClassLoader: Option[ClassLoader] = None):
 
       myClassLoader = new AbstractFileClassLoader(ctx.settings.outputDir.value, parent)
       myReplStringOf = {
-        // We need to use the ScalaRunTime class coming from the scala-library
-        // on the user classpath, and not the one available in the current
-        // classloader, so we use reflection instead of simply calling
-        // `ScalaRunTime.replStringOf`. Probe for new API without extraneous newlines.
-        // For old API, try to clean up extraneous newlines by stripping suffix and maybe prefix newline.
-        val scalaRuntime = Class.forName("scala.runtime.ScalaRunTime", true, myClassLoader)
-        val renderer = "stringOf"
-        def stringOfMaybeTruncated(value: Object, maxElements: Int): String = {
-          try {
-            val meth = scalaRuntime.getMethod(renderer, classOf[Object], classOf[Int], classOf[Boolean])
-            val truly = java.lang.Boolean.TRUE
-            meth.invoke(null, value, maxElements, truly).asInstanceOf[String]
-          } catch {
-            case _: NoSuchMethodException =>
-              val meth = scalaRuntime.getMethod(renderer, classOf[Object], classOf[Int])
-              meth.invoke(null, value, maxElements).asInstanceOf[String]
-          }
+        /**
+          * The stock Scala REPL's rendering is suboptimal:
+          * - it doesn't format the output for better readability
+          * - the color highlighting is based on the string representation, i.e. a lot of information
+          *   about the value it wants to render is lost, such as product labels, type information etc. 
+          * Therefor this part was rewritten for replpp. 
+          * 
+          * Just like in the regular REPL (see dotty.tools.repl.Rendering), we need to use the PPrinter class
+          * from the on the user classpath, and not the one available in the current classloader, so we
+          * use reflection instead of simply calling `replpp.PPrinter:apply`.
+          **/
+        val pprinter = Class.forName("replpp.PPrinter", true, myClassLoader)
+        val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int], classOf[Boolean])
+        (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
+          renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue), nocolors).asInstanceOf[String]
         }
-
-        (value: Object, maxElements: Int, maxCharacters: Int) => {
-          // `ScalaRuntime.stringOf` may truncate the output, in which case we want to indicate that fact to the user
-          // In order to figure out if it did get truncated, we invoke it twice - once with the `maxElements` that we
-          // want to print, and once without a limit. If the first is shorter, truncation did occur.
-          val notTruncated = stringOfMaybeTruncated(value, Int.MaxValue)
-          val maybeTruncatedByElementCount = stringOfMaybeTruncated(value, maxElements)
-          val maybeTruncated = truncate(maybeTruncatedByElementCount, maxCharacters)
-
-          // our string representation may have been truncated by element and/or character count
-          // if so, append an info string - but only once
-          if (notTruncated.length == maybeTruncated.length) maybeTruncated
-          else s"$maybeTruncated ... large output truncated, print value to show all"
-        }
-
       }
       myClassLoader
     }
-
-  private[replpp] def truncate(str: String, maxPrintCharacters: Int)(using ctx: Context): String =
-    val ncp = str.codePointCount(0, str.length) // to not cut inside code point
-    if ncp <= maxPrintCharacters then str
-    else str.substring(0, str.offsetByCodePoints(0, maxPrintCharacters - 1))
 
   /** Return a String representation of a value we got from `classLoader()`. */
   private[replpp] def replStringOf(value: Object)(using Context): String =

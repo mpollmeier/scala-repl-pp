@@ -39,12 +39,17 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 
 ### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
-* pretty printing via [pprint](https://com-lihaoyi.github.io/PPrint/)
 * customize greeting, prompt and shutdown code
 * multiple @main with named arguments (regular Scala REPL only allows an argument list)
 * predef code - i.e. run custom code before starting the REPL - via string and scripts
 * server mode: REPL runs embedded
 * easily embeddable into your own build
+* structured rendering including product labels and type information:<br/>
+Stock scala REPL:<br/>
+<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/c564e4c1-6e78-4b9c-8d2f-749fedeb7db6" width="700px"/>
+<br/>
+Scala-REPL-PP:<br/>
+<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/e31a06b2-4909-4370-a3f9-ea48da7f093a" width="700px"/>
 
 ### [Ammonite](http://ammonite.io)
 * Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: scala-repl-pp uses the regular Scala3/dotty ReplDriver. 
@@ -119,17 +124,13 @@ println(bar) //1
 
 Unlike the stock Scala REPL, scala-repl-pp does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
 ```
-
 ./scala-repl-pp --maxHeight 5
-
-scala> (1 to 100000).map(_.toString).toSeq
-val res0: IndexedSeq[String] = Vector(1, 2, 3, 4, 5, 6, 7, 8, 9,
- 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
- 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
- 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
- 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73,
- 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
- 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1...
+scala> (1 to 100000).toSeq
+val res0: scala.collection.immutable.Range.Inclusive = Range(
+  1,
+  2,
+  3,
+...
 ```
 
 ## Scripting

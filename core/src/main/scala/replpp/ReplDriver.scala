@@ -28,7 +28,8 @@ class ReplDriver(args: Array[String],
                  greeting: Option[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
-                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, classLoader) {
+                 nocolors: Boolean = false,
+                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, maxHeight, nocolors, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
@@ -37,11 +38,6 @@ class ReplDriver(args: Array[String],
     val terminal = new JLineTerminal {
       override protected def promptStr = prompt
     }
-
-    // configure rendering to use our pprinter for displaying results
-    rendering.myReplStringOf = (objectToRender: Object, maxElements: Int, maxCharacters: Int) =>
-      PPrinter.apply(objectToRender, maxHeight)
-
     greeting.foreach(out.println)
 
     @tailrec

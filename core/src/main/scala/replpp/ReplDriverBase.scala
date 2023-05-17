@@ -23,8 +23,12 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
-abstract class ReplDriverBase(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
-  extends DottyReplDriver(args, out, classLoader) {
+abstract class ReplDriverBase(args: Array[String],
+                              out: PrintStream,
+                              maxHeight: Option[Int],
+                              nocolors: Boolean,
+                              classLoader: Option[ClassLoader])
+  extends DottyReplDriver(args, out, maxHeight, nocolors, classLoader) {
 
   protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
