@@ -39,7 +39,7 @@ import scala.jdk.CollectionConverters.*
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
-import replpp.util.{findAdjacentNumberRanges, Range}
+import replpp.util.{findAdjacentNumberRanges, InclusiveRange}
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
@@ -442,7 +442,7 @@ class DottyReplDriver(settings: Array[String],
     assert(previouslyHighlighted.length == dottyHighlighted.length,
       s"something went wrong in SyntaxHighlighting.highlight, the length of the highlighted messages must be identical but isn't: ${previouslyHighlighted.length} (previously) vs ${dottyHighlighted.length} (dotty highlighted)")
 
-    val coloredCharRangesInOriginal: Seq[Range] = {
+    val coloredCharRangesInOriginal: Seq[InclusiveRange] = {
       val coloredPositions = previouslyHighlighted.getColors.zipWithIndex.collect { case (color, index) if color != 0 => index }
       findAdjacentNumberRanges(coloredPositions)
     }
@@ -452,7 +452,7 @@ class DottyReplDriver(settings: Array[String],
     var previouslyHighlightedBuffer = previouslyHighlighted
     var dottyBuffer = dottyHighlighted
     var currentIndex = 0
-    coloredCharRangesInOriginal.foreach { case Range(from, to) =>
+    coloredCharRangesInOriginal.foreach { case InclusiveRange(from, to) =>
       if (from > currentIndex) {
         // first take from dottyHighlighted until `range.from`
         val splitPosition = from - currentIndex
