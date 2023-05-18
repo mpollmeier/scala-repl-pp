@@ -127,7 +127,7 @@ private[replpp] class Rendering(maxHeight: Option[Int],
 
   /** Render value definition result */
   def renderVal(d: Denotation)(using Context): Either[ReflectiveOperationException, Option[Diagnostic]] =
-    val dcl = d.symbol.showUser
+    val dcl = SyntaxHighlighting.highlight(d.symbol.showUser)
     def msg(s: String) = infoDiagnostic(s, d)
     try
       Right(
