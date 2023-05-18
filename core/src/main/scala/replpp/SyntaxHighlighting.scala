@@ -28,9 +28,8 @@ object SyntaxHighlighting {
   val CommentColor: String    = Console.BLUE
   val KeywordColor: String    = Console.YELLOW
   val ValDefColor: String     = Console.CYAN
-  val LiteralColor: String    = Console.RED
-  val StringColor: String     = Console.GREEN
-  val TypeColor: String       = Console.MAGENTA
+  val LiteralColor: String    = Console.GREEN
+  val TypeColor: String       = Console.GREEN
   val AnnotationColor: String = Console.MAGENTA
 
   def highlight(in: String)(using Context): String = {
