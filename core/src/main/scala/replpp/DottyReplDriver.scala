@@ -118,7 +118,7 @@ class DottyReplDriver(settings: Array[String],
    *  `protected final` to facilitate testing.
    */
   def runUntilQuit(using initialState: State = initialState)(): State = {
-    val terminal = new JLineTerminal
+    val terminal = new replpp.JLineTerminal
 
     out.println(
       s"""Welcome to Scala $simpleVersionString ($javaVersion, Java $javaVmName).
