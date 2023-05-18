@@ -82,7 +82,7 @@ class JLineTerminal extends java.io.Closeable {
   /** Provide syntax highlighting */
   private class Highlighter(using Context) extends reader.Highlighter {
     def highlight(reader: LineReader, buffer: String): AttributedString = {
-      val highlighted = SyntaxHighlighting.highlight(buffer)
+      val highlighted = replpp.SyntaxHighlighting.highlight(buffer)
       AttributedString.fromAnsi(highlighted)
     }
     def setErrorPattern(errorPattern: java.util.regex.Pattern): Unit = {}
