@@ -46,10 +46,10 @@ Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammon
 * easily embeddable into your own build
 * structured rendering including product labels and type information:<br/>
 Stock scala REPL:<br/>
-<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/c564e4c1-6e78-4b9c-8d2f-749fedeb7db6" width="700px"/>
+<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/TODO" width="700px"/>
 <br/>
 Scala-REPL-PP:<br/>
-<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/e31a06b2-4909-4370-a3f9-ea48da7f093a" width="700px"/>
+<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/TODO" width="700px"/>
 
 ### [Ammonite](http://ammonite.io)
 * Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: scala-repl-pp uses the regular Scala3/dotty ReplDriver. 
