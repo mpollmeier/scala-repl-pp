@@ -35,7 +35,7 @@ class ReplDriver(args: Array[String],
     * Main difference to the 'original': different greeting, trap Ctrl-c
    */
   override def runUntilQuit(using initialState: State = initialState)(): State = {
-    val terminal = new JLineTerminal {
+    val terminal = new replpp.JLineTerminal {
       override protected def promptStr = prompt
     }
     greeting.foreach(out.println)
@@ -69,7 +69,7 @@ class ReplDriver(args: Array[String],
     * If the input contains a using file directive (e.g. `//> using file abc.sc`), then we interpret everything up
     * until the directive, then interpret the directive (i.e. import that file) and continue with the remainder of
     * our input. That way, we import the file in-place, while preserving line numbers for user feedback.  */
-  private def readLine(terminal: JLineTerminal, state: State): IterableOnce[String] = {
+  private def readLine(terminal: replpp.JLineTerminal, state: State): IterableOnce[String] = {
     given Context = state.context
     val completer: Completer = { (_, line, candidates) =>
       val comps = completions(line.cursor, line.line, state)
