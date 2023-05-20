@@ -39,7 +39,6 @@ import scala.jdk.CollectionConverters.*
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
-import replpp.util.{findAdjacentNumberRanges, InclusiveRange}
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
@@ -405,25 +404,7 @@ class DottyReplDriver(settings: Array[String],
           val formattedTypeDefs =  // don't render type defs if wrapper initialization failed
             if newState.invalidObjectIndexes.contains(state.objectIndex) then Seq.empty
             else typeDefs(wrapperModule.symbol)
-          val highlighted = (formattedTypeDefs ++ formattedMembers)
-            .map(d => new Diagnostic(d.msg.mapMsg { msg =>
-              if (PPrinter.isAnsiEncoded(msg)) {
-                // `msg` already contains ansi color encodings - that's going to mess with the Scanner used by
-                // SyntaxHighlighting, so we'll remember the used colors here, reset the color coding of the input,
-                // and reapply those old colors in the end.
-                // Going forward it'd be much better if the dotty repl was rendering the objects directly, rather than
-                // just highlighting the result string. That way we have all type information, product element labels
-                // etc still available... my intention is to create a PR on the dotty repo for that, but first need
-                // to iron out things here.
-                val previouslyHighlighted = fansi.Str(msg)
-                enrichWithDottyHighlighting(
-                  previouslyHighlighted = previouslyHighlighted,
-                  dottyHighlighted = SyntaxHighlighting.highlight(previouslyHighlighted.plainText)
-                ).render
-              } else {
-                SyntaxHighlighting.highlight(msg)
-              }
-            }, d.pos, d.level))
+          val highlighted = (formattedTypeDefs ++ formattedMembers).map(d => new Diagnostic(d.msg, d.pos, d.level))
           (newState, highlighted)
         }
         .getOrElse {
@@ -431,50 +412,6 @@ class DottyReplDriver(settings: Array[String],
           (state, Seq.empty)
         }
     }
-  }
-
-  /**
-   * for a given previously highlighted (i.e. ansi encoded) string, add dotty's syntax highlighting.
-   * the previous highlighting has precedence, i.e. the dotty highlighting is only added for the not-yet-colored
-   * parts of the string
-   */
-  private def enrichWithDottyHighlighting(previouslyHighlighted: fansi.Str, dottyHighlighted: fansi.Str): fansi.Str = {
-    assert(previouslyHighlighted.length == dottyHighlighted.length,
-      s"something went wrong in SyntaxHighlighting.highlight, the length of the highlighted messages must be identical but isn't: ${previouslyHighlighted.length} (previously) vs ${dottyHighlighted.length} (dotty highlighted)")
-
-    val coloredCharRangesInOriginal: Seq[InclusiveRange] = {
-      val coloredPositions = previouslyHighlighted.getColors.zipWithIndex.collect { case (color, index) if color != 0 => index }
-      findAdjacentNumberRanges(coloredPositions)
-    }
-
-    // now merge the two fansi.Str - prefer the previously hightlighted where it's color coded, otherwise take the dottyHighlighted
-    var result = fansi.Str()
-    var previouslyHighlightedBuffer = previouslyHighlighted
-    var dottyBuffer = dottyHighlighted
-    var currentIndex = 0
-    coloredCharRangesInOriginal.foreach { case InclusiveRange(from, to) =>
-      if (from > currentIndex) {
-        // first take from dottyHighlighted until `range.from`
-        val splitPosition = from - currentIndex
-        val (takenFromDotty, dottyRemainder) = dottyBuffer.splitAt(splitPosition)
-        result = result ++ takenFromDotty
-        dottyBuffer = dottyRemainder
-        previouslyHighlightedBuffer = previouslyHighlightedBuffer.substring(start = splitPosition)
-        currentIndex = from
-      }
-
-      // then take range length from previously highlighted (either way)
-      val splitPosition = to + 1 - currentIndex
-      val (takenFromPreviouslyHighlighted, previouslyHighlightedRemainder) = previouslyHighlightedBuffer.splitAt(splitPosition)
-      result = result ++ takenFromPreviouslyHighlighted
-      previouslyHighlightedBuffer = previouslyHighlightedRemainder
-      dottyBuffer = dottyBuffer.substring(start = splitPosition)
-
-      currentIndex = to + 1
-    }
-    result = result ++ dottyBuffer
-
-    result.render
   }
 
   /** Interpret `cmd` to action and propagate potentially new `state` */
