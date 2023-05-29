@@ -3,6 +3,7 @@
 
 ## scala-repl-pp
 Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. Runs on JDK11+.
+This is (also) a breeding ground for improvements to the regular scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
 
 ## TOC
 <!-- generated with: -->
@@ -58,7 +59,7 @@ Stock Scala REPL:<br/>
 * Note: Ammonite allows to add dependencies dynamically even in the middle of the REPL session - that's not supported by scala-repl-pp yet. You need to know which dependencies you want on startup. 
 
 ### [scala-cli](https://scala-cli.virtuslab.org/)
-scala-cli is mostly a wrapper around the regular Scala REPL and Ammonite, so depending on which one you choose, you essentially end up with the same differences as above. 
+scala-cli wraps and invokes the regular Scala REPL (or optionally Ammonite). It doesn't have a separate REPL implementation, and therefor the above differences apply. 
 
 ## Build it locally
 
