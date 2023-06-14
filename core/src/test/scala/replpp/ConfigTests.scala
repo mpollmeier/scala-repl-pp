@@ -24,8 +24,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
 
     val javaArgs = config.asJavaArgs
     javaArgs shouldBe Seq(
-      "--predef", "/some/path/predefFile1",
-      "--predef", "/some/path/predefFile2",
+      "--predef", Paths.get("/some/path/predefFile1").toString,
+      "--predef", Paths.get("/some/path/predefFile2").toString,
       "--nocolors",
       "--verbose",
       "--dep", "com.michaelpollmeier:versionsort:1.0.7",
@@ -33,7 +33,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--repo", apacheRepo,
       "--repo", sonatypeRepo,
       "--maxHeight", "10000",
-      "--script", "/some/script.sc",
+      "--script", Paths.get("/some/script.sc").toString,
       "--command", "someCommand",
       "--param", "param1=value1",
       "--param", "param2=222",
