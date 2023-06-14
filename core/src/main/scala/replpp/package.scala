@@ -54,7 +54,7 @@ package object replpp {
         .map(_.getFile)
         .mkString(pathSeparator)
 
-    (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).mkString(pathSeparator)
+    (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).distinct.mkString(pathSeparator)
   }
 
   private def dependencyArtifacts(config: Config): Seq[File] = {
