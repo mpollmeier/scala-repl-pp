@@ -198,7 +198,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
     val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
     val scriptFile = os.temp(scriptSrc).toNIO
-    val config = adaptConfig(Config(scriptFile = Some(scriptFile), verbose = false))
+    val config = adaptConfig(Config(scriptFile = Some(scriptFile), verbose = true))
     ScriptRunner.exec(config).map{_ => os.read(testOutputFile)}
   }
 

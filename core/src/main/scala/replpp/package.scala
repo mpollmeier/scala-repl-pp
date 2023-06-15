@@ -41,8 +41,8 @@ package object replpp {
   }
 
   def classpath(config: Config, quiet: Boolean = false): String = {
-    val fromJavaClassPathProperty = System.getProperty("java.class.path")
-    val fromDependencies = dependencyArtifacts(config)
+    val fromJavaClassPathProperty = System.getProperty("java.class.path").split(pathSeparator)
+    val fromDependencies = dependencyArtifacts(config).map(_.toString)
 
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
@@ -50,11 +50,10 @@ package object replpp {
     }
 
     val fromClassLoaderHierarchy =
-      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
-        .map(_.getFile)
-        .mkString(pathSeparator)
+      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(_.getFile)
 
-    (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).map(s => s"XX${s}XX").distinct.mkString(pathSeparator)
+    val allEntries = fromClassLoaderHierarchy ++ fromDependencies ++ fromJavaClassPathProperty
+    allEntries.distinct.mkString(pathSeparator)
   }
 
   private def dependencyArtifacts(config: Config): Seq[File] = {
