@@ -49,10 +49,9 @@ package object replpp {
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
-    val fromClassLoaderHierarchy =
-      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(_.getFile)
+    val fromClassLoaderHierarchy = jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(_.toString)
 
-    val allEntries = fromClassLoaderHierarchy ++ fromDependencies ++ fromJavaClassPathProperty
+    val allEntries: Seq[String] = fromClassLoaderHierarchy ++ fromDependencies ++ fromJavaClassPathProperty
     allEntries.distinct.mkString(pathSeparator)
   }
 
@@ -67,10 +66,10 @@ package object replpp {
     Dependencies.resolve(allDependencies, resolvers).get
   }
   
-  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
+  private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[Path] = {
     classLoader match {
       case cl: java.net.URLClassLoader =>
-        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs
+        jarsFromClassLoaderRecursively(cl.getParent) ++ cl.getURLs.map(url => Paths.get(url.toURI))
       case _ =>
         Seq.empty
     }
