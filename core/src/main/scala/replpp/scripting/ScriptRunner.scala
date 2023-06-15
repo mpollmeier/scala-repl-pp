@@ -2,8 +2,6 @@ package replpp.scripting
 
 import replpp.Config
 
-import java.nio.file.Files
-import java.nio.file.Paths
 import scala.util.{Failure, Success, Try}
 import sys.process.Process
 
@@ -16,12 +14,9 @@ object ScriptRunner {
 
   def exec(config: Config): Try[Unit] = {
     val classpath = replpp.classpath(config, quiet = true)
-    // TODO cleanup, use tmp file, document file args
-    val classpathFile = Paths.get("classpath.txt")
-    Files.writeString(classpathFile, s"'$classpath'")
     val args = Seq(
       "-classpath",
-      s"@$classpathFile",
+      s"'$classpath'",
       "replpp.scripting.NonForkingScriptRunner",
     ) ++ config.asJavaArgs
     if (replpp.verboseEnabled(config)) println(s"executing `java ${args.mkString(" ")}`")
