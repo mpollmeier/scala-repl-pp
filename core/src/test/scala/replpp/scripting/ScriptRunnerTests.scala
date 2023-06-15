@@ -10,7 +10,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   "execute simple single-statement script" in {
     execTest { testOutputPath =>
-      TestSetup(s"""os.write.over(os.Path("$testOutputPath"), "iwashere-simple")""")
+      TestSetup(s"""os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-simple")""")
     }.get shouldBe "iwashere-simple"
   }
 
@@ -18,7 +18,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       TestSetup(
         s"""@main def foo() = {
-           |  os.write.over(os.Path("$testOutputPath"), "iwashere-@main")
+           |  os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-@main")
            |}""".stripMargin
       )
     }.get shouldBe "iwashere-@main"
@@ -28,11 +28,11 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       TestSetup(
         s"""@main def foo() = {
-           |  os.write.append(os.Path("$testOutputPath"), "iwashere-@main-foo")
+           |  os.write.append(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-@main-foo")
            |}
            |
            |@main def bar() = {
-           |  os.write.append(os.Path("$testOutputPath"), "iwashere-@main-bar")
+           |  os.write.append(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-@main-bar")
            |}""".stripMargin,
         adaptConfig = _.copy(command = Some("bar"))
       )
@@ -43,7 +43,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       TestSetup(
         s"""@main def foo(value: String) = {
-           |  os.write.over(os.Path("$testOutputPath"), value)
+           |  os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), value)
            |}""".stripMargin,
         adaptConfig = _.copy(params = Map("value" -> "iwashere-parameter"))
       )
@@ -54,7 +54,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       val predefFile = os.temp("val bar = \"iwashere-predefFile\"").toNIO
       TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), bar)""".stripMargin,
+        s"""os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), bar)""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
     }.get shouldBe "iwashere-predefFile"
@@ -64,7 +64,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       val predefFile = os.temp("import Byte.MaxValue").toNIO
       TestSetup(
-        s"""os.write.over(os.Path("$testOutputPath"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
+        s"""os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
     }.get shouldBe "iwashere-predefFile-127"
@@ -74,7 +74,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     execTest { testOutputPath =>
       TestSetup(
         s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-param:" + compareResult)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-param:" + compareResult)
            |""".stripMargin,
         adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
       )
@@ -87,7 +87,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         s"""
            |//> using dep com.michaelpollmeier:versionsort:1.0.7
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-script:" + compareResult)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-using-script:" + compareResult)
            |""".stripMargin
       )
     }.get shouldBe "iwashere-dependency-using-script:1"
@@ -99,7 +99,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       TestSetup(
         s"""
            |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-dependency-using-predefFiles:" + compareResult)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-using-predefFiles:" + compareResult)
            |""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
@@ -112,7 +112,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       os.write.over(additionalScript, "def foo = 99")
       TestSetup(
         s"""//> using file $additionalScript
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test1:" + foo)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test1:" + foo)
            |""".stripMargin
       )
     }.get shouldBe "iwashere-using-file-test1:99"
@@ -124,7 +124,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       val predefFile = os.temp(s"//> using file $additionalScript").toNIO
       TestSetup(
         s"""
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test3:" + foo)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test3:" + foo)
            |""".stripMargin,
         adaptConfig = _.copy(predefFiles = List(predefFile))
       )
@@ -144,7 +144,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
            |def bar = foo""".stripMargin)
       TestSetup(
         s"""//> using file $additionalScript1
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test4:" + bar)
+           |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test4:" + bar)
            |""".stripMargin
       )
     }.get shouldBe "iwashere-using-file-test4:99"
@@ -165,7 +165,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         s"""def foo = 99""".stripMargin)
       TestSetup(
         s"""//> using file $additionalScript0
-           |os.write.over(os.Path("$testOutputPath"), "iwashere-using-file-test5:" + bar)
+           |os.write.over(os.Path("$testOutputPath\"\"\"), "iwashere-using-file-test5:" + bar)
            |""".stripMargin,
         adaptConfig = _.copy(verbose = true)
       )
@@ -193,7 +193,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
   type TestOutput = String
   case class TestSetup(scriptSrc: String, adaptConfig: Config => Config = identity)
   private def execTest(setupTest: TestOutputPath => TestSetup): Try[TestOutput] = {
-    val testOutputFile = os.temp()
+    val testOutputFile = os.temp(deleteOnExit = false)
     val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
 
     val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
