@@ -168,7 +168,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           s"""def foo = 99""".stripMargin)
         TestSetup(
           s"""//> using file $additionalScript0
-             |os.write.over(os.Path("$testOutputPath\"\"\"), "iwashere-using-file-test5:" + bar)
+             |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test5:" + bar)
              |""".stripMargin,
           adaptConfig = _.copy(verbose = true)
         )
