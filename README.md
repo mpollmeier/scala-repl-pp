@@ -281,6 +281,16 @@ curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote
 # {"success":true,"stdout":"",...}%
 ```
 
+The same for windows and powershell:
+```
+scala-repl-pp-all.bat --server
+
+Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "val foo = 42"}'
+# Content           : {"success":true,"stdout":"val foo: Int = 42\r\n","uuid":"02f843ba-671d-4fb5-b345-91c1dcf5786d"}
+Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "foo + 1"}'
+# Content           : {"success":true,"stdout":"val res0: Int = 43\r\n","uuid":"dc49df42-a390-4177-98d0-ac87a277c7d5"}
+```
+
 Predef code works with server as well:
 ```
 echo val foo = 99 > foo.sc

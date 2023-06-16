@@ -3,9 +3,10 @@ package replpp
 import coursier.cache.{CacheDefaults, FileCache}
 import coursier.credentials.Credentials
 import coursier.parse.DependencyParser
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import java.io.File
 
 class DependenciesTests extends AnyWordSpec with Matchers {
   val coursierCache = os.home / ".cache" / "coursier" / "v1"
@@ -14,19 +15,21 @@ class DependenciesTests extends AnyWordSpec with Matchers {
   "artifact resolution including transitive dependencies" should {
     "work for java artifacts" in {
       val jars = Dependencies.resolve(Seq("io.shiftleft:overflowdb-core:1.171")).get
-      val overflowDbJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/io/shiftleft/overflowdb-core/1.171/overflowdb-core-1.171.jar")
-      val mvstoreJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/com/h2database/h2-mvstore/1.4.200/h2-mvstore-1.4.200.jar")
-      jars should contain(overflowDbJar.toIO)
-      jars should contain(mvstoreJar.toIO)
+      val mvstoreJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/com/h2database/h2-mvstore/1.4.200/")
+
+      ensureContains("overflowdb-core-1.171.jar", jars)
+      ensureContains("h2-mvstore-1.4.200.jar", jars)
     }
 
     "work for scala artifacts" in {
       val jars = Dependencies.resolve(Seq("com.lihaoyi::sourcecode:0.3.0")).get
       jars.size shouldBe 3
-      val sourceCodeJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/com/lihaoyi/sourcecode_3/0.3.0/sourcecode_3-0.3.0.jar")
-      val scalaLibJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.1.3/scala3-library_3-3.1.3.jar")
-      jars should contain(sourceCodeJar.toIO)
-      jars should contain(scalaLibJar.toIO)
+      ensureContains("sourcecode_3-0.3.0.jar", jars)
+      ensureContains("scala3-library_3-3.1.3.jar", jars)
+    }
+
+    def ensureContains(fileName: String, jars: Seq[File]): Unit = {
+      assert(jars.exists(_.toString.endsWith(fileName)), s"expected $fileName, but it's not in the results: $jars")
     }
   }
 
