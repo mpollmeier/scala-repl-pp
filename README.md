@@ -112,6 +112,13 @@ scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
 
+For Scala dependencies use `::`:
+```
+./scala-repl-pp --dep com.michaelpollmeier::colordiff:0.36
+colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
+// color coded diff
+```
+
 Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
 
 ### Importing additional script files interactively
@@ -124,6 +131,14 @@ val foo = 1
 //> using file myScript.sc
 println(bar) //1
 ```
+
+You can specify the filename with relative or absolute paths:
+```java
+//> using file scripts/myScript.sc
+//> using file ../myScript.sc
+//> using file /path/to/myScript.sc
+```
+
 
 ### Rendering of output
 
@@ -233,6 +248,8 @@ test-main-withargs.sc
 ```bash
 ./scala-repl-pp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
+Note that on windows the parameters need to be triple-quoted:
+`./scala-repl-pp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
@@ -385,4 +402,3 @@ Scala-REPL-PP currently uses a simplistic model for predef code|files and additi
 A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
-
