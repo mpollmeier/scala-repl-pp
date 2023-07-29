@@ -1,4 +1,4 @@
-package replpp.shadowed
+package replpp.shaded
 package geny
 import java.io.{ByteArrayInputStream, InputStream, OutputStream, OutputStreamWriter}
 import java.nio.charset.StandardCharsets

@@ -1,4 +1,4 @@
-package replpp.shadowed
+package replpp.shaded
 
 import scala.language.implicitConversions
 

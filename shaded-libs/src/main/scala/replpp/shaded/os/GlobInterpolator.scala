@@ -1,4 +1,4 @@
-package replpp.shadowed
+package replpp.shaded
 package os
 
 object GlobInterpolator {

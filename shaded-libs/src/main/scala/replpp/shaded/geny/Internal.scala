@@ -1,4 +1,4 @@
-package replpp.shadowed
+package replpp.shaded
 package geny
 
 import java.io.{InputStream, OutputStream}
