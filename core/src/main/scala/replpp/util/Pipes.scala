@@ -40,6 +40,17 @@ object Pipes {
 
   def main(args: Array[String]): Unit = {
     import scala.sys.process._
+//    val io = BasicIO.standard(connectInput = true)
+    val io = BasicIO.standard { (out: java.io.OutputStream) =>
+      // TODO connect to the repl's stdin
+      println("XX0 " + out)
+      ()
+    }
+    Process(Seq("less", "README.md")).run(io)
+//    val io = new ProcessIO()
+//    val p = Process(Seq("less", "README.md"))
+//    p.run(io)
+
     ???
 
 
