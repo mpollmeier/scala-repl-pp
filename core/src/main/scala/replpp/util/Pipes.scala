@@ -22,39 +22,22 @@ object Pipes {
 
     // TODO implement |>>
 
-    // TODO document
     /** Pipe output into a different command.
+     * What actually happens: writes the string value to a temporary file and then passes that to the
+     * given command. In other words, this does not stream the results.
      */
     def #|(command: String): Unit = {
       val tempFile = Files.createTempFile("replpp-pipes", "txt")
       val attempt = try {
         #>(tempFile)
-        val p = Process(Seq(command, tempFile.toString))
-        p.run()
+        import replpp.shaded.os
+        os.proc(Seq("less", tempFile.toAbsolutePath.toString))
+          .call(stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
         ()
       } finally {
         Files.deleteIfExists(tempFile)
       }
     }
   }
-
-  def main(args: Array[String]): Unit = {
-    import scala.sys.process._
-//    val io = BasicIO.standard(connectInput = true)
-    val io = BasicIO.standard { (out: java.io.OutputStream) =>
-      // TODO connect to the repl's stdin
-      println("XX0 " + out)
-      ()
-    }
-    Process(Seq("less", "README.md")).run(io)
-//    val io = new ProcessIO()
-//    val p = Process(Seq("less", "README.md"))
-//    p.run(io)
-
-    ???
-
-
-  }
-
 
 }
