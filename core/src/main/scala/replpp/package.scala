@@ -23,6 +23,7 @@ package object replpp {
 
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
+  val DefaultPredefLines = Seq("import replpp.Operators.*")
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
@@ -83,6 +84,8 @@ package object replpp {
   def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
+
+    resultLines ++= DefaultPredefLines
 
     val allPredefFiles = globalPredefFileMaybe ++ config.predefFiles
     allPredefFiles.foreach { file =>
