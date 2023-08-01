@@ -1,4 +1,4 @@
-package replpp.util
+package replpp
 
 import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters.IterableHasAsScala
@@ -8,23 +8,24 @@ import System.lineSeparator
 import java.io.FileWriter
 
 /**
- * Redirect output to files or external commands / processes - inspired by unix pipes.
- * Naming convention: similar to scala.sys.process we prefix all operators with `#`
- * to avoid naming clashes with more basic operators like `>` for comparisons.
- * */
-object Pipes {
+  * Operators to redirect output to files or pipe them into external commands / processes,
+  * inspired by unix shell redirection and pipe operators: `>`, `>>` and `|`.
+  * Naming convention: similar to scala.sys.process we prefix all operators with `#`
+  * to avoid naming clashes with more basic operators like `>` for greater-than-comparisons.
+  * */
+object Operators {
 
   extension (value: String) {
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
       Files.writeString(outFile, value)
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFileName: String): Unit =
       #>(Paths.get(outFileName))
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFile: Path): Unit = {
       Using.resource(new FileWriter(outFile.toFile, true)) { fw =>
         fw.write(lineSeparator)
@@ -32,7 +33,7 @@ object Pipes {
       }
     }
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFileName: String): Unit =
       #>>(Paths.get(outFileName))
 
@@ -55,19 +56,19 @@ object Pipes {
   extension (iter: IterableOnce[String]) {
     private def valueAsString = iter.iterator.mkString(lineSeparator)
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
       valueAsString #> outFile
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFileName: String): Unit =
       valueAsString #> outFileName
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFile: Path): Unit =
       valueAsString #>> outFile
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFileName: String): Unit =
       valueAsString #>> outFileName
 
@@ -81,19 +82,19 @@ object Pipes {
 
   extension (iter: java.lang.Iterable[String]) {
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
       iter.asScala #> outFile
 
-    /** Pipe output into file, overriding that file - similar to `>` redirection in unix. */
+    /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFileName: String): Unit =
       iter.asScala #> outFileName
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFile: Path): Unit =
       iter.asScala #>> outFile
 
-    /** Pipe output into file, appending to that file - similar to `>>` redirection in unix. */
+    /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFileName: String): Unit =
       iter.asScala #>> outFileName
 

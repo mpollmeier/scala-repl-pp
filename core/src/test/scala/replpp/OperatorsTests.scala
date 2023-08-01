@@ -5,9 +5,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.util.Pipes.*
 
-class PipesTests extends AnyWordSpec with Matchers {
+class OperatorsTests extends AnyWordSpec with Matchers {
 
-  "#> pipes output into a file, overriding it" when {
+  "#> redirects output into a file, overriding it" when {
     "using on String" in {
       val tmpFile = os.temp("old")
       "new" #> tmpFile.toString
@@ -27,7 +27,7 @@ class PipesTests extends AnyWordSpec with Matchers {
     }
   }
 
-  "#>> pipes output into a file, appending to it" when {
+  "#>> redirects output into a file, appending to it" when {
     "using on String" in {
       val tmpFile = os.temp("old")
       "new" #>> tmpFile.toString
