@@ -1,11 +1,14 @@
 package replpp
 
+import replpp.shaded.os.{ProcessInput, ProcessOutput, SubProcess}
+
+import java.io.FileWriter
+import java.lang.ProcessBuilder.Redirect
+import java.lang.System.lineSeparator
 import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.sys.process.Process
 import scala.util.{Try, Using}
-import System.lineSeparator
-import java.io.FileWriter
 
 /**
   * Operators to redirect output to files or pipe them into external commands / processes,
@@ -42,11 +45,11 @@ object Operators {
      * given command. In other words, this does not stream the results.
      */
     def #|(command: String): Unit = {
-      val tempFile = Files.createTempFile("replpp-pipes", "txt")
+      val tempFile = Files.createTempFile("replpp-piped", "txt")
       try {
         #>(tempFile)
         import replpp.shaded.os
-        os.proc(Seq(command, tempFile.toString)) .call(stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
+        os.proc(Seq(command, tempFile.toString)).call(stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
       } finally {
         Files.deleteIfExists(tempFile)
       }

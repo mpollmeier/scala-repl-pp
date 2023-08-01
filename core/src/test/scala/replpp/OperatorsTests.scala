@@ -1,9 +1,10 @@
 package replpp.util
 
-import scala.jdk.CollectionConverters.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import replpp.util.Pipes.*
+import replpp.Operators.*
+
+import scala.jdk.CollectionConverters.*
 
 class OperatorsTests extends AnyWordSpec with Matchers {
 
@@ -19,7 +20,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
       values #> tmpFile.toString
       os.read.lines(tmpFile) shouldBe values
     }
-    "using on java Iterator" in {
+    "using on java Iterable" in {
       val tmpFile = os.temp("old")
       val values: java.lang.Iterable[String] = Seq("new1", "new2").asJava
       values #> tmpFile.toString
@@ -39,12 +40,11 @@ class OperatorsTests extends AnyWordSpec with Matchers {
       values #>> tmpFile.toString
       os.read.lines(tmpFile) shouldBe Seq("old", "new1", "new2")
     }
-    "using on java Iterator" in {
+    "using on java Iterable" in {
       val tmpFile = os.temp("old")
       val values: java.lang.Iterable[String] = Seq("new1", "new2").asJava
       values #>> tmpFile.toString
       os.read.lines(tmpFile) shouldBe Seq("old", "new1", "new2")
     }
   }
-
 }
