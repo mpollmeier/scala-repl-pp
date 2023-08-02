@@ -31,7 +31,9 @@ object Operators {
     /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFile: Path): Unit = {
       Using.resource(new FileWriter(outFile.toFile, true)) { fw =>
-        fw.write(lineSeparator)
+        if (Files.size(outFile) > 0) {
+          fw.write(lineSeparator)
+        }
         fw.write(value)
       }
     }

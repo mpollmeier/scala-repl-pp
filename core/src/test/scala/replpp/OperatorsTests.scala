@@ -30,21 +30,24 @@ class OperatorsTests extends AnyWordSpec with Matchers {
 
   "#>> redirects output into a file, appending to it" when {
     "using on String" in {
-      val tmpFile = os.temp("old")
-      "new" #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("old", "new")
+      val tmpFile = os.temp()
+      "aaa" #>> tmpFile.toString
+      "bbb" #>> tmpFile.toString
+      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb")
     }
     "using on IterableOnce" in {
-      val tmpFile = os.temp("old")
-      val values: IterableOnce[String] = Seq("new1", "new2")
-      values #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("old", "new1", "new2")
+      val tmpFile = os.temp()
+      val values1: IterableOnce[String] = Seq("aaa", "bbb")
+      values1 #>> tmpFile.toString
+      Seq("ccc", "ddd") #>> tmpFile.toString
+      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
     }
     "using on java Iterable" in {
-      val tmpFile = os.temp("old")
-      val values: java.lang.Iterable[String] = Seq("new1", "new2").asJava
+      val tmpFile = os.temp()
+      val values: java.lang.Iterable[String] = Seq("aaa", "bbb").asJava
       values #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("old", "new1", "new2")
+      Seq("ccc", "ddd").asJava #>> tmpFile.toString
+      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
     }
   }
 }
