@@ -40,19 +40,15 @@ object Operators {
     def #>>(outFileName: String): Unit =
       #>>(Paths.get(outFileName))
 
-    /** Pipe output into a different command.
-     * What actually happens: writes the string value to a temporary file and then passes that to the
-     * given command. In other words, this does not stream the results.
+    /** Pipe output into a different command, i.e. pass the value into the command's InputStream.
      */
     def #|(command: String): Unit = {
-      val tempFile = Files.createTempFile("replpp-piped", "txt")
-      try {
-        #>(tempFile)
-        import replpp.shaded.os
-        os.proc(Seq(command, tempFile.toString)).call(stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
-      } finally {
-        Files.deleteIfExists(tempFile)
-      }
+      import replpp.shaded.os
+      os.proc(Seq(command)).call(
+        stdin = pipeInput(value),
+        stdout = os.Inherit,
+        stderr = os.Inherit
+      )
     }
   }
 
@@ -107,6 +103,19 @@ object Operators {
      */
     def #|(command: String): Unit =
       iter.asScala #| command
+  }
+
+  private def pipeInput(value: String) = new ProcessInput {
+    def redirectFrom: Redirect = ProcessBuilder.Redirect.PIPE
+
+    def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
+      Some { () =>
+        // TODO write buffered?
+        stdin.write(value)
+        stdin.flush()
+        stdin.close()
+      }
+    }
   }
 
 }
