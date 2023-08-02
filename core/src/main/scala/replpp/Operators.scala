@@ -22,19 +22,15 @@ object Operators {
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
-      Files.writeString(outFile, value)
+      writeToFile(outFile, append = false)
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFileName: String): Unit =
       #>(Paths.get(outFileName))
 
     /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
-    def #>>(outFile: Path): Unit = {
-      Using.resource(new FileWriter(outFile.toFile, true)) { fw =>
-        fw.write(value)
-        fw.write(lineSeparator)
-      }
-    }
+    def #>>(outFile: Path): Unit =
+      writeToFile(outFile, append = true)
 
     /** Redirect output into file, appending to that file - similar to `>>` redirection in unix. */
     def #>>(outFileName: String): Unit =
@@ -49,6 +45,13 @@ object Operators {
         stdout = os.Inherit,
         stderr = os.Inherit
       )
+    }
+
+    private def writeToFile(outFile: Path, append: Boolean): Unit = {
+      Using.resource(new FileWriter(outFile.toFile, true)) { fw =>
+        fw.write(value)
+        fw.write(lineSeparator)
+      }
     }
   }
 
