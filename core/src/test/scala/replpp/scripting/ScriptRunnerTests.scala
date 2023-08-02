@@ -10,15 +10,6 @@ import scala.util.{Failure, Success, Try}
 
 class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
-  val x = {
-    import java.nio.file.Files
-    val outFileName: String = ""
-    val outFile = Paths.get(outFileName)
-    Files.writeString(outFile, "asdf")
-
-    val i: Iterable[_] = ???
-  }
-
   if (scala.util.Properties.isWin) {
     info("tests were cancelled currently fail on windows - not sure why - I'm testing the `--script` mode manually for now and will replace these tests in the future")
   } else {
