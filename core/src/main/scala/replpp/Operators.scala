@@ -2,9 +2,10 @@ package replpp
 
 import replpp.shaded.os.{ProcessInput, ProcessOutput, SubProcess}
 
-import java.io.FileWriter
+import java.io.{FileWriter, PipedInputStream, PipedOutputStream}
 import java.lang.ProcessBuilder.Redirect
 import java.lang.System.lineSeparator
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.sys.process.Process
@@ -113,8 +114,17 @@ object Operators {
 
     def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
       Some { () =>
-        // TODO write buffered?
-        stdin.write(value)
+        val bytes = value.getBytes(StandardCharsets.UTF_8)
+        val chunkSize = 8192
+        var remaining = bytes.length
+        var pos = 0
+        while (remaining > 0) {
+          val currentWindow = math.min(remaining, chunkSize)
+          stdin.buffered.write(value, pos, currentWindow)
+          pos += currentWindow
+          remaining -= currentWindow
+        }
+
         stdin.flush()
         stdin.close()
       }
