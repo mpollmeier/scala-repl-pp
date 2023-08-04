@@ -5,6 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import replpp.Operators.*
 
 import scala.jdk.CollectionConverters.*
+import System.lineSeparator
 
 class OperatorsTests extends AnyWordSpec with Matchers {
 
@@ -49,5 +50,33 @@ class OperatorsTests extends AnyWordSpec with Matchers {
       Seq("ccc", "ddd").asJava #>> tmpFile.toString
       os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
     }
+  }
+
+  "#| pipes into an external command" when {
+      if (scala.util.Properties.isWin) {
+        info("#| not unit-tested in windows")
+        // TODO implmeent
+        ???
+      } else {
+        "using on String" in {
+          val value = "aaa"
+          val result = value #| "cat"
+          result shouldBe value
+        }
+        "using on IterableOnce" in {
+          val values: IterableOnce[String] = Seq("aaa", "bbb")
+          val result = values #| "cat"
+          result shouldBe """aaa
+                            |bbb
+                            |""".stripMargin
+        }
+        "using on java Iterable" in {
+          val values: java.lang.Iterable[String] = Seq("aaa", "bbb").asJava
+          val result = values #| "cat"
+          result shouldBe """aaa
+                            |bbb
+                            |""".stripMargin
+        }
+      }
   }
 }

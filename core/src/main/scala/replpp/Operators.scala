@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.sys.process.Process
-import scala.util.{Try, Using}
+import scala.util.{Failure, Success, Try, Using}
 
 /**
   * Operators to redirect output to files or pipe them into external commands / processes,
@@ -18,6 +18,9 @@ import scala.util.{Try, Using}
   * to avoid naming clashes with more basic operators like `>` for greater-than-comparisons.
   * */
 object Operators {
+
+  /** output from an external command, e.g. when using `#|` */
+  case class ProcessResults(stdout: String, stderr: String)
 
   extension (value: String) {
 
@@ -37,15 +40,60 @@ object Operators {
     def #>>(outFileName: String): Unit =
       #>>(Paths.get(outFileName))
 
-    /** Pipe output into a different command, i.e. pass the value into the command's InputStream.
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * It returns a concatenation of the stdout and stderr of the external command.
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
      */
-    def #|(command: String): Unit = {
+    def #|(command: String): String = {
+      val ProcessResults(stdout, stderr) = ##|(command).get
+      Seq(stdout, stderr).filter(_.nonEmpty).mkString(lineSeparator)
+    }
+
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * Executing an external command may fail, hence returning a `Try`.
+     */
+    def ##|(command: String): Try[ProcessResults] = {
       import replpp.shaded.os
-      os.proc(Seq(command)).call(
-        stdin = pipeInput(value),
-        stdout = os.Inherit,
-        stderr = os.Inherit
-      )
+      var stdout = ""
+      var stderr = ""
+
+      Try {
+        os.proc(Seq(command)).call(
+          stdin = pipeInput,
+          stdout = os.ProcessOutput.Readlines { commandStdout =>
+            stdout = commandStdout
+          },
+          stderr = os.ProcessOutput.Readlines { commandStderr =>
+            stderr = commandStderr
+          }
+        )
+        ProcessResults(stdout, stderr)
+      }
+    }
+
+    private def pipeInput = new ProcessInput {
+      def redirectFrom: Redirect = ProcessBuilder.Redirect.PIPE
+
+      def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
+        Some { () =>
+          val bytes = value.getBytes(StandardCharsets.UTF_8)
+          val chunkSize = 8192
+          var remaining = bytes.length
+          var pos = 0
+          while (remaining > 0) {
+            val currentWindow = math.min(remaining, chunkSize)
+            stdin.buffered.write(value, pos, currentWindow)
+            pos += currentWindow
+            remaining -= currentWindow
+          }
+
+          stdin.flush()
+          stdin.close()
+        }
+      }
     }
 
     private def writeToFile(outFile: Path, append: Boolean): Unit = {
@@ -57,7 +105,7 @@ object Operators {
   }
 
   extension (iter: IterableOnce[String]) {
-    private def valueAsString = iter.iterator.mkString(lineSeparator)
+    private def valueAsString: String = iter.iterator.mkString(lineSeparator)
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
@@ -75,12 +123,22 @@ object Operators {
     def #>>(outFileName: String): Unit =
       valueAsString #>> outFileName
 
-    /** Pipe output into a different command.
-     * What actually happens: writes the string value to a temporary file and then passes that to the
-     * given command. In other words, this does not stream the results.
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * It returns a concatenation of the stdout and stderr of the external command.
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
      */
-    def #|(command: String): Unit =
+    def #|(command: String): String =
       valueAsString #| command
+
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * Executing an external command may fail, hence returning a `Try`.
+     */
+    def ##|(command: String): Try[ProcessResults] =
+      valueAsString ##| command
+
   }
 
   extension (iter: java.lang.Iterable[String]) {
@@ -101,34 +159,21 @@ object Operators {
     def #>>(outFileName: String): Unit =
       iter.asScala #>> outFileName
 
-    /** Pipe output into a different command.
-     * What actually happens: writes the string value to a temporary file and then passes that to the
-     * given command. In other words, this does not stream the results.
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * It returns a concatenation of the stdout and stderr of the external command.
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
      */
-    def #|(command: String): Unit =
+    def #|(command: String): String =
       iter.asScala #| command
-  }
 
-  private def pipeInput(value: String) = new ProcessInput {
-    def redirectFrom: Redirect = ProcessBuilder.Redirect.PIPE
-
-    def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
-      Some { () =>
-        val bytes = value.getBytes(StandardCharsets.UTF_8)
-        val chunkSize = 8192
-        var remaining = bytes.length
-        var pos = 0
-        while (remaining > 0) {
-          val currentWindow = math.min(remaining, chunkSize)
-          stdin.buffered.write(value, pos, currentWindow)
-          pos += currentWindow
-          remaining -= currentWindow
-        }
-
-        stdin.flush()
-        stdin.close()
-      }
-    }
+    /**
+     * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+     * Executing an external command may fail, hence returning a `Try`.
+     */
+    def ##|(command: String): Try[ProcessResults] =
+      iter.asScala ##| command
   }
 
 }
