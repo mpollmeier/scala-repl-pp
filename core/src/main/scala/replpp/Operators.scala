@@ -108,8 +108,14 @@ object Operators {
     }
 
     private def writeToFile(outFile: Path, append: Boolean): Unit = {
-      Using.resource(new FileWriter(outFile.toFile, true)) { fw =>
+      Using.resource(new FileWriter(outFile.toFile, append)) { fw =>
         fw.write(value)
+        /* The convention on UNIX-like systems is that text files are supposed to end with a new-line.
+         * This is mostly a side-effect of the fact that UNIX tools must end their output with a newline if they
+         * don't want to mess up the prompt of the shell. And then piping the output of these tools to a file
+         * means these files always end with a newline. And so appending on the shell also just needs to do
+         * open(.., O_APPEND) and the appended output will automatically start in a new line.
+         */
         fw.write(lineSeparator)
       }
     }

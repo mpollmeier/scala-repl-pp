@@ -13,7 +13,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     "using on String" in {
       val tmpFile = os.temp("old")
       "new" #> tmpFile.toString
-      os.read(tmpFile) shouldBe "new"
+      os.read(tmpFile) shouldBe "new" + lineSeparator
     }
     "using on IterableOnce" in {
       val tmpFile = os.temp("old")
@@ -55,7 +55,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
   "#| pipes into an external command" when {
       if (scala.util.Properties.isWin) {
         info("#| not unit-tested in windows")
-        // TODO implmeent
+        // TODO implmement
         ???
       } else {
         "using on String" in {
