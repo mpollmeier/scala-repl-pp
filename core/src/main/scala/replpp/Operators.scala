@@ -7,6 +7,7 @@ import java.lang.ProcessBuilder.Redirect
 import java.lang.System.lineSeparator
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
+import replpp.shaded.os
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.sys.process.Process
 import scala.util.{Failure, Success, Try, Using}
@@ -57,22 +58,21 @@ object Operators {
      * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
     def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] = {
-      import replpp.shaded.os
-      var stdout = ""
-      var stderr = ""
+      val stdout = new StringBuilder
+      val stderr = new StringBuilder
 
       Try {
         os.proc(Seq(command)).call(
           stdin = pipeInput,
           stdout =
             if (inheritIO) os.Inherit
-            else os.ProcessOutput.Readlines { stdoutFromCommand => stdout = stdoutFromCommand },
+            else lineReader(stdout),
           stderr =
             if (inheritIO) os.Inherit
-            else os.ProcessOutput.Readlines { stderrFromCommand => stderr = stderrFromCommand },
+            else lineReader(stderr),
         )
 
-        ProcessResults(stdout, stderr)
+        ProcessResults(stdout.result(), stderr.result())
       }
     }
 
@@ -95,6 +95,15 @@ object Operators {
           stdin.flush()
           stdin.close()
         }
+      }
+    }
+
+    def lineReader(stringBuilder: StringBuilder): os.ProcessOutput = {
+      os.ProcessOutput.Readlines { s =>
+        if (stringBuilder.nonEmpty) {
+          stringBuilder.addAll(lineSeparator)
+        }
+        stringBuilder.addAll(s)
       }
     }
 

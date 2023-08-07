@@ -67,15 +67,13 @@ class OperatorsTests extends AnyWordSpec with Matchers {
           val values: IterableOnce[String] = Seq("aaa", "bbb")
           val result = values #| "cat"
           result shouldBe """aaa
-                            |bbb
-                            |""".stripMargin
+                            |bbb""".stripMargin
         }
         "using on java Iterable" in {
           val values: java.lang.Iterable[String] = Seq("aaa", "bbb").asJava
           val result = values #| "cat"
           result shouldBe """aaa
-                            |bbb
-                            |""".stripMargin
+                            |bbb""".stripMargin
         }
       }
   }
