@@ -104,11 +104,14 @@ scala> "hey there" #>  "out.txt"
 scala> "hey again" #>> "out.txt"
 scala> Seq("a", "b", "c") #>> "out.txt"
 
-// opens results in `less`, useful e.g. to browse long results
-scala> Seq("a", "b", "c") #| "less"
+// pipe results to external command and retrieve stdout/stderr - using `cat` as a trivial example
+scala> Seq("a", "b", "c") #| "cat"
+
+// `#|^` is a variant of `#|` that let's the external command inherit stdin/stdout - useful e.g. for `less`
+scala> Seq("a", "b", "c") #|^ "less"
 ```
 
-This is supported for `String`, `IterableOnce[String]` and `java.lang.Iterable[String]`. 
+The above operators are supported for `String`, `IterableOnce[String]` and `java.lang.Iterable[String]`. 
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ### Add dependencies with maven coordinates
