@@ -46,83 +46,32 @@ object Operators {
      * Executing an external command may fail, and this will throw an exception in that case.
      * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
      */
-    def #|(command: String): String = {
-      val ProcessResults(stdout, stderr) = ##|(command).get
+    def #|(command: String, inheritIO: Boolean = false): String = {
+      val ProcessResults(stdout, stderr) = ##|(command, inheritIO).get
       Seq(stdout, stderr).filter(_.nonEmpty).mkString(lineSeparator)
     }
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
      * Executing an external command may fail, hence returning a `Try`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
-    def ##|(command: String): Try[ProcessResults] = {
+    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] = {
       import replpp.shaded.os
       var stdout = ""
       var stderr = ""
 
-      // TODO experiment: capture System.out
-      // TODO: fix threading issue: change `out` to my custom one at the start, and register handlers when needed; worst case that way: when two threads do this at the same time, we capute some stdout on both sides
-      println("DD0: modifying stdout")
-      val baos = new ByteArrayOutputStream
-      val ps = new PrintStream(baos)
-      val oldSystemOut = System.out
-      System.setOut(ps)
-
-      val stdoutImpl: os.ProcessOutput =
-         new ProcessOutput {
-           // works for `less` but not for `cat`: os.Inherit
-           def redirectTo = ProcessBuilder.Redirect.INHERIT
-           // works for `cat`, but not for `less`: Readlines(f: String => Unit)
-           //           def redirectTo = ProcessBuilder.Redirect.PIPE
-
-           //           def processOutput(stdin: => SubProcess.OutputStream) = None
-           def processOutput(out: => SubProcess.OutputStream) = Some {
-             () => {
-               val buffered = new BufferedReader(new InputStreamReader(out))
-               while ( {
-                 val lineOpt =
-                   try {
-                     buffered.readLine() match {
-                       case null =>
-                         println("XX0")
-                         None
-                       case line =>
-                         println("XX1")
-                         Some(line)
-                     }
-                   } catch {
-                     case e: Throwable => None
-                   }
-                 lineOpt match {
-                   case None =>
-                     println("XX2")
-                     false
-                   case Some(s) =>
-                     println("XX3")
-                     stdout = s
-                     true
-                 }
-               }) ()
-             }
-           }
-         }
-
       Try {
         os.proc(Seq(command)).call(
           stdin = pipeInput,
-          stdout = stdoutImpl,
-          stderr = os.ProcessOutput.Readlines { commandStderr =>
-            stderr = commandStderr
-          }
+          stdout =
+            if (inheritIO) os.Inherit
+            else os.ProcessOutput.Readlines { stdoutFromCommand => stdout = stdoutFromCommand },
+          stderr =
+            if (inheritIO) os.Inherit
+            else os.ProcessOutput.Readlines { stderrFromCommand => stderr = stderrFromCommand },
         )
 
-        // revert to old system.out
-        System.out.flush()
-        System.setOut(oldSystemOut)
-        val captured = baos.toString(StandardCharsets.UTF_8)
-        baos.close()
-        ps.close()
-        println(s"DD9: captured = `$captured`")
         ProcessResults(stdout, stderr)
       }
     }
