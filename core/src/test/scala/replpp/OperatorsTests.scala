@@ -8,6 +8,14 @@ import scala.jdk.CollectionConverters.*
 import System.lineSeparator
 
 class OperatorsTests extends AnyWordSpec with Matchers {
+  /* note: `inheritIO` mode can only be tested manually: it's supposed to open `less` in the terminal with the given input
+    ```
+    "this is a test" #| ("less", inheritIO = true)
+    Seq("this is a test", "another one") #| ("less", inheritIO = true)
+    import scala.jdk.CollectionConverters.*
+    Seq("this is a test", "another one").asJava #| ("less", inheritIO = true)
+    ```
+  */
 
   "#> redirects output into a file, overriding it" when {
     "using on String" in {

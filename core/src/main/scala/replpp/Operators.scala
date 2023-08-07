@@ -46,6 +46,7 @@ object Operators {
      * It returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
      * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
     def #|(command: String, inheritIO: Boolean = false): String = {
       val ProcessResults(stdout, stderr) = ##|(command, inheritIO).get
@@ -145,16 +146,18 @@ object Operators {
      * It returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
      * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
-    def #|(command: String): String =
-      valueAsString #| command
+    def #|(command: String, inheritIO: Boolean = false): String =
+      valueAsString #| (command, inheritIO)
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
      * Executing an external command may fail, hence returning a `Try`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
-    def ##|(command: String): Try[ProcessResults] =
-      valueAsString ##| command
+    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] =
+      valueAsString ##| (command, inheritIO)
 
   }
 
@@ -181,16 +184,18 @@ object Operators {
      * It returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
      * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
-    def #|(command: String): String =
-      iter.asScala #| command
+    def #|(command: String, inheritIO: Boolean = false): String =
+      iter.asScala #| (command, inheritIO)
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
      * Executing an external command may fail, hence returning a `Try`.
+     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
      */
-    def ##|(command: String): Try[ProcessResults] =
-      iter.asScala ##| command
+    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] =
+      iter.asScala ##| (command, inheritIO)
   }
 
 }
