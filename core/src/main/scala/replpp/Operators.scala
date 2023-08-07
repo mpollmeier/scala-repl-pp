@@ -2,7 +2,7 @@ package replpp
 
 import replpp.shaded.os.{ProcessInput, ProcessOutput, SubProcess}
 
-import java.io.{FileWriter, PipedInputStream, PipedOutputStream}
+import java.io.{BufferedReader, FileWriter, InputStreamReader, PipedInputStream, PipedOutputStream}
 import java.lang.ProcessBuilder.Redirect
 import java.lang.System.lineSeparator
 import java.nio.charset.StandardCharsets
@@ -60,12 +60,54 @@ object Operators {
       var stdout = ""
       var stderr = ""
 
+      // TODO fix, cleanup, ...
+      val stdoutImpl: os.ProcessOutput =
+         new ProcessOutput {
+           // works for `less` but not for `cat`: os.Inherit
+           def redirectTo = ProcessBuilder.Redirect.INHERIT
+           // works for `cat`, but not for `less`: Readlines(f: String => Unit)
+           //           def redirectTo = ProcessBuilder.Redirect.PIPE
+
+           // TODO: experiment: can we do BOTH?
+           // redirect to file: works for neither: always only writes to the file
+//           def redirectTo = ProcessBuilder.Redirect.to(Path.of("/home/mp/stdout").toFile)
+           //           def processOutput(stdin: => SubProcess.OutputStream) = None
+
+           def processOutput(out: => SubProcess.OutputStream) = Some {
+             () => {
+               val buffered = new BufferedReader(new InputStreamReader(out))
+               while ( {
+                 val lineOpt =
+                   try {
+                     buffered.readLine() match {
+                       case null =>
+                         println("XX0")
+                         None
+                       case line =>
+                         println("XX1")
+                         Some(line)
+                     }
+                   } catch {
+                     case e: Throwable => None
+                   }
+                 lineOpt match {
+                   case None =>
+                     println("XX2")
+                     false
+                   case Some(s) =>
+                     println("XX3")
+                     stdout = s
+                     true
+                 }
+               }) ()
+             }
+           }
+         }
+
       Try {
         os.proc(Seq(command)).call(
           stdin = pipeInput,
-          stdout = os.ProcessOutput.Readlines { commandStdout =>
-            stdout = commandStdout
-          },
+          stdout = stdoutImpl,
           stderr = os.ProcessOutput.Readlines { commandStderr =>
             stderr = commandStderr
           }
