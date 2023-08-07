@@ -43,70 +43,21 @@ object Operators {
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * It returns a concatenation of the stdout and stderr of the external command.
+     * Returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
-     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
+     * see `#|^` for a variant that inherits IO (e.g. for `less`)
      */
-    def #|(command: String, inheritIO: Boolean = false): String = {
-      val ProcessResults(stdout, stderr) = ##|(command, inheritIO).get
+    def #|(command: String): String = {
+      val ProcessResults(stdout, stderr) = pipeToCommand(value, command, inheritIO = false).get
       Seq(stdout, stderr).filter(_.nonEmpty).mkString(lineSeparator)
     }
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * Executing an external command may fail, hence returning a `Try`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
-     */
-    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] = {
-      val stdout = new StringBuilder
-      val stderr = new StringBuilder
-
-      Try {
-        os.proc(Seq(command)).call(
-          stdin = pipeInput,
-          stdout =
-            if (inheritIO) os.Inherit
-            else lineReader(stdout),
-          stderr =
-            if (inheritIO) os.Inherit
-            else lineReader(stderr),
-        )
-
-        ProcessResults(stdout.result(), stderr.result())
-      }
-    }
-
-    private def pipeInput = new ProcessInput {
-      def redirectFrom: Redirect = ProcessBuilder.Redirect.PIPE
-
-      def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
-        Some { () =>
-          val bytes = value.getBytes(StandardCharsets.UTF_8)
-          val chunkSize = 8192
-          var remaining = bytes.length
-          var pos = 0
-          while (remaining > 0) {
-            val currentWindow = math.min(remaining, chunkSize)
-            stdin.buffered.write(value, pos, currentWindow)
-            pos += currentWindow
-            remaining -= currentWindow
-          }
-
-          stdin.flush()
-          stdin.close()
-        }
-      }
-    }
-
-    def lineReader(stringBuilder: StringBuilder): os.ProcessOutput = {
-      os.ProcessOutput.Readlines { s =>
-        if (stringBuilder.nonEmpty) {
-          stringBuilder.addAll(lineSeparator)
-        }
-        stringBuilder.addAll(s)
-      }
-    }
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * This is a variant of `#|` which inherits IO (e.g. for `less`) - therefor it doesn't capture stdout/stderr. */
+    def #|^(command: String): Unit =
+      pipeToCommand(value, command, inheritIO = true).get
 
     private def writeToFile(outFile: Path, append: Boolean): Unit = {
       Using.resource(new FileWriter(outFile.toFile, append)) { fw =>
@@ -143,21 +94,21 @@ object Operators {
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * It returns a concatenation of the stdout and stderr of the external command.
+     * Returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
-     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
+     * see `#|^` for a variant that inherits IO (e.g. for `less`)
      */
-    def #|(command: String, inheritIO: Boolean = false): String =
-      valueAsString #| (command, inheritIO)
+    def #|(command: String): String = {
+      val ProcessResults(stdout, stderr) = pipeToCommand(valueAsString, command, inheritIO = false).get
+      Seq(stdout, stderr).filter(_.nonEmpty).mkString(lineSeparator)
+    }
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * Executing an external command may fail, hence returning a `Try`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
-     */
-    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] =
-      valueAsString ##| (command, inheritIO)
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * This is a variant of `#|` which inherits IO (e.g. for `less`) - therefor it doesn't capture stdout/stderr. */
+    def #|^(command: String): Unit =
+      pipeToCommand(valueAsString, command, inheritIO = true).get
 
   }
 
@@ -181,21 +132,75 @@ object Operators {
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * It returns a concatenation of the stdout and stderr of the external command.
+     * Returns a concatenation of the stdout and stderr of the external command.
      * Executing an external command may fail, and this will throw an exception in that case.
-     * If you See so the safe variant of this is `##|` which returns a `Try[ProcessResults]`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
+     * see `#|^` for a variant that inherits IO (e.g. for `less`)
      */
-    def #|(command: String, inheritIO: Boolean = false): String =
-      iter.asScala #| (command, inheritIO)
+    def #|(command: String): String =
+      iter.asScala #| command
 
     /**
      * Pipe output into an external process, i.e. pass the value into the command's InputStream.
-     * Executing an external command may fail, hence returning a `Try`.
-     * @param inheritIO: set to true for commands like `less` that are supposed to capture the entire IO
-     */
-    def ##|(command: String, inheritIO: Boolean = false): Try[ProcessResults] =
-      iter.asScala ##| (command, inheritIO)
+     * Executing an external command may fail, and this will throw an exception in that case.
+     * This is a variant of `#|` which inherits IO (e.g. for `less`) - therefor it doesn't capture stdout/stderr. */
+    def #|^(command: String): Unit =
+      iter.asScala #|^ command
+  }
+
+  /**
+   * Pipe output into an external process, i.e. pass the value into the command's InputStream.
+   * Executing an external command may fail, hence returning a `Try`.
+   *
+   * @param inheritIO : set to true for commands like `less` that are supposed to capture the entire IO
+   */
+  def pipeToCommand(value: String, command: String, inheritIO: Boolean): Try[ProcessResults] = {
+    val stdout = new StringBuilder
+    val stderr = new StringBuilder
+
+    Try {
+      os.proc(Seq(command)).call(
+        stdin = pipeInput(value),
+        stdout =
+          if (inheritIO) os.Inherit
+          else lineReader(stdout),
+        stderr =
+          if (inheritIO) os.Inherit
+          else lineReader(stderr),
+      )
+
+      ProcessResults(stdout.result(), stderr.result())
+    }
+  }
+
+  private def pipeInput(value: String) = new ProcessInput {
+    def redirectFrom: Redirect = ProcessBuilder.Redirect.PIPE
+
+    def processInput(stdin: => SubProcess.InputStream): Option[Runnable] = {
+      Some { () =>
+        val bytes = value.getBytes(StandardCharsets.UTF_8)
+        val chunkSize = 8192
+        var remaining = bytes.length
+        var pos = 0
+        while (remaining > 0) {
+          val currentWindow = math.min(remaining, chunkSize)
+          stdin.buffered.write(value, pos, currentWindow)
+          pos += currentWindow
+          remaining -= currentWindow
+        }
+
+        stdin.flush()
+        stdin.close()
+      }
+    }
+  }
+
+  private def lineReader(stringBuilder: StringBuilder): os.ProcessOutput = {
+    os.ProcessOutput.Readlines { s =>
+      if (stringBuilder.nonEmpty) {
+        stringBuilder.addAll(lineSeparator)
+      }
+      stringBuilder.addAll(s)
+    }
   }
 
 }

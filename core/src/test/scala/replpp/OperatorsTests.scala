@@ -10,10 +10,12 @@ import System.lineSeparator
 class OperatorsTests extends AnyWordSpec with Matchers {
   /* note: `inheritIO` mode can only be tested manually: it's supposed to open `less` in the terminal with the given input
     ```
-    "this is a test" #| ("less", inheritIO = true)
-    Seq("this is a test", "another one") #| ("less", inheritIO = true)
+    "this is a test" #|^ "less"
+
+    Seq("this is a test", "another one") #|^ "less"
+
     import scala.jdk.CollectionConverters.*
-    Seq("this is a test", "another one").asJava #| ("less", inheritIO = true)
+    Seq("this is a test", "another one").asJava #|^ "less"
     ```
   */
 
@@ -63,7 +65,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
   "#| pipes into an external command" when {
       if (scala.util.Properties.isWin) {
         info("#| not unit-tested in windows")
-        // TODO implmement
+        // TODO implement
         ???
       } else {
         "using on String" in {
@@ -85,4 +87,5 @@ class OperatorsTests extends AnyWordSpec with Matchers {
         }
       }
   }
+
 }
