@@ -111,7 +111,7 @@ scala> Seq("a", "b", "c") #| "cat"
 scala> Seq("a", "b", "c") #|^ "less"
 ```
 
-The above operators are supported for `String`, `IterableOnce[String]` and `java.lang.Iterable[String]`. 
+The above operators are supported for `String`, `IterableOnce` and `java.lang.Iterable`. 
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ### Add dependencies with maven coordinates

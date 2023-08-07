@@ -27,13 +27,13 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
     "using on IterableOnce" in {
       val tmpFile = os.temp("old")
-      val values: IterableOnce[String] = Seq("new1", "new2")
+      val values: IterableOnce[_] = Seq("new1", "new2")
       values #> tmpFile.toString
       os.read.lines(tmpFile) shouldBe values
     }
     "using on java Iterable" in {
       val tmpFile = os.temp("old")
-      val values: java.lang.Iterable[String] = Seq("new1", "new2").asJava
+      val values: java.lang.Iterable[_] = Seq("new1", "new2").asJava
       values #> tmpFile.toString
       os.read.lines(tmpFile) shouldBe values.asScala.toSeq
     }
@@ -48,14 +48,14 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
     "using on IterableOnce" in {
       val tmpFile = os.temp()
-      val values1: IterableOnce[String] = Seq("aaa", "bbb")
+      val values1: IterableOnce[_] = Seq("aaa", "bbb")
       values1 #>> tmpFile.toString
       Seq("ccc", "ddd") #>> tmpFile.toString
       os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
     }
     "using on java Iterable" in {
       val tmpFile = os.temp()
-      val values: java.lang.Iterable[String] = Seq("aaa", "bbb").asJava
+      val values: java.lang.Iterable[_] = Seq("aaa", "bbb").asJava
       values #>> tmpFile.toString
       Seq("ccc", "ddd").asJava #>> tmpFile.toString
       os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
@@ -74,13 +74,13 @@ class OperatorsTests extends AnyWordSpec with Matchers {
           result shouldBe value
         }
         "using on IterableOnce" in {
-          val values: IterableOnce[String] = Seq("aaa", "bbb")
+          val values: IterableOnce[_] = Seq("aaa", "bbb")
           val result = values #| "cat"
           result shouldBe """aaa
                             |bbb""".stripMargin
         }
         "using on java Iterable" in {
-          val values: java.lang.Iterable[String] = Seq("aaa", "bbb").asJava
+          val values: java.lang.Iterable[_] = Seq("aaa", "bbb").asJava
           val result = values #| "cat"
           result shouldBe """aaa
                             |bbb""".stripMargin

@@ -73,7 +73,7 @@ object Operators {
     }
   }
 
-  extension (iter: IterableOnce[String]) {
+  extension (iter: IterableOnce[_]) {
     private def valueAsString: String = iter.iterator.mkString(lineSeparator)
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
@@ -112,7 +112,7 @@ object Operators {
 
   }
 
-  extension (iter: java.lang.Iterable[String]) {
+  extension (iter: java.lang.Iterable[_]) {
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
