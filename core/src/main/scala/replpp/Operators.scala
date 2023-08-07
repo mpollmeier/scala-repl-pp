@@ -2,7 +2,7 @@ package replpp
 
 import replpp.shaded.os.{ProcessInput, ProcessOutput, SubProcess}
 
-import java.io.{BufferedReader, FileWriter, InputStreamReader, PipedInputStream, PipedOutputStream}
+import java.io.{BufferedReader, ByteArrayOutputStream, FileWriter, InputStreamReader, PipedInputStream, PipedOutputStream, PrintStream}
 import java.lang.ProcessBuilder.Redirect
 import java.lang.System.lineSeparator
 import java.nio.charset.StandardCharsets
@@ -60,7 +60,14 @@ object Operators {
       var stdout = ""
       var stderr = ""
 
-      // TODO fix, cleanup, ...
+      // TODO experiment: capture System.out
+      // TODO: fix threading issue: change `out` to my custom one at the start, and register handlers when needed; worst case that way: when two threads do this at the same time, we capute some stdout on both sides
+      println("DD0: modifying stdout")
+      val baos = new ByteArrayOutputStream
+      val ps = new PrintStream(baos)
+      val oldSystemOut = System.out
+      System.setOut(ps)
+
       val stdoutImpl: os.ProcessOutput =
          new ProcessOutput {
            // works for `less` but not for `cat`: os.Inherit
@@ -68,11 +75,7 @@ object Operators {
            // works for `cat`, but not for `less`: Readlines(f: String => Unit)
            //           def redirectTo = ProcessBuilder.Redirect.PIPE
 
-           // TODO: experiment: can we do BOTH?
-           // redirect to file: works for neither: always only writes to the file
-//           def redirectTo = ProcessBuilder.Redirect.to(Path.of("/home/mp/stdout").toFile)
            //           def processOutput(stdin: => SubProcess.OutputStream) = None
-
            def processOutput(out: => SubProcess.OutputStream) = Some {
              () => {
                val buffered = new BufferedReader(new InputStreamReader(out))
@@ -112,6 +115,14 @@ object Operators {
             stderr = commandStderr
           }
         )
+
+        // revert to old system.out
+        System.out.flush()
+        System.setOut(oldSystemOut)
+        val captured = baos.toString(StandardCharsets.UTF_8)
+        baos.close()
+        ps.close()
+        println(s"DD9: captured = `$captured`")
         ProcessResults(stdout, stderr)
       }
     }
