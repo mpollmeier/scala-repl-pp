@@ -64,9 +64,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
 
   "#| pipes into an external command" when {
       if (scala.util.Properties.isWin) {
-        info("#| not unit-tested in windows")
-        // TODO implement
-        ???
+        info("#| is not unit-tested yet on windows - no idea what the equivalent of `cat` is")
       } else {
         "using on String" in {
           val value = "aaa"
