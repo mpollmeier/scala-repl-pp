@@ -21,6 +21,7 @@ Runs on JDK11+.
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Rendering of output](#rendering-of-output)
+  * [Exiting the REPL](#exiting-the-repl)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
   * [Predef file(s) used in script](#predef-files-used-in-script)
@@ -151,6 +152,15 @@ val res0: scala.collection.immutable.Range.Inclusive = Range(
   2,
   3,
 ...
+```
+
+### Exiting the REPL
+Famously one of the most popular question on stackoverflow is about how to exit `vim` - fortunately you can apply the answer as-is to exit scala-repl-pp :slightly_smiling_face:
+```
+// all of the following exit the REPL
+:exit
+:quit
+:q
 ```
 
 ## Scripting

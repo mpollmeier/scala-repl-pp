@@ -493,7 +493,8 @@ class DottyReplDriver(settings: Array[String],
 
     case Quit =>
       // end of the world!
-      state
+      // MP: slight variation from original DottyReplDriver to support exiting via the Quit command
+      throw new EndOfFileException()
   }
 
   /** shows all errors nicely formatted */
