@@ -9,7 +9,6 @@ This is (also) a breeding ground for improvements to the regular scala REPL: we'
 Runs on JDK11+.
 
 ## TOC
-<!-- generated with: -->
 <!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
 
 - [Benefits over / comparison with](#benefits-over--comparison-with)
@@ -18,6 +17,7 @@ Runs on JDK11+.
   * [scala-cli](#scala-cli)
 - [Build it locally](#build-it-locally)
 - [REPL](#repl)
+  * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Rendering of output](#rendering-of-output)
@@ -39,11 +39,13 @@ Runs on JDK11+.
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+  * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
 
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
+* `#>`, `#>>` and `#|` operators to redirect output to file and pipe to external command
 * customize greeting, prompt and shutdown code
 * multiple @main with named arguments (regular Scala REPL only allows an argument list)
 * predef code - i.e. run custom code before starting the REPL - via string and scripts
@@ -93,6 +95,25 @@ echo 'def foo = 42' > foo.sc
 scala> foo
 val res0: Int = 42
 ```
+
+### Operators: Redirect to file, pipe to external command
+Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
+```scala
+./scala-repl-pp
+
+scala> "hey there" #>  "out.txt"
+scala> "hey again" #>> "out.txt"
+scala> Seq("a", "b", "c") #>> "out.txt"
+
+// pipe results to external command and retrieve stdout/stderr - using `cat` as a trivial example
+scala> Seq("a", "b", "c") #| "cat"
+
+// `#|^` is a variant of `#|` that let's the external command inherit stdin/stdout - useful e.g. for `less`
+scala> Seq("a", "b", "c") #|^ "less"
+```
+
+The above operators are supported for `String`, `IterableOnce` and `java.lang.Iterable`. 
+All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ### Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
@@ -412,3 +433,6 @@ Scala-REPL-PP currently uses a simplistic model for predef code|files and additi
 A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
+
+### Why do we ship a shaded copy of other libraries and not use dependencies?
+Scala-REPL-PP includes some small libraries (e.g. os-lib and geny) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors!

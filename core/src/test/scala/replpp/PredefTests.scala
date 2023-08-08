@@ -12,9 +12,10 @@ class PredefTests extends AnyWordSpec with Matchers {
     allPredefCode(Config(
       predefFiles = Seq(predefFile1, predefFile2),
     )) shouldBe
-      """val foo = 10
-        |val bar = foo * 2
-        |""".stripMargin.trim
+      s"""$DefaultPredef
+         |val foo = 10
+         |val bar = foo * 2
+         |""".stripMargin.trim
   }
 
   "recursively resolve `//> using file` directive and insert at the top of the referencing file - simple case" in {
@@ -27,7 +28,8 @@ class PredefTests extends AnyWordSpec with Matchers {
          |""".stripMargin)
 
     allPredefCode(Config(predefFiles = Seq(predefFile.toNIO))) shouldBe
-      s"""val additionalScript1 = 10
+      s"""$DefaultPredef
+         |val additionalScript1 = 10
          |val additionalScript2 = 20
          |val predefCode = 1
          |""".stripMargin.trim
@@ -49,12 +51,13 @@ class PredefTests extends AnyWordSpec with Matchers {
          |""".stripMargin)
 
     allPredefCode(Config(predefFiles = Seq(predefFile.toNIO))) shouldBe
-      """val additionalScript1 = 10
-        |val additionalScript4 = 40
-        |val additionalScript2 = 20
-        |val additionalScript3 = 30
-        |val predefCode = 1
-        |""".stripMargin.trim
+      s"""$DefaultPredef
+         |val additionalScript1 = 10
+         |val additionalScript4 = 40
+         |val additionalScript2 = 20
+         |val additionalScript3 = 30
+         |val predefCode = 1
+         |""".stripMargin.trim
   }
 
   "recursively resolve `//> using file` directive and insert at the top of the referencing file - with recursive loops" in {
@@ -76,9 +79,10 @@ class PredefTests extends AnyWordSpec with Matchers {
 
     allPredefCode(Config(predefFiles = Seq(predefFile.toNIO))) shouldBe
       // most importantly, this should not loop endlessly due to the recursive imports
-      """val additionalScript1 = 10
-        |val additionalScript2 = 20
-        |val predefCode = 1
-        |""".stripMargin.trim
+      s"""$DefaultPredef
+         |val additionalScript1 = 10
+         |val additionalScript2 = 20
+         |val predefCode = 1
+         |""".stripMargin.trim
   }
 }
