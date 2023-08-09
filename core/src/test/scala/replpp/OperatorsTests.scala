@@ -7,83 +7,154 @@ import replpp.Operators.*
 import scala.jdk.CollectionConverters.*
 import System.lineSeparator
 
+/* note: `inheritIO` mode can only be tested manually: it's supposed to open `less` in the terminal with the given input
+  ```
+  "this is a test" #|^ "less"
+
+  Seq("this is a test", "another one") #|^ "less"
+
+  import scala.jdk.CollectionConverters.*
+  Seq("this is a test", "another one").asJava #|^ "less"
+  ```
+*/
 class OperatorsTests extends AnyWordSpec with Matchers {
-  /* note: `inheritIO` mode can only be tested manually: it's supposed to open `less` in the terminal with the given input
-    ```
-    "this is a test" #|^ "less"
 
-    Seq("this is a test", "another one") #|^ "less"
+  case class PrettyPrintable(s: String, i: Int)
 
-    import scala.jdk.CollectionConverters.*
-    Seq("this is a test", "another one").asJava #|^ "less"
-    ```
-  */
-
-  "#> redirects output into a file, overriding it" when {
-    "using on String" in {
-      val tmpFile = os.temp("old")
-      "new" #> tmpFile.toString
-      os.read(tmpFile) shouldBe "new" + lineSeparator
-    }
-    "using on IterableOnce" in {
-      val tmpFile = os.temp("old")
-      val values: IterableOnce[_] = Seq("new1", "new2")
-      values #> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe values
-    }
-    "using on java Iterable" in {
-      val tmpFile = os.temp("old")
-      val values: java.lang.Iterable[_] = Seq("new1", "new2").asJava
-      values #> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe values.asScala.toSeq
-    }
-  }
-
-  "#>> redirects output into a file, appending to it" when {
-    "using on String" in {
-      val tmpFile = os.temp()
-      "aaa" #>> tmpFile.toString
-      "bbb" #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb")
-    }
-    "using on IterableOnce" in {
-      val tmpFile = os.temp()
-      val values1: IterableOnce[_] = Seq("aaa", "bbb")
-      values1 #>> tmpFile.toString
-      Seq("ccc", "ddd") #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
-    }
-    "using on java Iterable" in {
-      val tmpFile = os.temp()
-      val values: java.lang.Iterable[_] = Seq("aaa", "bbb").asJava
-      values #>> tmpFile.toString
-      Seq("ccc", "ddd").asJava #>> tmpFile.toString
-      os.read.lines(tmpFile) shouldBe Seq("aaa", "bbb", "ccc", "ddd")
-    }
-  }
-
-  "#| pipes into an external command" when {
-      if (scala.util.Properties.isWin) {
-        info("#| is not unit-tested yet on windows - no idea what the equivalent of `cat` is")
-      } else {
-        "using on String" in {
-          val value = "aaa"
-          val result = value #| "cat"
-          result shouldBe value
-        }
-        "using on IterableOnce" in {
-          val values: IterableOnce[_] = Seq("aaa", "bbb")
-          val result = values #| "cat"
-          result shouldBe """aaa
-                            |bbb""".stripMargin
-        }
-        "using on java Iterable" in {
-          val values: java.lang.Iterable[_] = Seq("aaa", "bbb").asJava
-          val result = values #| "cat"
-          result shouldBe """aaa
-                            |bbb""".stripMargin
-        }
+  "#> and #>> override and append to file" when {
+    "using single objects" in {
+      val result = withTempFile { path =>
+        "foo" #> path
+        PrettyPrintable("two", 2) #>> path
       }
+      result shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+
+      // double checking that it ends with a lineSeparator
+      result shouldBe "foo" + lineSeparator + """PrettyPrintable(s = "two", i = 2)""" + lineSeparator
+    }
+
+    "using IterableOnce" in {
+      val values: IterableOnce[_] = Seq("foo", PrettyPrintable("two", 2))
+      withTempFile { path =>
+        values #> path
+        "-----" #>> path
+        values #>> path
+      } shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |-----
+          |foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+    }
+
+    "using java.lang.Iterable" in {
+      val values: java.lang.Iterable[_] = Seq("foo", PrettyPrintable("two", 2)).asJava
+      withTempFile { path =>
+        values #> path
+        "-----" #>> path
+        values #>> path
+      } shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |-----
+          |foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+    }
+
+    "using Array" in {
+      val values: Array[_] = Seq("foo", PrettyPrintable("two", 2)).toArray
+      withTempFile { path =>
+        values #> path
+        "-----" #>> path
+        values #>> path
+      } shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |-----
+          |foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+    }
+
+    "using Iterator" in {
+      def values: Iterator[_] = Seq("foo", PrettyPrintable("two", 2)).iterator
+      withTempFile { path =>
+        values #> path
+        "-----" #>> path
+        values #>> path
+      } shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |-----
+          |foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+    }
+
+    "using java.util.Iterator" in {
+      def values: java.util.Iterator[_] = Seq("foo", PrettyPrintable("two", 2)).asJava.iterator()
+      withTempFile { path =>
+        values #> path
+        "-----" #>> path
+        values #>> path
+      } shouldBe
+        """foo
+          |PrettyPrintable(s = "two", i = 2)
+          |-----
+          |foo
+          |PrettyPrintable(s = "two", i = 2)
+          |""".stripMargin
+    }
+  }
+
+    "#| pipes into an external command" when {
+        if (scala.util.Properties.isWin) {
+          info("#| is not unit-tested yet on windows - no idea what the equivalent of `cat` is")
+        } else {
+          "using String" in {
+            val value = "foo"
+            val result = value #| "cat"
+            result shouldBe value
+          }
+
+          "using case class" in {
+            val result = PrettyPrintable("two", 2) #| "cat"
+            result shouldBe """PrettyPrintable(s = "two", i = 2)"""
+          }
+
+          "using list types" when {
+            val values = Seq("foo", PrettyPrintable("two", 2))
+            Seq(
+              ("IterableOnce", values: IterableOnce[_]),
+              ("java.lang.Iterable", values.asJava: java.lang.Iterable[_]),
+              ("Array", values.toArray: Array[_]),
+              ("Iterator", values.iterator: Iterator[_]),
+              ("java.util.Iterator", values.asJava.iterator: java.util.Iterator[_]),
+            ).foreach { case (listType, list) =>
+              listType in {
+                val result = list #| "cat"
+                result shouldBe
+                  """foo
+                    |PrettyPrintable(s = "two", i = 2)""".stripMargin
+              }
+            }
+          }
+        }
+    }
+
+  def withTempFile(funWithPath: String => Unit): String = {
+    val tmpFile = os.temp(contents = "initial contents", prefix = getClass.getName)
+    try {
+      funWithPath(tmpFile.toString)
+      os.read(tmpFile)
+    } finally {
+      os.remove(tmpFile)
+    }
   }
 
 }
