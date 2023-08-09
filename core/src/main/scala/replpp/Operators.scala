@@ -62,27 +62,37 @@ object Operators {
       pipeToCommand(valueAsString, command, inheritIO = true).get
 
 
-    private def valueAsString: String = asString(value)
-
     /**
      * If `value` is a list-type: unwrap it (only at the root level).
      * Then, pretty-print the results using our `PPrinter`.
      * This is to ensure we get the same output as we would get on the REPL (apart from the list-unwrapping).
      */
-    private def asString(obj: Any): String = {
+    private def valueAsString: String = {
+      val topLevelListTypeMaybe: Option[Iterator[_]] =
+        value match {
+          case iter: IterableOnce[_] => Some(iter.iterator)
+          case iter: java.lang.Iterable[_] => Some(iter.iterator.asScala)
+          case iter: java.util.Iterator[_] => Some(iter.asScala)
+          case array: Array[_] => Some(array.iterator)
+          case _ => None
+        }
+
+      topLevelListTypeMaybe match {
+        case None =>
+          render(value)
+        case Some(iter) =>
+          iter.map(render).mkString(lineSeparator)
+      }
+    }
+
+    /**
+     * Pretty-print the results using our `PPrinter`. Special handling for top level strings: render without quotes
+     */
+    private def render(obj: Any): String = {
       // TODO enable coloring by default, but allow to disable, e.g. by having an implicit import in scope
       obj match {
         case string: String => string
-        case iter: IterableOnce[_] =>
-          iter.iterator.map(asString).mkString(lineSeparator)
-        case iter: java.lang.Iterable[_] =>
-          asString(iter.asScala)
-        case iter: java.util.Iterator[_] =>
-          asString(iter.asScala)
-        case array: Array[_] =>
-          asString(array.toSeq)
-        case other =>
-          PPrinter(other, nocolors = true)
+        case other => PPrinter(other, nocolors = true)
       }
     }
   }

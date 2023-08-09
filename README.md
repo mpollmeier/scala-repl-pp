@@ -112,7 +112,32 @@ scala> Seq("a", "b", "c") #| "cat"
 scala> Seq("a", "b", "c") #|^ "less"
 ```
 
-The above operators are supported for `String`, `IterableOnce` and `java.lang.Iterable`. 
+All operators use the same pretty-printing that's used within the REPL, i.e. you get structured rendering including product labels etc. 
+```scala
+scala> case class PrettyPrintable(s: String, i: Int)
+scala> PrettyPrintable("two", 2) #> "out.txt"
+// out.txt now contains `PrettyPrintable(s = "two", i = 2)`
+```
+
+The operators have a special handling for two common use cases that are applied at the root level of the object you hand them: list- or iterator-type objects are unwrapped and their elements are rendered in separate lines, and Strings are rendered without the surrounding `""`. Examples:
+```scala
+scala> "a string" #> "out.txt"
+// rendered as `a string` without quotes
+
+scala> Seq("one", "two") #> "out.txt"
+// rendered as two lines without quotes:
+// one
+// two
+
+scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
+// top-level list-types are unwrapped
+// resulting top-level strings are rendered without quotes:
+// one
+// List("two")
+// List("three", 4)
+// 5
+```
+
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ### Add dependencies with maven coordinates

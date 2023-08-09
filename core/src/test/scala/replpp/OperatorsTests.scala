@@ -112,40 +112,58 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
   }
 
-    "#| pipes into an external command" when {
-        if (scala.util.Properties.isWin) {
-          info("#| is not unit-tested yet on windows - no idea what the equivalent of `cat` is")
-        } else {
-          "using String" in {
-            val value = "foo"
-            val result = value #| "cat"
-            result shouldBe value
-          }
+  "#| pipes into an external command" when {
+    if (scala.util.Properties.isWin) {
+      info("#| is not unit-tested yet on windows - no idea what the equivalent of `cat` is")
+    } else {
+      "using String" in {
+        val value = "foo"
+        val result = value #| "cat"
+        result shouldBe value
+      }
 
-          "using case class" in {
-            val result = PrettyPrintable("two", 2) #| "cat"
-            result shouldBe """PrettyPrintable(s = "two", i = 2)"""
-          }
+      "using case class" in {
+        val result = PrettyPrintable("two", 2) #| "cat"
+        result shouldBe """PrettyPrintable(s = "two", i = 2)"""
+      }
 
-          "using list types" when {
-            val values = Seq("foo", PrettyPrintable("two", 2))
-            Seq(
-              ("IterableOnce", values: IterableOnce[_]),
-              ("java.lang.Iterable", values.asJava: java.lang.Iterable[_]),
-              ("Array", values.toArray: Array[_]),
-              ("Iterator", values.iterator: Iterator[_]),
-              ("java.util.Iterator", values.asJava.iterator: java.util.Iterator[_]),
-            ).foreach { case (listType, list) =>
-              listType in {
-                val result = list #| "cat"
-                result shouldBe
-                  """foo
-                    |PrettyPrintable(s = "two", i = 2)""".stripMargin
-              }
-            }
+      "using list types" when {
+        val values = Seq("foo", PrettyPrintable("two", 2))
+        Seq(
+          ("IterableOnce", values: IterableOnce[_]),
+          ("java.lang.Iterable", values.asJava: java.lang.Iterable[_]),
+          ("Array", values.toArray: Array[_]),
+          ("Iterator", values.iterator: Iterator[_]),
+          ("java.util.Iterator", values.asJava.iterator: java.util.Iterator[_]),
+        ).foreach { case (listType, list) =>
+          listType in {
+            val result = list #| "cat"
+            result shouldBe
+              """foo
+                |PrettyPrintable(s = "two", i = 2)""".stripMargin
           }
         }
+      }
     }
+  }
+
+  "unwrapping of list-types should only happen at root level" should {
+    "happen at root level" in {
+      withTempFile { file =>
+        Seq(
+          "one",
+          Seq("two"),
+          Seq("three", 4),
+          5
+        ) #> file
+      } shouldBe
+        """one
+          |List("two")
+          |List("three", 4)
+          |5
+          |""".stripMargin
+    }
+  }
 
   def withTempFile(funWithPath: String => Unit): String = {
     val tmpFile = os.temp(contents = "initial contents", prefix = getClass.getName)
