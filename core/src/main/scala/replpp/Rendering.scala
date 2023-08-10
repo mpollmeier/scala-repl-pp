@@ -12,6 +12,7 @@ import transform.ValueClasses
 import util.StackTraceOps.*
 
 import scala.util.control.NonFatal
+import scala.util.Try
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/Rendering.scala
  *
@@ -89,8 +90,14 @@ private[replpp] class Rendering(maxHeight: Option[Int],
     val objectName = sym.owner.fullName.encode.toString.stripSuffix("$")
     val resObj: Class[?] = Class.forName(objectName, true, classLoader())
     val symValue = resObj
-      .getDeclaredMethods.find(_.getName == sym.name.encode.toString)
-      .flatMap(result => rewrapValueClass(sym.info.classSymbol, result.invoke(null)))
+      .getDeclaredMethods
+      .find(_.getName == sym.name.encode.toString)
+      .flatMap { method =>
+        println("XX0")
+        val invocationResult = Try(method.invoke(null))
+        println(s"XX1: $invocationResult")
+        rewrapValueClass(sym.info.classSymbol, invocationResult.get)
+      }
     val valueString = symValue.map(replStringOf)
 
     if (!sym.is(Flags.Method) && sym.info == defn.UnitType)
