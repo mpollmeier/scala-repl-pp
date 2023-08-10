@@ -8,7 +8,7 @@ object PPrinter {
   private var maxHeight: Int = Int.MaxValue
   private var nocolors: Boolean = false
 
-  def apply(objectToRender: Object, maxHeight: Int = Int.MaxValue, nocolors: Boolean = false): String = {
+  def apply(objectToRender: Any, maxHeight: Int = Int.MaxValue, nocolors: Boolean = false): String = {
     val _pprinter = this.synchronized {
       // initialise on first use and whenever the maxHeight setting changed
       if (pprinter == null || this.maxHeight != maxHeight || this.nocolors != nocolors) {
