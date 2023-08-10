@@ -31,6 +31,7 @@ class JLineTerminal extends java.io.Closeable {
   // MP: adapted here
   // ignore SIGINT (Ctrl-C)
   terminal.handle(Signal.INT, _ =>
+    // we can't easily cancel the current computation on the jvm, so just notify the user instead
     println("Captured interrupt signal `INT`")
   )
 
