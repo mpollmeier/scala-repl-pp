@@ -12,7 +12,6 @@ import transform.ValueClasses
 import util.StackTraceOps.*
 
 import scala.util.control.NonFatal
-import scala.util.Try
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/Rendering.scala
  *
@@ -93,10 +92,8 @@ private[replpp] class Rendering(maxHeight: Option[Int],
       .getDeclaredMethods
       .find(_.getName == sym.name.encode.toString)
       .flatMap { method =>
-        println("XX0")
-        val invocationResult = Try(method.invoke(null))
-        println(s"XX1: $invocationResult")
-        rewrapValueClass(sym.info.classSymbol, invocationResult.get)
+        val invocationResult = method.invoke(null)
+        rewrapValueClass(sym.info.classSymbol, invocationResult)
       }
     val valueString = symValue.map(replStringOf)
 
