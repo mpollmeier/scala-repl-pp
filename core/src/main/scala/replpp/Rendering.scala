@@ -94,8 +94,26 @@ private[replpp] class Rendering(maxHeight: Option[Int],
       .find(_.getName == sym.name.encode.toString)
       .flatMap { method =>
         println("XX0")
-        val invocationResult = Try(method.invoke(null))
-        println(s"XX1: $invocationResult")
+//        val invocationResult = Try(method.invoke(null))
+        var invocationResult: Option[AnyRef] = None
+        val t = new Thread(new Runnable {
+          def run = {
+            println("in thread: start")
+            val result = Try(method.invoke(null))
+            println(s"in thread: result=$result")
+            invocationResult = result.toOption
+            println("in thread: end")
+          }
+        })
+        t.run()
+
+        // TODO use some semaphore, or executorservice singlethreaded or so
+        while (invocationResult.isEmpty) {
+          println(s"waiting for result; t.state=${t.getState}")
+          Thread.sleep(1000)
+        }
+
+        println(s"get the result: $invocationResult; t.state=${t.getState}")
         rewrapValueClass(sym.info.classSymbol, invocationResult.get)
       }
     val valueString = symValue.map(replStringOf)
