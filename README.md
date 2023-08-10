@@ -46,7 +46,6 @@ Runs on JDK11+.
 ### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
 * `#>`, `#>>` and `#|` operators to redirect output to file and pipe to external command
-* captures `Ctrl-c`: rather than exiting the REPL, only cancel the current command
 * customize greeting, prompt and shutdown code
 * multiple @main with named arguments (regular Scala REPL only allows an argument list)
 * predef code - i.e. run custom code before starting the REPL - via string and scripts

@@ -30,7 +30,9 @@ class JLineTerminal extends java.io.Closeable {
 
   // MP: adapted here
   // ignore SIGINT (Ctrl-C)
-  terminal.handle(Signal.INT, _ => ())
+  terminal.handle(Signal.INT, _ =>
+    println("Captured interrupt signal `INT`")
+  )
 
   private val history = new DefaultHistory
   def dumbTerminal = Option(System.getenv("TERM")) == Some("dumb")
