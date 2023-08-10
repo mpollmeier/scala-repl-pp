@@ -13,6 +13,7 @@ import org.jline.reader.Parser.ParseContext
 import org.jline.reader.*
 import org.jline.reader.impl.LineReaderImpl
 import org.jline.reader.impl.history.DefaultHistory
+import org.jline.terminal.Terminal.Signal
 import org.jline.terminal.TerminalBuilder
 import org.jline.utils.AttributedString
 
@@ -26,6 +27,11 @@ class JLineTerminal extends java.io.Closeable {
     TerminalBuilder.builder()
     .dumb(dumbTerminal) // fail early if not able to create a terminal
     .build()
+
+  // MP: adapted here
+  // ignore SIGINT (Ctrl-C)
+  terminal.handle(Signal.INT, _ => ())
+
   private val history = new DefaultHistory
   def dumbTerminal = Option(System.getenv("TERM")) == Some("dumb")
 
