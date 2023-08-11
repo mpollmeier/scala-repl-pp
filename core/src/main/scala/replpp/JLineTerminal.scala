@@ -30,9 +30,17 @@ class JLineTerminal extends java.io.Closeable {
 
   // MP: adapted here
   // ignore SIGINT (Ctrl-C)
+  var lastIntSignalReceived = 0L
   terminal.handle(Signal.INT, _ =>
-    // we can't easily cancel the current computation on the jvm, so just notify the user instead
-    println("Captured interrupt signal `INT`")
+    // we can't easily cancel the current computation on the jvm, but we can stop long-running printing of outputs
+    // in some situations they might want to kill the entire REPL  (e.g. if they're in an endless loop) - they can just
+    // press Ctrl-C twice in that case (within 3 seconds)
+    if (System.currentTimeMillis() - lastIntSignalReceived < 3000) {
+      System.exit(130)
+    } else {
+      lastIntSignalReceived = System.currentTimeMillis()
+      println("Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c again within three seconds")
+    }
   )
 
   private val history = new DefaultHistory
