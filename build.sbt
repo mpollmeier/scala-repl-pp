@@ -12,7 +12,7 @@ lazy val core = project.in(file("core"))
     name := "scala-repl-pp-core",
     libraryDependencies ++= Seq(
       "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-      "com.lihaoyi"      %% "mainargs"  % "0.5.0",
+      "com.lihaoyi"      %% "mainargs"  % "0.5.1",
       "com.lihaoyi"      %% "pprint"    % "0.8.1",
       "com.github.scopt" %% "scopt"     % "4.1.0",
       ("io.get-coursier" %% "coursier"  % "2.1.2").cross(CrossVersion.for3Use2_13)
