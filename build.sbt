@@ -6,18 +6,20 @@ ThisBuild / scalaVersion := "3.3.0"
 
 lazy val ScalaTestVersion = "3.2.15"
 
-lazy val core = project.in(file("core")).settings(
-  name := "scala-repl-pp",
-  libraryDependencies ++= Seq(
-    "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-    "com.lihaoyi"      %% "mainargs"  % "0.5.0",
-    "com.lihaoyi"      %% "pprint"    % "0.8.1",
-    "com.github.scopt" %% "scopt"     % "4.1.0",
-    ("io.get-coursier" %% "coursier"  % "2.1.2").cross(CrossVersion.for3Use2_13)
-      .exclude("org.scala-lang.modules", "scala-xml_2.13")
-      .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-    "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
-  )
+lazy val core = project.in(file("core"))
+  .dependsOn(shadedLibs)
+  .settings(
+    name := "scala-repl-pp-core",
+    libraryDependencies ++= Seq(
+      "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
+      "com.lihaoyi"      %% "mainargs"  % "0.5.0",
+      "com.lihaoyi"      %% "pprint"    % "0.8.1",
+      "com.github.scopt" %% "scopt"     % "4.1.0",
+      ("io.get-coursier" %% "coursier"  % "2.1.2").cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-xml_2.13")
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
+    )
 )
 
 lazy val server = project.in(file("server"))
@@ -41,6 +43,15 @@ lazy val all = project.in(file("all"))
   .settings(
     name := "scala-repl-pp-all",
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7" % Optional,
+  )
+
+lazy val shadedLibs = project.in(file("shaded-libs"))
+  .settings(
+    name := "scala-repl-pp-shaded-libs",
+    scalacOptions ++= Seq(
+      "-language:implicitConversions",
+      "-Wconf:any:silent" // silence warnings from shaded libraries
+    )
   )
 
 ThisBuild / libraryDependencies ++= Seq(
