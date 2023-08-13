@@ -9,7 +9,6 @@ This is (also) a breeding ground for improvements to the regular scala REPL: we'
 Runs on JDK11+.
 
 ## TOC
-<!-- generated with: -->
 <!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
 
 - [Benefits over / comparison with](#benefits-over--comparison-with)
@@ -18,9 +17,11 @@ Runs on JDK11+.
   * [scala-cli](#scala-cli)
 - [Build it locally](#build-it-locally)
 - [REPL](#repl)
+  * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Rendering of output](#rendering-of-output)
+  * [Exiting the REPL](#exiting-the-repl)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
   * [Predef file(s) used in script](#predef-files-used-in-script)
@@ -38,11 +39,13 @@ Runs on JDK11+.
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+  * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
 
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
+* `#>`, `#>>` and `#|` operators to redirect output to file and pipe to external command
 * customize greeting, prompt and shutdown code
 * multiple @main with named arguments (regular Scala REPL only allows an argument list)
 * predef code - i.e. run custom code before starting the REPL - via string and scripts
@@ -92,6 +95,50 @@ echo 'def foo = 42' > foo.sc
 scala> foo
 val res0: Int = 42
 ```
+
+### Operators: Redirect to file, pipe to external command
+Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
+```scala
+./scala-repl-pp
+
+scala> "hey there" #>  "out.txt"
+scala> "hey again" #>> "out.txt"
+scala> Seq("a", "b", "c") #>> "out.txt"
+
+// pipe results to external command and retrieve stdout/stderr - using `cat` as a trivial example
+scala> Seq("a", "b", "c") #| "cat"
+
+// `#|^` is a variant of `#|` that let's the external command inherit stdin/stdout - useful e.g. for `less`
+scala> Seq("a", "b", "c") #|^ "less"
+```
+
+All operators use the same pretty-printing that's used within the REPL, i.e. you get structured rendering including product labels etc. 
+```scala
+scala> case class PrettyPrintable(s: String, i: Int)
+scala> PrettyPrintable("two", 2) #> "out.txt"
+// out.txt now contains `PrettyPrintable(s = "two", i = 2)`
+```
+
+The operators have a special handling for two common use cases that are applied at the root level of the object you hand them: list- or iterator-type objects are unwrapped and their elements are rendered in separate lines, and Strings are rendered without the surrounding `""`. Examples:
+```scala
+scala> "a string" #> "out.txt"
+// rendered as `a string` without quotes
+
+scala> Seq("one", "two") #> "out.txt"
+// rendered as two lines without quotes:
+// one
+// two
+
+scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
+// top-level list-types are unwrapped
+// resulting top-level strings are rendered without quotes:
+// one
+// List("two")
+// List("three", 4)
+// 5
+```
+
+All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ### Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
@@ -151,6 +198,15 @@ val res0: scala.collection.immutable.Range.Inclusive = Range(
   2,
   3,
 ...
+```
+
+### Exiting the REPL
+Famously one of the most popular question on stackoverflow is about how to exit `vim` - fortunately you can apply the answer as-is to exit scala-repl-pp :slightly_smiling_face:
+```
+// all of the following exit the REPL
+:exit
+:quit
+:q
 ```
 
 ## Scripting
@@ -402,3 +458,6 @@ Scala-REPL-PP currently uses a simplistic model for predef code|files and additi
 A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
+
+### Why do we ship a shaded copy of other libraries and not use dependencies?
+Scala-REPL-PP includes some small libraries (e.g. os-lib and geny) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors!

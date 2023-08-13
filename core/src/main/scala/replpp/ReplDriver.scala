@@ -60,7 +60,9 @@ class ReplDriver(args: Array[String],
       }
     }
 
-    try runBody { loop(using initialState)() }
+    try runBody {
+      loop(using initialState)()
+    }
     finally terminal.close()
   }
 

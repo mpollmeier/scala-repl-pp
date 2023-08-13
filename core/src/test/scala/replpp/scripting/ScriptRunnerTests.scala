@@ -3,6 +3,8 @@ package replpp.scripting
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.Config
+
+import java.nio.file.Paths
 import scala.util.{Failure, Success, Try}
 
 

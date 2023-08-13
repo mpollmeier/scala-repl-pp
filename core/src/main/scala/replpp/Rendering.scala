@@ -89,8 +89,12 @@ private[replpp] class Rendering(maxHeight: Option[Int],
     val objectName = sym.owner.fullName.encode.toString.stripSuffix("$")
     val resObj: Class[?] = Class.forName(objectName, true, classLoader())
     val symValue = resObj
-      .getDeclaredMethods.find(_.getName == sym.name.encode.toString)
-      .flatMap(result => rewrapValueClass(sym.info.classSymbol, result.invoke(null)))
+      .getDeclaredMethods
+      .find(_.getName == sym.name.encode.toString)
+      .flatMap { method =>
+        val invocationResult = method.invoke(null)
+        rewrapValueClass(sym.info.classSymbol, invocationResult)
+      }
     val valueString = symValue.map(replStringOf)
 
     if (!sym.is(Flags.Method) && sym.info == defn.UnitType)
