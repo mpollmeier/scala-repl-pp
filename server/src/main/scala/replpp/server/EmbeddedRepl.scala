@@ -3,6 +3,7 @@ package replpp.server
 import dotty.tools.dotc.config.Printers.config
 import dotty.tools.repl.State
 import org.slf4j.{Logger, LoggerFactory}
+import replpp.Colors.BlackWhite
 import replpp.{Config, ReplDriverBase, pwd}
 
 import java.io.*
@@ -83,7 +84,7 @@ class EmbeddedRepl(predefLines: IterableOnce[String] = Seq.empty) {
 }
 
 class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
-  extends ReplDriverBase(args, out, maxHeight = None, nocolors = true, classLoader) {
+  extends ReplDriverBase(args, out, maxHeight = None, classLoader)(using BlackWhite) {
   def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
     interpretInput(inputLines, state, pwd)
 }

@@ -23,9 +23,7 @@ import scala.util.control.NonFatal
  *       `ReplDriver#resetToInitial` is called, the accompanying instance of
  *       `Rendering` is no longer valid.
  */
-private[replpp] class Rendering(maxHeight: Option[Int],
-                                nocolors: Boolean,
-                                parentClassLoader: Option[ClassLoader] = None):
+private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Option[ClassLoader] = None)(using colors: Colors):
 
   import Rendering._
 
@@ -65,6 +63,11 @@ private[replpp] class Rendering(maxHeight: Option[Int],
           **/
         val pprinter = Class.forName("replpp.PPrinter", true, myClassLoader)
         val renderingMethod = pprinter.getMethod("apply", classOf[Object], classOf[Int], classOf[Boolean])
+        val nocolors = colors match {
+          case Colors.BlackWhite => true
+          case Colors.Default => false
+        }
+
         (objectToRender: Object, maxElements: Int, maxCharacters: Int) => {
           renderingMethod.invoke(null, objectToRender, maxHeight.getOrElse(Int.MaxValue), nocolors).asInstanceOf[String]
         }

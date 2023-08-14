@@ -10,6 +10,10 @@ import scala.io.Source
 import scala.util.Using
 
 package object replpp {
+  enum Colors {
+    case BlackWhite, Default
+  }
+
   /* ":" on unix */
   val pathSeparator = java.io.File.pathSeparator
 
