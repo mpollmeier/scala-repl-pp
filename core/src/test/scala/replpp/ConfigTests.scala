@@ -2,13 +2,14 @@ package replpp
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.Colors
 
 import java.nio.file.Paths
 
 class ConfigTests extends AnyWordSpec with Matchers {
   val apacheRepo = "https://repository.apache.org/content/groups/public"
   val sonatypeRepo = "https://oss.sonatype.org/content/repositories/public"
-  
+
   "color modes" in {
     Config().colors shouldBe Colors.Default
     Config(nocolors = false).colors shouldBe Colors.Default

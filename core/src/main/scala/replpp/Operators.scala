@@ -25,7 +25,7 @@ object Operators {
   /** output from an external command, e.g. when using `#|` */
   case class ProcessResults(stdout: String, stderr: String)
 
-  extension (value: Any) {
+  extension (value: Any)(using Colors) {
 
     /** Redirect output into file, overriding that file - similar to `>` redirection in unix. */
     def #>(outFile: Path): Unit =
@@ -89,10 +89,14 @@ object Operators {
      * Pretty-print the results using our `PPrinter`. Special handling for top level strings: render without quotes
      */
     private def render(obj: Any): String = {
-      // TODO enable coloring by default, but allow to disable, e.g. by having an implicit import in scope
       obj match {
-        case string: String => string
-        case other => PPrinter(other, nocolors = true)
+        case string: String =>
+          string
+        case other =>
+          PPrinter(
+            other,
+            nocolors = summon[Colors] == Colors.BlackWhite
+          )
       }
     }
   }

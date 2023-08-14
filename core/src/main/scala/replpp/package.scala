@@ -10,9 +10,7 @@ import scala.io.Source
 import scala.util.Using
 
 package object replpp {
-  enum Colors {
-    case BlackWhite, Default
-  }
+  enum Colors { case BlackWhite, Default }
 
   /* ":" on unix */
   val pathSeparator = java.io.File.pathSeparator
@@ -27,8 +25,17 @@ package object replpp {
 
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
-  val DefaultPredefLines = Seq("import replpp.Operators.*")
-  lazy val DefaultPredef = DefaultPredefLines.mkString(lineSeparator)
+  private[replpp] def DefaultPredefLines(using colors: Colors) = {
+    val colorsImport = colors match {
+      case Colors.BlackWhite => "replpp.Colors.BlackWhite"
+      case Colors.Default => "replpp.Colors.Default"
+    }
+    Seq(
+      "import replpp.Operators.*",
+      s"given replpp.Colors = $colorsImport"
+    )
+  }
+  private[replpp] def DefaultPredef(using Colors) = DefaultPredefLines.mkString(lineSeparator)
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
@@ -89,6 +96,7 @@ package object replpp {
   def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
+    import config.colors
 
     resultLines ++= DefaultPredefLines
 
