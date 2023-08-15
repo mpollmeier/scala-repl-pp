@@ -2,6 +2,7 @@ package replpp.util
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.Colors
 import replpp.Operators.*
 
 import scala.jdk.CollectionConverters.*
@@ -18,6 +19,7 @@ import System.lineSeparator
   ```
 */
 class OperatorsTests extends AnyWordSpec with Matchers {
+  given Colors = Colors.BlackWhite
 
   case class PrettyPrintable(s: String, i: Int)
 

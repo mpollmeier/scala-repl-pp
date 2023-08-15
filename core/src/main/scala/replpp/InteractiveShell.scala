@@ -12,13 +12,13 @@ object InteractiveShell {
 
     val predefCode = allPredefCode(config)
     val compilerArgs = replpp.compilerArgs(config)
+    import config.colors
     val replDriver = new ReplDriver(
       compilerArgs,
       onExitCode = config.onExitCode,
       greeting = Option(config.greeting),
       prompt = config.prompt.getOrElse("scala"),
-      maxHeight = config.maxHeight,
-      nocolors = config.nocolors
+      maxHeight = config.maxHeight
     )
 
     val initialState: State = replDriver.initialState

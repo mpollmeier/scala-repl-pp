@@ -46,8 +46,7 @@ import scala.util.Using
 class DottyReplDriver(settings: Array[String],
                       out: PrintStream,
                       maxHeight: Option[Int],
-                      nocolors: Boolean,
-                      classLoader: Option[ClassLoader]) extends Driver:
+                      classLoader: Option[ClassLoader])(using Colors) extends Driver:
 
   /** Overridden to `false` in order to not have to give sources on the
    *  commandline
@@ -90,7 +89,7 @@ class DottyReplDriver(settings: Array[String],
       rootCtx = rootCtx.fresh
         .setSetting(rootCtx.settings.outputDir, new VirtualDirectory("<REPL compilation output>"))
     compiler = new ReplCompiler
-    rendering = new Rendering(maxHeight, nocolors, classLoader)
+    rendering = new Rendering(maxHeight, classLoader)
   }
 
   private var rootCtx: Context = _

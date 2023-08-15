@@ -26,9 +26,8 @@ import scala.util.{Failure, Success, Try}
 abstract class ReplDriverBase(args: Array[String],
                               out: PrintStream,
                               maxHeight: Option[Int],
-                              nocolors: Boolean,
-                              classLoader: Option[ClassLoader])
-  extends DottyReplDriver(args, out, maxHeight, nocolors, classLoader) {
+                              classLoader: Option[ClassLoader])(using Colors)
+  extends DottyReplDriver(args, out, maxHeight, classLoader) {
 
   protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]

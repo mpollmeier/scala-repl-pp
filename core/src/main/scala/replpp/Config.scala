@@ -1,5 +1,7 @@
 package replpp
 
+import replpp.Colors.{BlackWhite, Default}
+
 import java.nio.file.Path
 
 case class Config(
@@ -27,6 +29,10 @@ case class Config(
   serverAuthUsername: Option[String] = None,
   serverAuthPassword: Option[String] = None,
 ) {
+  implicit val colors: Colors =
+    if (nocolors) Colors.BlackWhite
+    else Colors.Default
+
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]

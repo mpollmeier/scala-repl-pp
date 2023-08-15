@@ -2,15 +2,30 @@ package replpp
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.Colors.{BlackWhite, Default}
 
 class PredefTests extends AnyWordSpec with Matchers {
+  given Colors = Default
+
+  "default content" in {
+    allPredefCode(Config()) shouldBe s"""
+         |import replpp.Operators.*
+         |given replpp.Colors = replpp.Colors.Default
+         |""".stripMargin.trim
+
+    allPredefCode(Config(nocolors = true)) shouldBe
+      s"""
+         |import replpp.Operators.*
+         |given replpp.Colors = replpp.Colors.BlackWhite
+         |""".stripMargin.trim
+  }
 
   "import predef files in given order" in {
     val predefFile1 = os.temp("val foo = 10").toNIO
     val predefFile2 = os.temp("val bar = foo * 2").toNIO
 
     allPredefCode(Config(
-      predefFiles = Seq(predefFile1, predefFile2),
+      predefFiles = Seq(predefFile1, predefFile2)
     )) shouldBe
       s"""$DefaultPredef
          |val foo = 10
