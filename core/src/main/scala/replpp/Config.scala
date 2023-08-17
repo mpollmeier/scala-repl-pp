@@ -1,6 +1,7 @@
 package replpp
 
 import replpp.Colors.{BlackWhite, Default}
+import replpp.scripting.ScriptRunner
 
 import java.nio.file.Path
 
@@ -10,6 +11,7 @@ case class Config(
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
   resolvers: Seq[String] = Seq.empty,
+  remoteJvmDebugEnabled: Boolean = false,
 
   // repl only
   prompt: Option[String] = None,
@@ -102,6 +104,10 @@ object Config {
         .optional()
         .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
         .text("additional repositories to resolve dependencies - may be passed multiple times")
+
+      opt[Unit]("remoteJvmDebug")
+        .action((_, c) => c.copy(remoteJvmDebugEnabled = true))
+        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
 
       note("REPL options")
 

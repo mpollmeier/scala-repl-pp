@@ -342,6 +342,12 @@ otherone.host=nexus.other.com
 ```
 The prefix is arbitrary and is only used to specify several credentials in a single file. scala-repl-pp uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
+### Attach a debugger (remote jvm debug)
+```
+./scala-repl-pp --script myScript.sc --remoteJvmDebug
+```
+Then attach your favorite IDE / debugger on port 5005. 
+
 ## Server mode
 ```bash
 ./scala-repl-pp --server
