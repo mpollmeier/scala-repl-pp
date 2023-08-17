@@ -14,11 +14,8 @@ object ScriptRunner {
 
   def exec(config: Config): Try[Unit] = {
     val classpath = replpp.classpath(config, quiet = true)
-    val args = Seq(
-      "-classpath",
-      s"'$classpath'",
-      "replpp.scripting.NonForkingScriptRunner",
-    ) ++ config.asJavaArgs
+    val mainClass = "replpp.scripting.NonForkingScriptRunner"
+    val args = Seq("-classpath", classpath, mainClass) ++ config.asJavaArgs
     if (replpp.verboseEnabled(config)) println(s"executing `java ${args.mkString(" ")}`")
     Process("java", args).run().exitValue() match {
       case 0 => Success(())
