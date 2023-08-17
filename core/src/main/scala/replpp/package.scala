@@ -53,21 +53,36 @@ package object replpp {
     compilerArgs.result()
   }
 
+  /**
+   * Concatenates the classpath from multiple sources, each are required for different scenarios:
+   * - `java.class.path` system property
+   * - dependency artifacts as passed via (command-line) configuration
+   * - jars from current class loader (recursively)
+   *
+   * To have reproducable results, we order the classpath entries. This may interfere with the user's deliberate choice
+   * of order, but since we need to concatenate the classpath from different sources, the user can't really depend on
+   * the order anyway.
+   */
   def classpath(config: Config, quiet: Boolean = false): String = {
-    val fromJavaClassPathProperty = System.getProperty("java.class.path")
-    val fromDependencies = dependencyArtifacts(config)
+    val entries = Seq.newBuilder[String]
+    System.getProperty("java.class.path").split(pathSeparator).foreach(entries.addOne)
 
+    val fromDependencies = dependencyArtifacts(config)
+    fromDependencies.foreach(file => entries.addOne(file.getPath))
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
-    val fromClassLoaderHierarchy =
-      jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
-        .map(_.getFile)
-        .mkString(pathSeparator)
+    jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
+      .foreach(url => entries.addOne(url.getPath))
 
-    (fromClassLoaderHierarchy +: fromDependencies :+ fromJavaClassPathProperty).mkString(pathSeparator)
+    /** Important: we absolutely have to make sure this ends with a `pathSeparator`.
+     * Otherwise, the last entry is lost somewhere down the line. I'm still debugging where exactly, but it looks
+     * like somewhere in dotty. Will report upstream once I figured it out, but for now it doesn't harm to add a
+     * pathseparator at the end.
+     */
+    entries.result().distinct.sorted.mkString(pathSeparator, pathSeparator, pathSeparator)
   }
 
   private def dependencyArtifacts(config: Config): Seq[File] = {
