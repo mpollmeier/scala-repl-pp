@@ -101,6 +101,7 @@ cp -rp LICENSE $TARGET
 cp -rp fansi/src/fansi/Fansi.scala $TARGET
 
 sed -i 's/^package fansi$/package replpp.shaded.fansi/' $TARGET/*
+sed -i '2iimport replpp.shaded.{fansi, sourcecode}' $TARGET/Fansi.scala
 
 cd $REPLPP_REPO_ROOT
 sbt clean test
