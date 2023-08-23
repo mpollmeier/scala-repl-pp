@@ -2,6 +2,7 @@ package replpp
 
 import replpp.Colors.{BlackWhite, Default}
 import replpp.scripting.ScriptRunner
+import replpp.shaded.scopt
 
 import java.nio.file.Path
 
