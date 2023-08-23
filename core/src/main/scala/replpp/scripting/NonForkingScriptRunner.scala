@@ -7,7 +7,6 @@ import replpp.allPredefCode
 import java.nio.file.Files
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters.*
-import scala.xml.NodeSeq
 
 /**
   * Main entrypoint for ScriptingDriver, i.e. it takes commandline arguments and executes a script on the current JVM. 
@@ -79,7 +78,8 @@ object NonForkingScriptRunner {
            |}
            |""".stripMargin
 
-    s"""import mainargs.main // intentionally shadow any potentially given @main
+    s"""import replpp.shaded.mainargs
+       |import mainargs.main // intentionally shadow any potentially given @main
        |
        |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
        |object ${ScriptingDriver.MainClassName} {
