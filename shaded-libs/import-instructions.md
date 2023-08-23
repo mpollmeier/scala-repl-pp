@@ -22,8 +22,11 @@ git checkout v4.1.0
 rm -rf $TARGET
 cp -rp shared/src/main/scala/scopt/ $TARGET
 cp -rp jvm/src/main/scala/* $TARGET
+cp -rp LICENSE.md $TARGET
 sed -i 's/^package scopt$/package replpp.shaded.scopt/' $TARGET/*
 sed -i 's/scopt.Read/Read/g' $TARGET/PlatformReadInstances.scala
 
 cd $REPLPP_REPO_ROOT
+sbt clean test
 ```
+
