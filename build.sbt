@@ -5,6 +5,8 @@ ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.3.0"
 
 lazy val ScalaTestVersion = "3.2.15"
+lazy val ScalaCollectionCompatVersion = "2.11.0"
+
 
 lazy val core = project.in(file("core"))
   .dependsOn(shadedLibs)
@@ -12,12 +14,12 @@ lazy val core = project.in(file("core"))
     name := "scala-repl-pp-core",
     libraryDependencies ++= Seq(
       "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-      "com.lihaoyi"      %% "mainargs"  % "0.5.1",
       "com.lihaoyi"      %% "pprint"    % "0.8.1",
       ("io.get-coursier" %% "coursier"  % "2.1.5").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-xml_2.13")
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
+      "org.scala-lang.modules" %% "scala-collection-compat" % ScalaCollectionCompatVersion,
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
     )
 )
 
@@ -47,6 +49,7 @@ lazy val all = project.in(file("all"))
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
     name := "scala-repl-pp-shaded-libs",
+    libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % ScalaCollectionCompatVersion,
     scalacOptions ++= Seq(
       "-language:implicitConversions",
       "-Wconf:any:silent" // silence warnings from shaded libraries

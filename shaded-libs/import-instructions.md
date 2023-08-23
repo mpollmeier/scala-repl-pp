@@ -22,8 +22,38 @@ git checkout v4.1.0
 rm -rf $TARGET
 cp -rp shared/src/main/scala/scopt/ $TARGET
 cp -rp jvm/src/main/scala/* $TARGET
+cp -rp LICENSE.md $TARGET
 sed -i 's/^package scopt$/package replpp.shaded.scopt/' $TARGET/*
 sed -i 's/scopt.Read/Read/g' $TARGET/PlatformReadInstances.scala
 
 cd $REPLPP_REPO_ROOT
+sbt clean test
+```
+
+## mainargs
+```
+# start location must be replpp repo root!
+REPLPP_REPO_ROOT=$(pwd)
+TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/mainargs
+
+cd /tmp
+rm -rf mainargs
+git clone https://github.com/com-lihaoyi/mainargs.git
+cd mainargs
+git checkout 0.5.1
+
+rm -rf $TARGET
+mkdir -p $TARGET
+cp -rp LICENSE $TARGET
+cp -rp mainargs/src/* $TARGET
+cp -rp mainargs/src-jvm/* $TARGET
+cp -rp mainargs/src-3/* $TARGET
+sed -i 's/^package mainargs$/package replpp.shaded.mainargs/' $TARGET/*
+sed -i '2iimport replpp.shaded.mainargs' $TARGET/Macros.scala $TARGET/TokensReader.scala
+sed -i 's/requiredClass("mainargs./requiredClass("replpp.shaded.mainargs./' $TARGET/Macros.scala
+
+cd $REPLPP_REPO_ROOT
+sbt clean stage
+echo 'println("Hello!")' > target/simple.sc
+./scala-repl-pp --script target/simple.sc
 ```
