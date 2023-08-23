@@ -58,6 +58,29 @@ echo 'println("Hello!")' > target/simple.sc
 ./scala-repl-pp --script target/simple.sc
 ```
 
+## fansi
+```
+# start location must be replpp repo root!
+REPLPP_REPO_ROOT=$(pwd)
+TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/fansi
+
+cd /tmp
+rm -rf fansi
+git clone https://github.com/com-lihaoyi/fansi.git
+cd fansi
+git checkout 0.4.0
+
+rm -rf $TARGET
+mkdir -p $TARGET
+cp -rp LICENSE $TARGET
+cp -rp fansi/src/fansi/Fansi.scala $TARGET
+
+sed -i 's/^package fansi$/package replpp.shaded.fansi/' $TARGET/*
+
+cd $REPLPP_REPO_ROOT
+sbt clean test
+```
+
 ## pprint
 ```
 # start location must be replpp repo root!
