@@ -57,3 +57,27 @@ sbt clean stage
 echo 'println("Hello!")' > target/simple.sc
 ./scala-repl-pp --script target/simple.sc
 ```
+
+## pprint
+```
+# start location must be replpp repo root!
+REPLPP_REPO_ROOT=$(pwd)
+TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/pprint
+
+cd /tmp
+rm -rf PPrint
+git clone https://github.com/com-lihaoyi/PPrint.git
+cd PPrint
+git checkout 0.8.1
+
+rm -rf $TARGET
+mkdir -p $TARGET
+cp -rp LICENSE $TARGET
+cp -rp pprint/src/pprint/* $TARGET
+cp -rp pprint/src-3/* $TARGET
+
+# TODO seds?
+
+cd $REPLPP_REPO_ROOT
+sbt clean test
+```

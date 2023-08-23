@@ -14,7 +14,6 @@ lazy val core = project.in(file("core"))
     name := "scala-repl-pp-core",
     libraryDependencies ++= Seq(
       "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-      "com.lihaoyi"      %% "pprint"    % "0.8.1",
       ("io.get-coursier" %% "coursier"  % "2.1.5").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-xml_2.13")
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
