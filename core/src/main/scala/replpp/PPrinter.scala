@@ -1,6 +1,8 @@
 package replpp
 
-import pprint.{PPrinter, Renderer, Result, Tree, Truncated}
+import replpp.shaded.fansi
+import replpp.shaded.pprint
+import replpp.shaded.pprint.{PPrinter, Renderer, Result, Tree, Truncated}
 import scala.util.matching.Regex
 
 object PPrinter {

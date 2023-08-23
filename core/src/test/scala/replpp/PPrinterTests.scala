@@ -1,10 +1,10 @@
 package replpp
 
+import java.nio.file.Files
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.shaded.fansi
 import replpp.util.ProjectRoot
-
-import java.nio.file.Files
 import scala.util.Try
 
 /** We use source-highlight to encode source as ansi strings, e.g. the .dump step Ammonite uses fansi for it's
