@@ -58,6 +58,31 @@ echo 'println("Hello!")' > target/simple.sc
 ./scala-repl-pp --script target/simple.sc
 ```
 
+## sourcecode
+```
+# start location must be replpp repo root!
+REPLPP_REPO_ROOT=$(pwd)
+TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/sourcecode
+
+cd /tmp
+rm -rf sourcecode
+git clone https://github.com/com-lihaoyi/sourcecode.git
+cd sourcecode
+git checkout 0.3.0
+
+rm -rf $TARGET
+mkdir -p $TARGET
+cp -rp LICENSE $TARGET
+cp -rp sourcecode/src/sourcecode/* $TARGET
+cp -rp sourcecode/src-3/sourcecode/* $TARGET
+
+sed -i 's/^package sourcecode$/package replpp.shaded.sourcecode/' $TARGET/*
+sed -i '2iimport replpp.shaded.sourcecode' $TARGET/Macros.scala
+
+cd $REPLPP_REPO_ROOT
+sbt clean test
+```
+
 ## fansi
 ```
 # start location must be replpp repo root!
