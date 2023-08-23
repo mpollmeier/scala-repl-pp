@@ -13,7 +13,8 @@ lazy val shadedLibs = project.in(file("shaded-libs"))
     libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % ScalaCollectionCompatVersion,
     scalacOptions ++= Seq(
       "-language:implicitConversions",
-      "-Wconf:any:silent" // silence warnings from shaded libraries
+      "-Wconf:any:silent", // silence warnings from shaded libraries
+      "-explain"
     )
   )
 
@@ -26,8 +27,7 @@ lazy val core = project.in(file("core"))
       ("io.get-coursier" %% "coursier"  % "2.1.5").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-xml_2.13")
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      "org.scala-lang.modules" %% "scala-collection-compat" % ScalaCollectionCompatVersion,
-      "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0", // required for coursier
     )
 )
 

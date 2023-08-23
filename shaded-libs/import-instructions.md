@@ -125,7 +125,12 @@ cp -rp LICENSE $TARGET
 cp -rp pprint/src/pprint/* $TARGET
 cp -rp pprint/src-3/* $TARGET
 
-# TODO seds?
+sed -i '1ipackage replpp.shaded' $TARGET/package.scala
+sed -i 's/^package pprint$/package replpp.shaded.pprint/' $TARGET/*.scala
+sed -i '2iimport replpp.shaded.sourcecode' $TARGET/PPrinter.scala
+sed -i 's/colorLiteral: fansi.Attrs/colorLiteral: replpp.shaded.fansi.Attrs/' $TARGET/PPrinter.scala
+sed -i 's/colorApplyPrefix: fansi.Attrs/colorApplyPrefix: replpp.shaded.fansi.Attrs/' $TARGET/PPrinter.scala
+sed -i '2iimport replpp.shaded.fansi' $TARGET/*.scala
 
 cd $REPLPP_REPO_ROOT
 sbt clean test
