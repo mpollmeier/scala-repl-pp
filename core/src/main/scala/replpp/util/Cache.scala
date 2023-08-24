@@ -2,7 +2,7 @@ package replpp.util
 
 import replpp.home
 
-import java.io.{FileOutputStream, InputStream}
+import java.io.InputStream
 import java.net.URI
 import java.nio.file.{Files, Path}
 
@@ -30,7 +30,9 @@ object Cache {
 
   /** similar to `getOrObtain`, but specifically for files that need to be downloaded */
   def getOrDownload(cacheKey: String, downloadUrl: URI): Path = {
-    ???
+    getOrObtain(cacheKey, obtain = () => {
+      downloadUrl.toURL.openStream()
+    })
   }
 
   /**
