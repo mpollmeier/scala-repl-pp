@@ -6,9 +6,7 @@ import java.io.InputStream
 import java.net.URI
 import java.nio.file.{Files, Path}
 
-/**
- * A simple cache for `cacheKey` -> `Path`, where `Path` is a single file or directory
- */
+/** A simple cache for `cacheKey` -> `Path`, where `Path` is a single file */
 object Cache {
   lazy val Dir: Path = {
     val dir = home.resolve(".scala-repl-pp/cache")
