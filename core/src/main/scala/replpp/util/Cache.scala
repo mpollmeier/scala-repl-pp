@@ -9,7 +9,7 @@ import java.nio.file.{Files, Path}
 /** A simple cache for `cacheKey` -> `Path`, where `Path` is a single file */
 object Cache {
   lazy val Dir: Path = {
-    val dir = home.resolve(".scala-repl-pp/cache")
+    val dir = home.resolve(".cache/scala-repl-pp")
     if (Files.notExists(dir)) Files.createDirectories(dir)
     dir
   }
