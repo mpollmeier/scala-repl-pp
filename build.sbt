@@ -21,8 +21,10 @@ lazy val shadedLibs = project.in(file("shaded-libs"))
 
 lazy val core = project.in(file("core"))
   .dependsOn(shadedLibs)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-core",
+    executableScriptName := "scala-repl-pp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j" % "slf4j-api" % Slf4jVersion,
