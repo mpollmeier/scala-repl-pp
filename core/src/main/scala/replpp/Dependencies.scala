@@ -22,7 +22,7 @@ object Dependencies {
 
     Try(os.proc(command).call()) match {
       case Success(commandResult) =>
-        Success(commandResult.out.text().split(System.lineSeparator()).map(Paths.get(_)))
+        Success(commandResult.out.text().split(System.lineSeparator()).map(Paths.get(_)).toIndexedSeq)
       case Failure(exception) =>
         Failure(new AssertionError(s"${getClass.getName}: error while invoking `${command.mkString(" ")}`", exception))
     }
