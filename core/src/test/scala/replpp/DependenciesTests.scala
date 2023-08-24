@@ -41,7 +41,7 @@ class DependenciesTests extends AnyWordSpec with Matchers {
       Seq("not-a-valid-repository"),
     )
     val errorMessage = parseResult.failed.get.getMessage
-    errorMessage should include("error while trying to parse given repository coordinates")
+    errorMessage should include("not-a-valid-repository")
   }
 }
 
