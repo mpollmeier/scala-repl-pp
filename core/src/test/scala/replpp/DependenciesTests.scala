@@ -1,12 +1,9 @@
 package replpp
 
-import coursier.cache.{CacheDefaults, FileCache}
-import coursier.credentials.Credentials
-import coursier.parse.DependencyParser
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.File
+import java.nio.file.Path
 
 class DependenciesTests extends AnyWordSpec with Matchers {
   val coursierCache = os.home / ".cache" / "coursier" / "v1"
@@ -15,7 +12,6 @@ class DependenciesTests extends AnyWordSpec with Matchers {
   "artifact resolution including transitive dependencies" should {
     "work for java artifacts" in {
       val jars = Dependencies.resolve(Seq("io.shiftleft:overflowdb-core:1.171")).get
-      val mvstoreJar = coursierCache / os.RelPath("https/repo1.maven.org/maven2/com/h2database/h2-mvstore/1.4.200/")
 
       ensureContains("overflowdb-core-1.171.jar", jars)
       ensureContains("h2-mvstore-1.4.200.jar", jars)
@@ -28,7 +24,7 @@ class DependenciesTests extends AnyWordSpec with Matchers {
       ensureContains("scala3-library_3-3.1.3.jar", jars)
     }
 
-    def ensureContains(fileName: String, jars: Seq[File]): Unit = {
+    def ensureContains(fileName: String, jars: Seq[Path]): Unit = {
       assert(jars.exists(_.toString.endsWith(fileName)), s"expected $fileName, but it's not in the results: $jars")
     }
   }
@@ -36,7 +32,7 @@ class DependenciesTests extends AnyWordSpec with Matchers {
   "return failure for invalid dependency coordinate" in {
     val parseResult = Dependencies.resolve(Seq("not-a-valid-maven-coordinate"))
     val errorMessage = parseResult.failed.get.getMessage
-    errorMessage should include("error while trying to parse the following dependency coordinate: `not-a-valid-maven-coordinate`")
+    errorMessage should include("fetch not-a-valid-maven-coordinate")
   }
 
   "return failure for invalid repository" in {

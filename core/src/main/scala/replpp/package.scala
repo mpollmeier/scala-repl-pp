@@ -68,7 +68,7 @@ package object replpp {
     System.getProperty("java.class.path").split(pathSeparator).foreach(entries.addOne)
 
     val fromDependencies = dependencyArtifacts(config)
-    fromDependencies.foreach(file => entries.addOne(file.getPath))
+    fromDependencies.foreach(file => entries.addOne(file.toString))
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
@@ -85,7 +85,7 @@ package object replpp {
     entries.result().distinct.sorted.mkString(pathSeparator, pathSeparator, pathSeparator)
   }
 
-  private def dependencyArtifacts(config: Config): Seq[File] = {
+  private def dependencyArtifacts(config: Config): Seq[Path] = {
     val scriptLines = config.scriptFile.map { path =>
        Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
     }.getOrElse(Seq.empty)
@@ -93,7 +93,7 @@ package object replpp {
 
     val resolvers = config.resolvers ++ UsingDirectives.findResolvers(allLines)
     val allDependencies = config.dependencies ++ UsingDirectives.findDeclaredDependencies(allLines)
-    Dependencies.resolve(allDependencies, resolvers).get
+    Dependencies.resolve(allDependencies, resolvers, verboseEnabled(config)).get
   }
   
   private def jarsFromClassLoaderRecursively(classLoader: ClassLoader): Seq[URL] = {
