@@ -209,6 +209,17 @@ Famously one of the most popular question on stackoverflow is about how to exit 
 :q
 ```
 
+When the REPL is waiting for input we capture `Ctrl-c` and don't exit. If there's currently a long-running execution that you really *might* want to cancel you can press `Ctrl-c` again immediately which will kill the entire repl:
+```
+scala> Thread.sleep(50000)
+// press Ctrl-c
+Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c again within three seconds
+
+// press Ctrl-c again will exit the repl
+$
+```
+Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
+
 ## Scripting
 
 See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
