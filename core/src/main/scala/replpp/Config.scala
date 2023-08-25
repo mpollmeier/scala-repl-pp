@@ -76,55 +76,67 @@ object Config {
   object opts {
     type Action[A, C] = (A, C) => C
 
-    def predef[C](builder: OParserBuilder[C])(action: Action[Path, C]) = {
+    def predef[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
       builder.opt[Path]('p', "predef")
         .valueName("myScript.sc")
         .unbounded()
         .optional()
-        .text("import additional script files on startup - may be passed multiple times")
         .action(action)
+        .text("import additional script files on startup - may be passed multiple times")
     }
 
-    def nocolors[C](builder: OParserBuilder[C])(action: Action[Unit, C]) =
+    def nocolors[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
       builder.opt[Unit]("nocolors").text("turn off colors").action(action)
+    }
 
-    def verbose[C](builder: OParserBuilder[C])(action: Action[Unit, C]) =
+    def verbose[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
       builder.opt[Unit]('v', "verbose")
-        .text("enable verbose output (predef, resolved dependency jars, ...)")
         .action(action)
+        .text("enable verbose output (predef, resolved dependency jars, ...)")
+    }
 
-    def dependency[C](builder: OParserBuilder[C])(action: Action[String, C]) =
+    def dependency[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
       builder.opt[String]('d', "dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
         .unbounded()
         .optional()
         .action(action)
         .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times")
+    }
 
-    def repo[C](builder: OParserBuilder[C])(action: Action[String, C]) =
+    def repo[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
       builder.opt[String]('r', "repo")
         .valueName("https://repository.apache.org/content/groups/public/")
         .unbounded()
         .optional()
         .action(action)
         .text("additional repositories to resolve dependencies - may be passed multiple times")
+    }
 
+    def remoteJvmDebug[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
+      builder.opt[Unit]("remoteJvmDebug")
+        .action(action)
+        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
+    }
+
+    /*
+    def [C](builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.
+    }
+   */
   }
 
   lazy val parser = {
-    val builder = OParser.builder[Config]
+    given builder: OParserBuilder[Config] = OParser.builder[Config]
     import builder._
     OParser.sequence(
       programName("scala-repl-pp"),
-      opts.predef(builder)((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
-      opts.nocolors(builder)((_, c) => c.copy(nocolors = true)),
-      opts.verbose(builder)((_, c) => c.copy(verbose = true)),
-      opts.dependency(builder)((x, c) => c.copy(dependencies = c.dependencies :+ x)),
-      opts.repo(builder)((x, c) => c.copy(resolvers = c.resolvers :+ x)),
-
-      opt[Unit]("remoteJvmDebug")
-        .action((_, c) => c.copy(remoteJvmDebugEnabled = true))
-        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'"),
+      opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
+      opts.nocolors((_, c) => c.copy(nocolors = true)),
+      opts.verbose((_, c) => c.copy(verbose = true)),
+      opts.dependency((x, c) => c.copy(dependencies = c.dependencies :+ x)),
+      opts.repo((x, c) => c.copy(resolvers = c.resolvers :+ x)),
+      opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
 
       note("REPL options"),
 
