@@ -12,6 +12,14 @@ object Dependencies {
   private val CoursierJarDownloadUrl = new URI("https://github.com/coursier/launchers/raw/master/coursier")
 
   def resolve(coordinates: Seq[String], additionalRepositories: Seq[String] = Nil, verbose: Boolean = false): Try[Seq[Path]] = {
+    if (coordinates.isEmpty) {
+      Try(Seq.empty)
+    } else {
+      resolve0(coordinates, additionalRepositories, verbose)
+    }
+  }
+
+  private def resolve0(coordinates: Seq[String], additionalRepositories: Seq[String], verbose: Boolean): Try[Seq[Path]] = {
     val coursierJarPath = Cache.getOrDownload("coursier.jar", CoursierJarDownloadUrl)
     val repositoryArgs = additionalRepositories.flatMap { repo =>
       Seq("--repository", repo)
