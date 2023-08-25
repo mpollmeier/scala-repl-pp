@@ -15,7 +15,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--server-port", "42",
       "--server-auth-username", "test-user",
       "--server-auth-password", "test-pass",
-      "--verbose", "true",
+      "--verbose",
       "--prompt", "testPrompt",
     ))
     parsed.serverHost shouldBe "testHost"

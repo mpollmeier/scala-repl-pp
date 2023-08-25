@@ -1,7 +1,7 @@
 package replpp.server
 
+import replpp.Config.opts
 import replpp.shaded.scopt.OParser
-import replpp.shaded.scopt.{OParserSetup, DefaultOParserSetup}
 
 case class Config(baseConfig: replpp.Config,
                   serverHost: String = "localhost",
@@ -13,9 +13,11 @@ object Config {
 
   def parse(args: Array[String]): Config = {
     val builder = OParser.builder[Config]
-    import builder._
+    import builder.*
     val parser = OParser.sequence(
       programName("scala-repl-pp-server"),
+      replpp.Config.opts.predef(builder)((x, c) => c.copy(baseConfig = c.baseConfig.copy(predefFiles = c.baseConfig.predefFiles :+ x))),
+      replpp.Config.opts.verbose(builder)((_, c) => c.copy(baseConfig = c.baseConfig.copy(verbose = true))),
 
       opt[String]("server-host")
         .action((x, c) => c.copy(serverHost = x))
@@ -36,10 +38,7 @@ object Config {
       help("help").text("Print this help text"),
     )
 
-    val baseConfig = replpp.Config.parse(args)
-    val setup: OParserSetup = new DefaultOParserSetup {
-      override def errorOnUnknownArgument: Boolean = false
-    }
-    OParser.parse(parser, args, Config(baseConfig), setup).get
+    OParser.parse(parser, args, Config(replpp.Config()))
+      .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
   }
 }

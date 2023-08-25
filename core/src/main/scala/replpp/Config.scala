@@ -3,6 +3,7 @@ package replpp
 import replpp.Colors.{BlackWhite, Default}
 import replpp.scripting.ScriptRunner
 import replpp.shaded.scopt.OParser
+import replpp.shaded.scopt.OParserBuilder
 
 import java.nio.file.Path
 
@@ -66,39 +67,40 @@ case class Config(
 
 object Config {
 
-  def main(args: Array[String]): Unit = {
-    // TODO drop
-    // problem: we want to combine the two, but the actions are different...
-    // ideally invoke the base parser for the base config and vice versa...
-    // be careful: there's also flags and short names...
-//    parser.toList.map(_.).foreach(println)
-  }
-  
   def parse(args: Array[String]): Config = {
-    OParser.parse(parser, args, Config()).get
+    OParser.parse(parser, args, Config())
+      .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
   }
 
-  // TODO: private[replpp] ??
+  object opts {
+    type Action[A, C] = (A, C) => C
+
+    def predef[C](builder: OParserBuilder[C])(action: Action[Path, C]) = {
+      builder.opt[Path]('p', "predef")
+        .valueName("myScript.sc")
+        .unbounded()
+        .optional()
+        .text("import additional script files on startup - may be passed multiple times")
+        .action(action)
+    }
+
+    def nocolors[C](builder: OParserBuilder[C])(action: Action[Unit, C]) =
+      builder.opt[Unit]("nocolors").text("turn off colors").action(action)
+
+    def verbose[C](builder: OParserBuilder[C])(action: Action[Unit, C]) =
+      builder.opt[Unit]('v', "verbose")
+        .text("enable verbose output (predef, resolved dependency jars, ...)")
+        .action(action)
+  }
+
   lazy val parser = {
     val builder = OParser.builder[Config]
     import builder._
     OParser.sequence(
       programName("scala-repl-pp"),
-
-      opt[Path]('p', "predef")
-        .valueName("myScript.sc")
-        .unbounded()
-        .optional()
-        .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
-        .text("import additional script files on startup - may be passed multiple times"),
-
-      opt[Unit]("nocolors")
-        .action((_, c) => c.copy(nocolors = true))
-        .text("turn off colors"),
-
-      opt[Unit]('v', "verbose")
-        .action((_, c) => c.copy(verbose = true))
-        .text("enable verbose output (predef, resolved dependency jars, ...)"),
+      opts.predef(builder)((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
+      opts.nocolors(builder)((_, c) => c.copy(nocolors = true)),
+      opts.verbose(builder)((_, c) => c.copy(verbose = true)),
 
       opt[String]('d', "dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
