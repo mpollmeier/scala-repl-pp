@@ -2,17 +2,15 @@ package replpp.all
 
 import replpp.scripting.ScriptRunner
 import replpp.server.ReplServer
-import replpp.{Config, InteractiveShell}
+import replpp.Config
 
 object Main {
   def main(args: Array[String]): Unit = {
     val config = Config.parse(args)
 
-    if (config.server) {
+    if (config.server)
       ReplServer.startHttpServer(config)
-    } else if (config.scriptFile.isDefined)
-      ScriptRunner.main(args)
     else 
-      InteractiveShell.run(config)
+      replpp.Main.main(args)
   }
 }

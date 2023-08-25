@@ -1,1 +1,1 @@
-all/target/universal/stage/bin/scala-repl-pp-all.bat
+core/target/universal/stage/bin/scala-repl-pp.bat

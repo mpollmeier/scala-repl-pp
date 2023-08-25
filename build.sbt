@@ -24,6 +24,7 @@ lazy val core = project.in(file("core"))
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-core",
+    Compile/mainClass := Some("replpp.Main"),
     executableScriptName := "scala-repl-pp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
@@ -51,6 +52,7 @@ lazy val all = project.in(file("all"))
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-all",
+    Compile/mainClass := Some("replpp.all.Main"),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7" % Optional,
   )
 
