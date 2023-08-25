@@ -4,7 +4,7 @@ publish/skip := true
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.3.0"
 
-lazy val ScalaTestVersion = "3.2.16"
+lazy val ScalaTestVersion = "3.2.15"
 
 lazy val core = project.in(file("core")).settings(
   name := "scala-repl-pp",
