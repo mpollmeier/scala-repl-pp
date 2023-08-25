@@ -11,7 +11,6 @@ import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
 import org.jline.reader.*
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.PrintStream
 import java.lang.System.lineSeparator

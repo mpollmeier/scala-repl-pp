@@ -4,7 +4,6 @@ publish/skip := true
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.3.0"
 
-lazy val Slf4jVersion = "2.0.7"
 lazy val ScalaCollectionCompatVersion = "2.11.0"
 lazy val ScalaTestVersion = "3.2.15"
 
@@ -28,7 +27,6 @@ lazy val core = project.in(file("core"))
     executableScriptName := "scala-repl-pp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-      "org.slf4j" % "slf4j-api" % Slf4jVersion,
     ),
   )
 
@@ -43,7 +41,7 @@ lazy val server = project.in(file("server"))
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
-      "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
+      "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
