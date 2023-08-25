@@ -2,9 +2,9 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3)
 
 ## scala-repl-pp
-Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. 
+Scala REPL PlusPlus: a better Scala 3 REPL. Wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. Keeps complexity low by using some (shaded) libraries from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack, as well as [coursier](https://get-coursier.io/) (invoked in a subprocess).
 
-This is (also) a breeding ground for improvements to the regular scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
+This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
 
 Runs on JDK11+.
 
@@ -208,6 +208,17 @@ Famously one of the most popular question on stackoverflow is about how to exit 
 :quit
 :q
 ```
+
+When the REPL is waiting for input we capture `Ctrl-c` and don't exit. If there's currently a long-running execution that you really *might* want to cancel you can press `Ctrl-c` again immediately which will kill the entire repl:
+```
+scala> Thread.sleep(50000)
+// press Ctrl-c
+Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c again within three seconds
+
+// press Ctrl-c again will exit the repl
+$
+```
+Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
 
 ## Scripting
 
@@ -469,3 +480,7 @@ If there's a compilation issue, the temporary script file will not be deleted an
 
 ### Why do we ship a shaded copy of other libraries and not use dependencies?
 Scala-REPL-PP includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of which versions were used and what we copied are in [import-instructions.md](shaded-libs/import-instructions.md).
+
+### Where's the cache located on disk?
+The cache? The caches you mean! :)
+There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via a subprocess) there's also `~/.cache/coursier`. 

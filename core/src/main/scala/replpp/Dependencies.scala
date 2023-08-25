@@ -1,58 +1,37 @@
 package replpp
 
-import coursier.Dependency
-import coursier.cache.FileCache
-import coursier.cache.loggers.RefreshLogger
-import coursier.core.Repository
-import coursier.parse.{DependencyParser, RepositoryParser}
+import replpp.shaded.os
+import replpp.util.Cache
 
-import java.io.File
-import java.nio.file.Path
+import java.net.URI
+import java.nio.file.{Path, Paths}
 import scala.util.{Failure, Success, Try}
 
 object Dependencies {
 
-  def resolve(coordinates: Seq[String], additionalRepositories: Seq[String] = Nil): Try[Seq[File]] = {
-    for {
-      repositories <- parseRepositories(additionalRepositories)
-      dependencies <- parseDependencies(coordinates)
-    } yield {
-      // the default cache throws away the credentials... see PlatformCacheCompanion.scala
-      val cache = FileCache().withLogger(RefreshLogger.create())
+  private val CoursierJarDownloadUrl = new URI("https://github.com/coursier/launchers/raw/master/coursier")
 
-      coursier.Fetch()
-        .withCache(cache)
-        .addRepositories(repositories: _*)
-        .addDependencies(dependencies: _*)
-        .run()
+  def resolve(coordinates: Seq[String], additionalRepositories: Seq[String] = Nil, verbose: Boolean = false): Try[Seq[Path]] = {
+    if (coordinates.isEmpty) {
+      Try(Seq.empty)
+    } else {
+      resolve0(coordinates, additionalRepositories, verbose)
     }
   }
 
-  private def parseRepositories(additionalRepositories: Seq[String]): Try[Seq[Repository]] = {
-    Try {
-      val parseResults = RepositoryParser.repositories(additionalRepositories)
-      parseResults.either match {
-        case Right(res) => res
-        case Left(failures) =>
-          throw new AssertionError(s"error while trying to parse given repository coordinates: ${failures.mkString(",")}")
-      }
+  private def resolve0(coordinates: Seq[String], additionalRepositories: Seq[String], verbose: Boolean): Try[Seq[Path]] = {
+    val coursierJarPath = Cache.getOrDownload("coursier.jar", CoursierJarDownloadUrl)
+    val repositoryArgs = additionalRepositories.flatMap { repo =>
+      Seq("--repository", repo)
     }
-  }
+    val command = Seq("java", "-jar", coursierJarPath.toAbsolutePath.toString, "fetch") ++ repositoryArgs ++ coordinates
+    if (verbose) println(s"executing `${command.mkString(" ")}`")
 
-
-  private def parseDependencies(coordinates: Seq[String]): Try[Seq[Dependency]] =
-    util.sequenceTry(coordinates.map(parseDependency))
-
-  private def parseDependency(coordinate: String): Try[Dependency] = {
-    lazy val errorGeneric = s"error while trying to parse the following dependency coordinate: `$coordinate`"
-    Try {
-      DependencyParser.dependency(coordinate, defaultScalaVersion = "3") match {
-        // I'd expect coursier to return a `Left(errorMsg)` here in all error scenarios, but it only does it in certain scenarios...
-        case Left(error) => throw new AssertionError(s"$errorGeneric: $error")
-        case Right(value) => value
-      }
-    }.recover {
-      case error => throw new AssertionError(errorGeneric, error)
+    Try(os.proc(command).call()) match {
+      case Success(commandResult) =>
+        Success(commandResult.out.text().split(System.lineSeparator()).map(Paths.get(_)).toIndexedSeq)
+      case Failure(exception) =>
+        Failure(new AssertionError(s"${getClass.getName}: error while invoking `${command.mkString(" ")}`", exception))
     }
   }
 

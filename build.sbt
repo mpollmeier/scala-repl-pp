@@ -4,8 +4,9 @@ publish/skip := true
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.3.0"
 
-lazy val ScalaTestVersion = "3.2.15"
+lazy val Slf4jVersion = "2.0.7"
 lazy val ScalaCollectionCompatVersion = "2.11.0"
+lazy val ScalaTestVersion = "3.2.15"
 
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
@@ -20,16 +21,16 @@ lazy val shadedLibs = project.in(file("shaded-libs"))
 
 lazy val core = project.in(file("core"))
   .dependsOn(shadedLibs)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-core",
+    Compile/mainClass := Some("replpp.Main"),
+    executableScriptName := "scala-repl-pp",
     libraryDependencies ++= Seq(
-      "org.scala-lang"   %% "scala3-compiler" % scalaVersion.value,
-      ("io.get-coursier" %% "coursier"  % "2.1.5").cross(CrossVersion.for3Use2_13)
-        .exclude("org.scala-lang.modules", "scala-xml_2.13")
-        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      "org.scala-lang.modules" %% "scala-xml" % "2.1.0", // required for coursier
-    )
-)
+      "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.slf4j" % "slf4j-api" % Slf4jVersion,
+    ),
+  )
 
 lazy val server = project.in(file("server"))
   .dependsOn(core)
@@ -40,7 +41,7 @@ lazy val server = project.in(file("server"))
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
-      "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
+      "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
@@ -51,6 +52,7 @@ lazy val all = project.in(file("all"))
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-all",
+    Compile/mainClass := Some("replpp.all.Main"),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7" % Optional,
   )
 
