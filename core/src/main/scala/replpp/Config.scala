@@ -2,7 +2,7 @@ package replpp
 
 import replpp.Colors.{BlackWhite, Default}
 import replpp.scripting.ScriptRunner
-import replpp.shaded.scopt
+import replpp.shaded.scopt.OParser
 
 import java.nio.file.Path
 
@@ -24,13 +24,6 @@ case class Config(
   scriptFile: Option[Path] = None,
   command: Option[String] = None,
   params: Map[String, String] = Map.empty,
-
-  // server only
-  server: Boolean = false,
-  serverHost: String = "localhost",
-  serverPort: Int = 8080,
-  serverAuthUsername: Option[String] = None,
-  serverAuthPassword: Option[String] = None,
 ) {
   implicit val colors: Colors =
     if (nocolors) Colors.BlackWhite
@@ -72,73 +65,88 @@ case class Config(
 }
 
 object Config {
+
+  def main(args: Array[String]): Unit = {
+    // TODO drop
+    // problem: we want to combine the two, but the actions are different...
+    // ideally invoke the base parser for the base config and vice versa...
+    // be careful: there's also flags and short names...
+//    parser.toList.map(_.).foreach(println)
+  }
   
   def parse(args: Array[String]): Config = {
-    val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
-      override def errorOnUnknownArgument = false
+    OParser.parse(parser, args, Config()).get
+  }
+
+  // TODO: private[replpp] ??
+  lazy val parser = {
+    val builder = OParser.builder[Config]
+    import builder._
+    OParser.sequence(
+      programName("scala-repl-pp"),
 
       opt[Path]('p', "predef")
         .valueName("myScript.sc")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
-        .text("import additional script files on startup - may be passed multiple times")
+        .text("import additional script files on startup - may be passed multiple times"),
 
       opt[Unit]("nocolors")
         .action((_, c) => c.copy(nocolors = true))
-        .text("turn off colors")
+        .text("turn off colors"),
 
       opt[Unit]('v', "verbose")
         .action((_, c) => c.copy(verbose = true))
-        .text("enable verbose output (predef, resolved dependency jars, ...)")
+        .text("enable verbose output (predef, resolved dependency jars, ...)"),
 
       opt[String]('d', "dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
-        .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times")
+        .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times"),
 
       opt[String]('r', "repo")
         .valueName("https://repository.apache.org/content/groups/public/")
         .unbounded()
         .optional()
         .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
-        .text("additional repositories to resolve dependencies - may be passed multiple times")
+        .text("additional repositories to resolve dependencies - may be passed multiple times"),
 
       opt[Unit]("remoteJvmDebug")
         .action((_, c) => c.copy(remoteJvmDebugEnabled = true))
-        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
+        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'"),
 
-      note("REPL options")
+      note("REPL options"),
 
       opt[String]("prompt")
         .valueName("scala")
         .action((x, c) => c.copy(prompt = Option(x)))
-        .text("specify a custom prompt")
+        .text("specify a custom prompt"),
 
       opt[String]("greeting")
         .valueName("Welcome to scala-repl-pp!")
         .action((x, c) => c.copy(greeting = x))
-        .text("specify a custom greeting")
+        .text("specify a custom greeting"),
 
       opt[String]("onExitCode")
         .valueName("""println("bye!")""")
-        .action((x, c) => c.copy(onExitCode = Option(x)))
+        .action((x, c) => c.copy(onExitCode = Option(x))),
 
       opt[Int]("maxHeight")
         .action((x, c) => c.copy(maxHeight = Some(x)))
-        .text("Maximum number lines to print before output gets truncated (default: no limit)")
+        .text("Maximum number lines to print before output gets truncated (default: no limit)"),
 
-      note("Script execution")
+      note("Script execution"),
 
       opt[Path]("script")
         .action((x, c) => c.copy(scriptFile = Some(x)))
-        .text("path to script file: will execute and exit")
+        .text("path to script file: will execute and exit"),
 
       opt[String]("command")
         .action((x, c) => c.copy(command = Some(x)))
-        .text("command to execute, in case there are multiple @main entrypoints")
+        .text("command to execute, in case there are multiple @main entrypoints"),
 
       opt[String]("param")
         .valueName("param1=value1")
@@ -150,35 +158,9 @@ object Config {
             case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
           }
         }
-        .text("key/value pair for main function in script - may be passed multiple times")
+        .text("key/value pair for main function in script - may be passed multiple times"),
 
-      note("REST server mode")
-
-      opt[Unit]("server")
-        .action((_, c) => c.copy(server = true))
-        .text("run as HTTP server")
-
-      opt[String]("server-host")
-        .action((x, c) => c.copy(serverHost = x))
-        .text("Hostname on which to expose the REPL server")
-
-      opt[Int]("server-port")
-        .action((x, c) => c.copy(serverPort = x))
-        .text("Port on which to expose the REPL server")
-
-      opt[String]("server-auth-username")
-        .action((x, c) => c.copy(serverAuthUsername = Option(x)))
-        .text("Basic auth username for the REPL server")
-
-      opt[String]("server-auth-password")
-        .action((x, c) => c.copy(serverAuthPassword = Option(x)))
-        .text("Basic auth password for the REPL server")
-
-      help("help")
-        .text("Print this help text")
-    }
-
-    // note: if config is really `None` an error message would have been displayed earlier
-    parser.parse(args, Config()).get
+      help("help").text("Print this help text"),
+    )
   }
 }

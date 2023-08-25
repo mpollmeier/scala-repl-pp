@@ -2,12 +2,12 @@ package replpp.server
 
 import cask.model.{Request, Response}
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.{Config, allPredefLines}
+import replpp.allPredefLines
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
-import java.util.{Base64, UUID}
-import scala.util.{Failure, Success, Try}
+import java.util.UUID
+import scala.util.{Failure, Success}
 
 /** Result of executing a query, containing in particular output received on standard out. */
 case class QueryResult(output: String, uuid: UUID, success: Boolean) extends HasUUID
@@ -18,10 +18,10 @@ object ReplServer {
   def startHttpServer(config: Config): Unit = {
     val authenticationMaybe = for {
       username <- config.serverAuthUsername
-      password <-config.serverAuthPassword
+      password <- config.serverAuthPassword
     } yield UsernamePasswordAuth(username, password)
 
-    val embeddedRepl = new EmbeddedRepl(allPredefLines(config))
+    val embeddedRepl = new EmbeddedRepl(allPredefLines(config.baseConfig))
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()

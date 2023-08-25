@@ -23,7 +23,7 @@ lazy val core = project.in(file("core"))
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    name := "scala-repl-pp-core",
+    name := "scala-repl-pp",
     Compile/mainClass := Some("replpp.Main"),
     executableScriptName := "scala-repl-pp",
     libraryDependencies ++= Seq(
@@ -35,8 +35,10 @@ lazy val core = project.in(file("core"))
 lazy val server = project.in(file("server"))
   .dependsOn(core)
   .configs(IntegrationTest)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-server",
+    Compile/mainClass := Some("replpp.server.Main"),
     Defaults.itSettings,
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
@@ -45,15 +47,6 @@ lazy val server = project.in(file("server"))
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
-  )
-
-lazy val all = project.in(file("all"))
-  .dependsOn(core, server)
-  .enablePlugins(JavaAppPackaging)
-  .settings(
-    name := "scala-repl-pp-all",
-    Compile/mainClass := Some("replpp.all.Main"),
-    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7" % Optional,
   )
 
 ThisBuild / libraryDependencies ++= Seq(

@@ -361,7 +361,7 @@ Then attach your favorite IDE / debugger on port 5005.
 
 ## Server mode
 ```bash
-./scala-repl-pp --server
+./scala-repl-pp-server
 
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
 # {"success":true,"stdout":"val foo: Int = 42\n",...}
@@ -375,7 +375,7 @@ curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote
 
 The same for windows and powershell:
 ```
-scala-repl-pp-all.bat --server
+scala-repl-pp-server.bat
 
 Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "val foo = 42"}'
 # Content           : {"success":true,"stdout":"val foo: Int = 42\r\n","uuid":"02f843ba-671d-4fb5-b345-91c1dcf5786d"}
@@ -386,7 +386,7 @@ Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentT
 Predef code works with server as well:
 ```
 echo val foo = 99 > foo.sc
-./scala-repl-pp --server --predef foo.sc
+./scala-repl-pp-server --predef foo.sc
 
 curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
 # {"success":true,"stdout":"val baz: Int = 100\n",...}
@@ -394,7 +394,7 @@ curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
 
 There's also has an asynchronous mode:
 ```
-./scala-repl-pp --server
+./scala-repl-pp-server
 
 curl http://localhost:8080/query -X POST -d '{"query": "val baz = 93"}'
 # {"success":true,"uuid":"e2640fcb-3193-4386-8e05-914b639c3184"}%
