@@ -11,7 +11,6 @@ import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
 import org.jline.reader.*
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.PrintStream
 import java.lang.System.lineSeparator
@@ -26,9 +25,8 @@ import scala.util.{Failure, Success, Try}
 abstract class ReplDriverBase(args: Array[String],
                               out: PrintStream,
                               maxHeight: Option[Int],
-                              nocolors: Boolean,
-                              classLoader: Option[ClassLoader])
-  extends DottyReplDriver(args, out, maxHeight, nocolors, classLoader) {
+                              classLoader: Option[ClassLoader])(using Colors)
+  extends DottyReplDriver(args, out, maxHeight, classLoader) {
 
   protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]

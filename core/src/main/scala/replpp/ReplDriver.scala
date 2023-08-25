@@ -1,24 +1,12 @@
 package replpp
 
-import dotty.tools.MainGenericCompiler.classpathSeparator
-import dotty.tools.dotc.Run
-import dotty.tools.dotc.ast.{Positioned, tpd, untpd}
-import dotty.tools.dotc.classpath.{AggregateClassPath, ClassPathFactory}
-import dotty.tools.dotc.config.{Feature, JavaPlatform, Platform}
-import dotty.tools.dotc.core.Comments.{ContextDoc, ContextDocstrings}
-import dotty.tools.dotc.core.Contexts.{Context, ContextBase, ContextState, FreshContext, ctx, explore}
-import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
-import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
+import dotty.tools.dotc.core.Contexts
+import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.repl.*
 import org.jline.reader.*
 
 import java.io.PrintStream
-import java.lang.System.lineSeparator
-import java.net.URL
-import java.nio.file.Path
-import javax.naming.InitialContext
 import scala.annotation.tailrec
-import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
@@ -28,8 +16,8 @@ class ReplDriver(args: Array[String],
                  greeting: Option[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
-                 nocolors: Boolean = false,
-                 classLoader: Option[ClassLoader] = None) extends ReplDriverBase(args, out, maxHeight, nocolors, classLoader) {
+                 classLoader: Option[ClassLoader] = None)(using Colors)
+  extends ReplDriverBase(args, out, maxHeight, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
@@ -60,7 +48,9 @@ class ReplDriver(args: Array[String],
       }
     }
 
-    try runBody { loop(using initialState)() }
+    try runBody {
+      loop(using initialState)()
+    }
     finally terminal.close()
   }
 

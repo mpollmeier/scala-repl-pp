@@ -1,15 +1,14 @@
 [![Release](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml/badge.svg)](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3)
 
 ## scala-repl-pp
-Scala REPL PlusPlus: a better Scala 3 REPL. With many features inspired by ammonite and scala-cli while keeping complexity low by depending on (and not adding much on top of) the stock Scala 3 REPL. 
+Scala REPL PlusPlus: a better Scala 3 REPL. Wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. Keeps complexity low by using some (shaded) libraries from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack, as well as [coursier](https://get-coursier.io/) (invoked in a subprocess).
 
-This is (also) a breeding ground for improvements to the regular scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
+This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
 
 Runs on JDK11+.
 
 ## TOC
-<!-- generated with: -->
 <!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
 
 - [Benefits over / comparison with](#benefits-over--comparison-with)
@@ -18,9 +17,11 @@ Runs on JDK11+.
   * [scala-cli](#scala-cli)
 - [Build it locally](#build-it-locally)
 - [REPL](#repl)
+  * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Rendering of output](#rendering-of-output)
+  * [Exiting the REPL](#exiting-the-repl)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
   * [Predef file(s) used in script](#predef-files-used-in-script)
@@ -38,11 +39,13 @@ Runs on JDK11+.
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
+  * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
 
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
 * add runtime dependencies on startup with maven coordinates - automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
+* `#>`, `#>>` and `#|` operators to redirect output to file and pipe to external command
 * customize greeting, prompt and shutdown code
 * multiple @main with named arguments (regular Scala REPL only allows an argument list)
 * predef code - i.e. run custom code before starting the REPL - via string and scripts
@@ -93,6 +96,50 @@ scala> foo
 val res0: Int = 42
 ```
 
+### Operators: Redirect to file, pipe to external command
+Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
+```scala
+./scala-repl-pp
+
+scala> "hey there" #>  "out.txt"
+scala> "hey again" #>> "out.txt"
+scala> Seq("a", "b", "c") #>> "out.txt"
+
+// pipe results to external command and retrieve stdout/stderr - using `cat` as a trivial example
+scala> Seq("a", "b", "c") #| "cat"
+
+// `#|^` is a variant of `#|` that let's the external command inherit stdin/stdout - useful e.g. for `less`
+scala> Seq("a", "b", "c") #|^ "less"
+```
+
+All operators use the same pretty-printing that's used within the REPL, i.e. you get structured rendering including product labels etc. 
+```scala
+scala> case class PrettyPrintable(s: String, i: Int)
+scala> PrettyPrintable("two", 2) #> "out.txt"
+// out.txt now contains `PrettyPrintable(s = "two", i = 2)`
+```
+
+The operators have a special handling for two common use cases that are applied at the root level of the object you hand them: list- or iterator-type objects are unwrapped and their elements are rendered in separate lines, and Strings are rendered without the surrounding `""`. Examples:
+```scala
+scala> "a string" #> "out.txt"
+// rendered as `a string` without quotes
+
+scala> Seq("one", "two") #> "out.txt"
+// rendered as two lines without quotes:
+// one
+// two
+
+scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
+// top-level list-types are unwrapped
+// resulting top-level strings are rendered without quotes:
+// one
+// List("two")
+// List("three", 4)
+// 5
+```
+
+All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
+
 ### Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
@@ -112,6 +159,13 @@ scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
 
+For Scala dependencies use `::`:
+```
+./scala-repl-pp --dep com.michaelpollmeier::colordiff:0.36
+colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
+// color coded diff
+```
+
 Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
 
 ### Importing additional script files interactively
@@ -124,6 +178,14 @@ val foo = 1
 //> using file myScript.sc
 println(bar) //1
 ```
+
+You can specify the filename with relative or absolute paths:
+```java
+//> using file scripts/myScript.sc
+//> using file ../myScript.sc
+//> using file /path/to/myScript.sc
+```
+
 
 ### Rendering of output
 
@@ -138,6 +200,26 @@ val res0: scala.collection.immutable.Range.Inclusive = Range(
 ...
 ```
 
+### Exiting the REPL
+Famously one of the most popular question on stackoverflow is about how to exit `vim` - fortunately you can apply the answer as-is to exit scala-repl-pp :slightly_smiling_face:
+```
+// all of the following exit the REPL
+:exit
+:quit
+:q
+```
+
+When the REPL is waiting for input we capture `Ctrl-c` and don't exit. If there's currently a long-running execution that you really *might* want to cancel you can press `Ctrl-c` again immediately which will kill the entire repl:
+```
+scala> Thread.sleep(50000)
+// press Ctrl-c
+Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c again within three seconds
+
+// press Ctrl-c again will exit the repl
+$
+```
+Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
+
 ## Scripting
 
 See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
@@ -146,10 +228,12 @@ See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.sca
 test-simple.sc
 ```scala
 println("Hello!")
+"i was here" #> "out.txt"
 ```
 
 ```bash
 ./scala-repl-pp --script test-simple.sc
+cat out.txt # prints 'i was here'
 ```
 
 ### Predef file(s) used in script
@@ -233,6 +317,8 @@ test-main-withargs.sc
 ```bash
 ./scala-repl-pp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
+Note that on windows the parameters need to be triple-quoted:
+`./scala-repl-pp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
@@ -267,9 +353,15 @@ otherone.host=nexus.other.com
 ```
 The prefix is arbitrary and is only used to specify several credentials in a single file. scala-repl-pp uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
+### Attach a debugger (remote jvm debug)
+```
+./scala-repl-pp --script myScript.sc --remoteJvmDebug
+```
+Then attach your favorite IDE / debugger on port 5005. 
+
 ## Server mode
 ```bash
-./scala-repl-pp --server
+./scala-repl-pp-server
 
 curl http://localhost:8080/query-sync -X POST -d '{"query": "val foo = 42"}'
 # {"success":true,"stdout":"val foo: Int = 42\n",...}
@@ -281,10 +373,20 @@ curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote
 # {"success":true,"stdout":"",...}%
 ```
 
+The same for windows and powershell:
+```
+scala-repl-pp-server.bat
+
+Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "val foo = 42"}'
+# Content           : {"success":true,"stdout":"val foo: Int = 42\r\n","uuid":"02f843ba-671d-4fb5-b345-91c1dcf5786d"}
+Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "foo + 1"}'
+# Content           : {"success":true,"stdout":"val res0: Int = 43\r\n","uuid":"dc49df42-a390-4177-98d0-ac87a277c7d5"}
+```
+
 Predef code works with server as well:
 ```
 echo val foo = 99 > foo.sc
-./scala-repl-pp --server --predef foo.sc
+./scala-repl-pp-server --predef foo.sc
 
 curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
 # {"success":true,"stdout":"val baz: Int = 100\n",...}
@@ -292,7 +394,7 @@ curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
 
 There's also has an asynchronous mode:
 ```
-./scala-repl-pp --server
+./scala-repl-pp-server
 
 curl http://localhost:8080/query -X POST -d '{"query": "val baz = 93"}'
 # {"success":true,"uuid":"e2640fcb-3193-4386-8e05-914b639c3184"}%
@@ -376,3 +478,9 @@ A better approach would be to work with a separate compiler phase, similar to wh
 
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
 
+### Why do we ship a shaded copy of other libraries and not use dependencies?
+Scala-REPL-PP includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of which versions were used and what we copied are in [import-instructions.md](shaded-libs/import-instructions.md).
+
+### Where's the cache located on disk?
+The cache? The caches you mean! :)
+There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via a subprocess) there's also `~/.cache/coursier`. 

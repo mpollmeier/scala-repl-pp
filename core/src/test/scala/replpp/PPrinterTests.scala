@@ -1,7 +1,11 @@
 package replpp
 
+import java.nio.file.Files
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.shaded.fansi
+import replpp.util.ProjectRoot
+import scala.util.Try
 
 /** We use source-highlight to encode source as ansi strings, e.g. the .dump step Ammonite uses fansi for it's
   * colour-coding, and while both pledge to follow the ansi codec, they aren't compatible TODO: PR for fansi to support
@@ -55,32 +59,40 @@ class PPrinterTests extends AnyWordSpec with Matchers {
     )
   }
 
+  "don't error on invalid ansi encodings" in {
+    val invalidAnsi = Files.readString(ProjectRoot.relativise("core/src/test/resources/invalid-ansi.txt"))
+    Try {
+      PPrinter(invalidAnsi, nocolors = true)
+      PPrinter(invalidAnsi)
+    }.isSuccess shouldBe true
+  }
+
   "fansi encoding fix" must {
     "handle different ansi encoding termination" in {
       // encoding ends with [39m for fansi instead of [m
       val fixedForFansi = PPrinter.fixForFansi(IntGreenForeground)
-      fixedForFansi shouldBe "\u001b[32mint\u001b[39m"
+      fixedForFansi shouldBe fansi.Str("\u001b[32mint\u001b[39m")
       fansi.Str(fixedForFansi) shouldBe fansi.Color.Green("int")
     }
 
     "handle different single-digit encodings" in {
       // `[01m` is encoded as `[1m` in fansi for all single digit numbers
       val fixedForFansi = PPrinter.fixForFansi(FBold)
-      fixedForFansi shouldBe "\u001b[1mF\u001b[39m"
+      fixedForFansi shouldBe fansi.Str("\u001b[1mF\u001b[39m")
       fansi.Str(fixedForFansi) shouldBe fansi.Str("F").overlay(fansi.Bold.On)
     }
 
     "handle multi-encoded parts" in {
       // `[01;34m` is encoded as `[1m[34m` in fansi
       val fixedForFansi = PPrinter.fixForFansi(IfBlueBold)
-      fixedForFansi shouldBe "\u001b[1m\u001b[34mif\u001b[39m"
+      fixedForFansi shouldBe fansi.Str("\u001b[1m\u001b[34mif\u001b[39m")
       fansi.Str(fixedForFansi) shouldBe fansi.Color.Blue("if").overlay(fansi.Bold.On)
     }
 
     "handle 8bit (256) 'full' colors" in {
       // `[00;38;05;70m` is encoded as `[38;5;70m` in fansi
       val fixedForFansi = PPrinter.fixForFansi(X8bit)
-      fixedForFansi shouldBe "\u001b[38;5;70mX\u001b[39m"
+      fixedForFansi shouldBe fansi.Str("\u001b[38;5;70mX\u001b[39m")
       fansi.Str(fixedForFansi) shouldBe fansi.Color.Full(70)("X")
     }
 

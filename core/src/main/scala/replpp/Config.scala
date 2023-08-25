@@ -1,5 +1,10 @@
 package replpp
 
+import replpp.Colors.{BlackWhite, Default}
+import replpp.scripting.ScriptRunner
+import replpp.shaded.scopt.OParser
+import replpp.shaded.scopt.OParserBuilder
+
 import java.nio.file.Path
 
 case class Config(
@@ -8,6 +13,7 @@ case class Config(
   verbose: Boolean = false,
   dependencies: Seq[String] = Seq.empty,
   resolvers: Seq[String] = Seq.empty,
+  remoteJvmDebugEnabled: Boolean = false,
 
   // repl only
   prompt: Option[String] = None,
@@ -19,14 +25,11 @@ case class Config(
   scriptFile: Option[Path] = None,
   command: Option[String] = None,
   params: Map[String, String] = Map.empty,
-
-  // server only
-  server: Boolean = false,
-  serverHost: String = "localhost",
-  serverPort: Int = 8080,
-  serverAuthUsername: Option[String] = None,
-  serverAuthPassword: Option[String] = None,
 ) {
+  implicit val colors: Colors =
+    if (nocolors) Colors.BlackWhite
+    else Colors.Default
+
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
@@ -63,109 +66,136 @@ case class Config(
 }
 
 object Config {
-  
-  def parse(args: Array[String]): Config = {
-    val parser = new scopt.OptionParser[Config](getClass.getSimpleName) {
-      override def errorOnUnknownArgument = false
 
-      opt[Path]('p', "predef")
+  def parse(args: Array[String]): Config = {
+    OParser.parse(parser, args, Config())
+      .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
+  }
+
+  lazy val parser = {
+    given builder: OParserBuilder[Config] = OParser.builder[Config]
+    import builder._
+    OParser.sequence(
+      programName("scala-repl-pp"),
+      opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
+      opts.nocolors((_, c) => c.copy(nocolors = true)),
+      opts.verbose((_, c) => c.copy(verbose = true)),
+      opts.dependency((x, c) => c.copy(dependencies = c.dependencies :+ x)),
+      opts.repo((x, c) => c.copy(resolvers = c.resolvers :+ x)),
+      opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
+
+      note("REPL options"),
+      opts.prompt((x, c) => c.copy(prompt = Option(x))),
+      opts.greeting((x, c) => c.copy(greeting = x)),
+      opts.onExitCode((x, c) => c.copy(onExitCode = Option(x))),
+      opts.maxHeight((x, c) => c.copy(maxHeight = Some(x))),
+
+      note("Script execution"),
+      opts.script((x, c) => c.copy(scriptFile = Some(x))),
+      opts.command((x, c) => c.copy(command = Some(x))),
+      opts.param { (x, c) =>
+        x.split("=", 2) match {
+          case Array(key, value) => c.copy(params = c.params + (key -> value))
+          case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
+        }
+      },
+      help("help").text("Print this help text"),
+    )
+  }
+
+  /** configuration arguments should be composable - they're reused in `replpp.server.Config` */
+  private [replpp] object opts {
+    type Action[A, C] = (A, C) => C
+
+    def predef[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
+      builder.opt[Path]('p', "predef")
         .valueName("myScript.sc")
         .unbounded()
         .optional()
-        .action((x, c) => c.copy(predefFiles = c.predefFiles :+ x))
+        .action(action)
         .text("import additional script files on startup - may be passed multiple times")
+    }
 
-      opt[Unit]("nocolors")
-        .action((_, c) => c.copy(nocolors = true))
-        .text("turn off colors")
+    def nocolors[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
+      builder.opt[Unit]("nocolors").text("turn off colors").action(action)
+    }
 
-      opt[Unit]('v', "verbose")
-        .action((_, c) => c.copy(verbose = true))
+    def verbose[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
+      builder.opt[Unit]('v', "verbose")
+        .action(action)
         .text("enable verbose output (predef, resolved dependency jars, ...)")
+    }
 
-      opt[String]('d', "dep")
+    def dependency[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]('d', "dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
         .unbounded()
         .optional()
-        .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
+        .action(action)
         .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times")
+    }
 
-      opt[String]('r', "repo")
+    def repo[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]('r', "repo")
         .valueName("https://repository.apache.org/content/groups/public/")
         .unbounded()
         .optional()
-        .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
+        .action(action)
         .text("additional repositories to resolve dependencies - may be passed multiple times")
+    }
 
-      note("REPL options")
+    def remoteJvmDebug[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
+      builder.opt[Unit]("remoteJvmDebug")
+        .action(action)
+        .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
+    }
 
-      opt[String]("prompt")
+    def prompt[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("prompt")
         .valueName("scala")
-        .action((x, c) => c.copy(prompt = Option(x)))
+        .action(action)
         .text("specify a custom prompt")
+    }
 
-      opt[String]("greeting")
+    def greeting[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("greeting")
         .valueName("Welcome to scala-repl-pp!")
-        .action((x, c) => c.copy(greeting = x))
+        .action(action)
         .text("specify a custom greeting")
+    }
 
-      opt[String]("onExitCode")
+    def onExitCode[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("onExitCode")
         .valueName("""println("bye!")""")
-        .action((x, c) => c.copy(onExitCode = Option(x)))
+        .action(action)
+        .text("code to execute when exiting")
+    }
 
-      opt[Int]("maxHeight")
-        .action((x, c) => c.copy(maxHeight = Some(x)))
+    def maxHeight[C](using builder: OParserBuilder[C])(action: Action[Int, C]) = {
+      builder.opt[Int]("maxHeight")
+        .action(action)
         .text("Maximum number lines to print before output gets truncated (default: no limit)")
+    }
 
-      note("Script execution")
-
-      opt[Path]("script")
-        .action((x, c) => c.copy(scriptFile = Some(x)))
+    def script[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
+      builder.opt[Path]("script")
+        .action(action)
         .text("path to script file: will execute and exit")
+    }
 
-      opt[String]("command")
-        .action((x, c) => c.copy(command = Some(x)))
+    def command[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("command")
+        .action(action)
         .text("command to execute, in case there are multiple @main entrypoints")
+    }
 
-      opt[String]("param")
+    def param[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("param")
         .valueName("param1=value1")
         .unbounded()
         .optional()
-        .action { (x, c) =>
-          x.split("=", 2) match {
-            case Array(key, value) => c.copy(params = c.params + (key -> value))
-            case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
-          }
-        }
+        .action(action)
         .text("key/value pair for main function in script - may be passed multiple times")
-
-      note("REST server mode")
-
-      opt[Unit]("server")
-        .action((_, c) => c.copy(server = true))
-        .text("run as HTTP server")
-
-      opt[String]("server-host")
-        .action((x, c) => c.copy(serverHost = x))
-        .text("Hostname on which to expose the REPL server")
-
-      opt[Int]("server-port")
-        .action((x, c) => c.copy(serverPort = x))
-        .text("Port on which to expose the REPL server")
-
-      opt[String]("server-auth-username")
-        .action((x, c) => c.copy(serverAuthUsername = Option(x)))
-        .text("Basic auth username for the REPL server")
-
-      opt[String]("server-auth-password")
-        .action((x, c) => c.copy(serverAuthPassword = Option(x)))
-        .text("Basic auth password for the REPL server")
-
-      help("help")
-        .text("Print this help text")
     }
-
-    // note: if config is really `None` an error message would have been displayed earlier
-    parser.parse(args, Config()).get
   }
 }

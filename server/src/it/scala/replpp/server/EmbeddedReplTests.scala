@@ -15,8 +15,8 @@ class EmbeddedReplTests extends AnyWordSpec with Matchers {
   "execute commands synchronously" in {
     val repl = new EmbeddedRepl()
 
-    repl.query("val x = 0").output shouldBe "val x: Int = 0\n"
-    repl.query("x + 1").output     shouldBe "val res0: Int = 1\n"
+    repl.query("val x = 0").output.trim shouldBe "val x: Int = 0"
+    repl.query("x + 1").output.trim     shouldBe "val res0: Int = 1"
 
     repl.shutdown()
   }
@@ -25,7 +25,7 @@ class EmbeddedReplTests extends AnyWordSpec with Matchers {
     val repl = new EmbeddedRepl()
     val (uuid, futureResult) = repl.queryAsync("val x = 0")
     val result = Await.result(futureResult, Duration.Inf)
-    result shouldBe "val x: Int = 0\n"
+    result.trim shouldBe "val x: Int = 0"
     repl.shutdown()
   }
 
