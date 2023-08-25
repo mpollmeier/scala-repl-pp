@@ -72,6 +72,7 @@ object Config {
       .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
   }
 
+  /** configuration arguments should be composable - they're reused in `replpp.server.Config` */
   object opts {
     type Action[A, C] = (A, C) => C
 
@@ -91,6 +92,23 @@ object Config {
       builder.opt[Unit]('v', "verbose")
         .text("enable verbose output (predef, resolved dependency jars, ...)")
         .action(action)
+
+    def dependency[C](builder: OParserBuilder[C])(action: Action[String, C]) =
+      builder.opt[String]('d', "dep")
+        .valueName("com.michaelpollmeier:versionsort:1.0.7")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times")
+
+    def repo[C](builder: OParserBuilder[C])(action: Action[String, C]) =
+      builder.opt[String]('r', "repo")
+        .valueName("https://repository.apache.org/content/groups/public/")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("additional repositories to resolve dependencies - may be passed multiple times")
+
   }
 
   lazy val parser = {
@@ -101,20 +119,8 @@ object Config {
       opts.predef(builder)((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
       opts.nocolors(builder)((_, c) => c.copy(nocolors = true)),
       opts.verbose(builder)((_, c) => c.copy(verbose = true)),
-
-      opt[String]('d', "dep")
-        .valueName("com.michaelpollmeier:versionsort:1.0.7")
-        .unbounded()
-        .optional()
-        .action((x, c) => c.copy(dependencies = c.dependencies :+ x))
-        .text("add artifacts (including transitive dependencies) for given maven coordinate to classpath - may be passed multiple times"),
-
-      opt[String]('r', "repo")
-        .valueName("https://repository.apache.org/content/groups/public/")
-        .unbounded()
-        .optional()
-        .action((x, c) => c.copy(resolvers = c.resolvers :+ x))
-        .text("additional repositories to resolve dependencies - may be passed multiple times"),
+      opts.dependency(builder)((x, c) => c.copy(dependencies = c.dependencies :+ x)),
+      opts.repo(builder)((x, c) => c.copy(resolvers = c.resolvers :+ x)),
 
       opt[Unit]("remoteJvmDebug")
         .action((_, c) => c.copy(remoteJvmDebugEnabled = true))
