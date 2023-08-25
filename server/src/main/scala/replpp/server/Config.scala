@@ -1,7 +1,7 @@
 package replpp.server
 
 import replpp.Config.opts
-import replpp.shaded.scopt.OParser
+import replpp.shaded.scopt.{OParser, OParserBuilder}
 
 case class Config(baseConfig: replpp.Config,
                   serverHost: String = "localhost",
@@ -12,13 +12,17 @@ case class Config(baseConfig: replpp.Config,
 object Config {
 
   def parse(args: Array[String]): Config = {
-    val builder = OParser.builder[Config]
+    given builder: OParserBuilder[Config] = OParser.builder[Config]
     import builder.*
     val parser = OParser.sequence(
       programName("scala-repl-pp-server"),
-      replpp.Config.opts.predef(builder)((x, c) => c.copy(baseConfig = c.baseConfig.copy(predefFiles = c.baseConfig.predefFiles :+ x))),
-      replpp.Config.opts.verbose(builder)((_, c) => c.copy(baseConfig = c.baseConfig.copy(verbose = true))),
+      replpp.Config.opts.predef((x, c) => c.copy(baseConfig = c.baseConfig.copy(predefFiles = c.baseConfig.predefFiles :+ x))),
+      replpp.Config.opts.verbose((_, c) => c.copy(baseConfig = c.baseConfig.copy(verbose = true))),
+      opts.dependency((x, c) => c.copy(baseConfig = c.baseConfig.copy(dependencies = c.baseConfig.dependencies :+ x))),
+      opts.repo((x, c) => c.copy(baseConfig = c.baseConfig.copy(resolvers = c.baseConfig.resolvers :+ x))),
+      opts.remoteJvmDebug((_, c) => c.copy(baseConfig = c.baseConfig.copy(remoteJvmDebugEnabled = true))),
 
+      note("Server mode"),
       opt[String]("server-host")
         .action((x, c) => c.copy(serverHost = x))
         .text("Hostname on which to expose the REPL server"),

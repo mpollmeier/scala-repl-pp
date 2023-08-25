@@ -16,14 +16,14 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--server-auth-username", "test-user",
       "--server-auth-password", "test-pass",
       "--verbose",
-      "--prompt", "testPrompt",
+      "--predef", "test-predef.sc",
     ))
     parsed.serverHost shouldBe "testHost"
     parsed.serverPort shouldBe 42
     parsed.serverAuthUsername shouldBe Some("test-user")
     parsed.serverAuthPassword shouldBe Some("test-pass")
     parsed.baseConfig.verbose shouldBe true
-    parsed.baseConfig.prompt shouldBe Some("testPrompt")
+    parsed.baseConfig.predefFiles shouldBe Seq(Paths.get("test-predef.sc"))
   }
 
 }

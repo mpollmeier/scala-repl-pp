@@ -72,8 +72,39 @@ object Config {
       .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
   }
 
+  lazy val parser = {
+    given builder: OParserBuilder[Config] = OParser.builder[Config]
+    import builder._
+    OParser.sequence(
+      programName("scala-repl-pp"),
+      opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
+      opts.nocolors((_, c) => c.copy(nocolors = true)),
+      opts.verbose((_, c) => c.copy(verbose = true)),
+      opts.dependency((x, c) => c.copy(dependencies = c.dependencies :+ x)),
+      opts.repo((x, c) => c.copy(resolvers = c.resolvers :+ x)),
+      opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
+
+      note("REPL options"),
+      opts.prompt((x, c) => c.copy(prompt = Option(x))),
+      opts.greeting((x, c) => c.copy(greeting = x)),
+      opts.onExitCode((x, c) => c.copy(onExitCode = Option(x))),
+      opts.maxHeight((x, c) => c.copy(maxHeight = Some(x))),
+
+      note("Script execution"),
+      opts.script((x, c) => c.copy(scriptFile = Some(x))),
+      opts.command((x, c) => c.copy(command = Some(x))),
+      opts.param { (x, c) =>
+        x.split("=", 2) match {
+          case Array(key, value) => c.copy(params = c.params + (key -> value))
+          case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
+        }
+      },
+      help("help").text("Print this help text"),
+    )
+  }
+
   /** configuration arguments should be composable - they're reused in `replpp.server.Config` */
-  object opts {
+  private [replpp] object opts {
     type Action[A, C] = (A, C) => C
 
     def predef[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
@@ -119,68 +150,52 @@ object Config {
         .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
     }
 
-    /*
-    def [C](builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.
-    }
-   */
-  }
-
-  lazy val parser = {
-    given builder: OParserBuilder[Config] = OParser.builder[Config]
-    import builder._
-    OParser.sequence(
-      programName("scala-repl-pp"),
-      opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
-      opts.nocolors((_, c) => c.copy(nocolors = true)),
-      opts.verbose((_, c) => c.copy(verbose = true)),
-      opts.dependency((x, c) => c.copy(dependencies = c.dependencies :+ x)),
-      opts.repo((x, c) => c.copy(resolvers = c.resolvers :+ x)),
-      opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
-
-      note("REPL options"),
-
-      opt[String]("prompt")
+    def prompt[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("prompt")
         .valueName("scala")
-        .action((x, c) => c.copy(prompt = Option(x)))
-        .text("specify a custom prompt"),
+        .action(action)
+        .text("specify a custom prompt")
+    }
 
-      opt[String]("greeting")
+    def greeting[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("greeting")
         .valueName("Welcome to scala-repl-pp!")
-        .action((x, c) => c.copy(greeting = x))
-        .text("specify a custom greeting"),
+        .action(action)
+        .text("specify a custom greeting")
+    }
 
-      opt[String]("onExitCode")
+    def onExitCode[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("onExitCode")
         .valueName("""println("bye!")""")
-        .action((x, c) => c.copy(onExitCode = Option(x))),
+        .action(action)
+        .text("code to execute when exiting")
+    }
 
-      opt[Int]("maxHeight")
-        .action((x, c) => c.copy(maxHeight = Some(x)))
-        .text("Maximum number lines to print before output gets truncated (default: no limit)"),
+    def maxHeight[C](using builder: OParserBuilder[C])(action: Action[Int, C]) = {
+      builder.opt[Int]("maxHeight")
+        .action(action)
+        .text("Maximum number lines to print before output gets truncated (default: no limit)")
+    }
 
-      note("Script execution"),
+    def script[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
+      builder.opt[Path]("script")
+        .action(action)
+        .text("path to script file: will execute and exit")
+    }
 
-      opt[Path]("script")
-        .action((x, c) => c.copy(scriptFile = Some(x)))
-        .text("path to script file: will execute and exit"),
+    def command[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("command")
+        .action(action)
+        .text("command to execute, in case there are multiple @main entrypoints")
+    }
 
-      opt[String]("command")
-        .action((x, c) => c.copy(command = Some(x)))
-        .text("command to execute, in case there are multiple @main entrypoints"),
-
-      opt[String]("param")
+    def param[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("param")
         .valueName("param1=value1")
         .unbounded()
         .optional()
-        .action { (x, c) =>
-          x.split("=", 2) match {
-            case Array(key, value) => c.copy(params = c.params + (key -> value))
-            case _ => throw new IllegalArgumentException(s"unable to parse param input $x")
-          }
-        }
-        .text("key/value pair for main function in script - may be passed multiple times"),
-
-      help("help").text("Print this help text"),
-    )
+        .action(action)
+        .text("key/value pair for main function in script - may be passed multiple times")
+    }
   }
 }
