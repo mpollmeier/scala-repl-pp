@@ -4,6 +4,8 @@
 ## scala-repl-pp
 Scala REPL PlusPlus: a better Scala 3 REPL. Wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. Keeps complexity low by using some (shaded) libraries from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack, as well as [coursier](https://get-coursier.io/) (invoked in a subprocess).
 
+scala-repl-pp has only one (direct) dependency: the scala3-compiler. 
+
 This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
 
 Runs on JDK11+.
