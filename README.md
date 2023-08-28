@@ -1,12 +1,15 @@
 [![Release](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml/badge.svg)](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp-all_3)
 
-## scala-repl-pp
-Scala REPL PlusPlus: a better Scala 3 REPL. Wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. Keeps complexity low by using some (shaded) libraries from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack, as well as [coursier](https://get-coursier.io/) (invoked in a subprocess).
+## scala-repl-pp (Scala REPL PlusPlus)
+A better Scala 3 REPL: wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. 
+scala-repl-pp has only one (direct) dependency: the scala3-compiler(*). 
 
-This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase (ideally).
+This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase.
 
 Runs on JDK11+.
+
+(*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the scala-repl-pp classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 
 
 ## TOC
 <!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
@@ -31,6 +34,7 @@ Runs on JDK11+.
   * [multiple @main entrypoints: test-main-multiple.sc](#multiple-main-entrypoints-test-main-multiplesc)
   * [named parameters](#named-parameters)
 - [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
+  * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
 - [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
@@ -40,7 +44,7 @@ Runs on JDK11+.
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
-
+  * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -167,6 +171,8 @@ colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 ```
 
 Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
+
+Implementation note: scala-repl-pp uses [coursier](https://get-coursier.io/) to fetch the dependencies. We invoke it in a subprocess via the coursier java launcher, in order to give our users maximum control over the classpath.
 
 ### Importing additional script files interactively
 ```
@@ -479,7 +485,7 @@ A better approach would be to work with a separate compiler phase, similar to wh
 If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
 
 ### Why do we ship a shaded copy of other libraries and not use dependencies?
-Scala-REPL-PP includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of which versions were used and what we copied are in [import-instructions.md](shaded-libs/import-instructions.md).
+Scala-REPL-PP includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of how to (re-) import then and which versions were used are available in [import-instructions.md](shaded-libs/import-instructions.md).
 
 ### Where's the cache located on disk?
 The cache? The caches you mean! :)

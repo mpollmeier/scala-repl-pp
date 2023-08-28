@@ -1,6 +1,6 @@
 package replpp.shaded.mainargs
 import replpp.shaded.mainargs
-import scala.collection.compat._
+import scala.collection.Factory
 import scala.collection.mutable
 
 /**

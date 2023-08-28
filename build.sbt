@@ -10,7 +10,6 @@ lazy val ScalaTestVersion = "3.2.15"
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
     name := "scala-repl-pp-shaded-libs",
-    libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % ScalaCollectionCompatVersion,
     scalacOptions ++= Seq(
       "-language:implicitConversions",
       "-Wconf:any:silent", // silence warnings from shaded libraries

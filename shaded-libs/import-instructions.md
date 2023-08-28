@@ -51,6 +51,7 @@ cp -rp mainargs/src-3/* $TARGET
 sed -i 's/^package mainargs$/package replpp.shaded.mainargs/' $TARGET/*
 sed -i '2iimport replpp.shaded.mainargs' $TARGET/Macros.scala $TARGET/TokensReader.scala
 sed -i 's/requiredClass("mainargs./requiredClass("replpp.shaded.mainargs./' $TARGET/Macros.scala
+sed -i 's/^import scala.collection.compat._$/import scala.collection.Factory/' $TARGET/TokensReader.scala
 
 cd $REPLPP_REPO_ROOT
 sbt clean stage
