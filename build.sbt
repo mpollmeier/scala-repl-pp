@@ -23,7 +23,7 @@ lazy val core = project.in(file("core"))
   .settings(
     name := "scala-repl-pp",
     Compile/mainClass := Some("replpp.Main"),
-    executableScriptName := "scala-repl-pp",
+    executableScriptName := "srp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
     ),
@@ -35,6 +35,7 @@ lazy val server = project.in(file("server"))
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-server",
+    executableScriptName := "srp-server",
     Compile/mainClass := Some("replpp.server.Main"),
     Defaults.itSettings,
     fork := true, // important: otherwise we run into classloader issues
