@@ -45,6 +45,12 @@ Runs on JDK11+.
   * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
   * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
+- [Contribution guidelines](#contribution-guidelines)
+  * [Updating the Scala version](#updating-the-scala-version)
+  * [Updating the shaded libraries](#updating-the-shaded-libraries)
+  
+
+
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -490,3 +496,23 @@ Scala-REPL-PP includes some small libraries (e.g. most of the com-haoyili univer
 ### Where's the cache located on disk?
 The cache? The caches you mean! :)
 There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via a subprocess) there's also `~/.cache/coursier`. 
+
+
+## Contribution guidelines
+
+### Updating the Scala version
+* bump version in [build.sbt](build.sbt)
+* get relevant diff from dotty repo: 
+```bash
+cd /path/to/dotty
+git fetch
+
+OLD=3.3.0 # set to version that was used before you bumped it
+NEW=3.3.1 # set to version that you bumped it to
+git diff $OLD $NEW compiler/src/dotty/tools/repl
+```
+
+### Updating the shaded libraries
+See [import-instructions.md](shaded-libs/import-instructions.md).
+
+
