@@ -1,0 +1,1 @@
+server/target/universal/stage/bin/srp-server.bat
