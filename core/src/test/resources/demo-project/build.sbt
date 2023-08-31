@@ -1,9 +1,9 @@
 name := "stringcalc"
 
-scalaVersion := "3.2.1"
+scalaVersion := "3.3.0"
 
 libraryDependencies ++= Seq(
-  "com.michaelpollmeier" %% "scala-repl-pp" % "0.0.29"
+  "com.michaelpollmeier" %% "scala-repl-pp" % "0.1.56"
 )
 
 enablePlugins(JavaAppPackaging)

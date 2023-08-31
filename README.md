@@ -428,9 +428,9 @@ Server-specific configuration options as per `srp --help`:
 ## Embed into your own project
 Try out the working [string calculator example](src/test/resources/demo-project) in this repo:
 ```bash
-cd src/test/resources/demo-project
+cd core/src/test/resources/demo-project
 sbt stage
-target/universal/stage/bin/stringcalc
+./stringcalc
 
 Welcome to the magical world of string calculation!
 Type `help` for help
