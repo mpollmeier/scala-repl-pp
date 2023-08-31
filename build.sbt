@@ -28,6 +28,14 @@ lazy val core = project.in(file("core"))
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
     ),
+    assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
+    assemblyMergeStrategy := {
+      case "META-INF/versions/9/module-info.class" => MergeStrategy.first
+      case x =>
+        val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
+        oldStrategy(x)
+    },
+    assemblyPrependShellScript := Some(sbtassembly.AssemblyPlugin.defaultShellScript),
   )
 
 lazy val server = project.in(file("server"))
