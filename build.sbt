@@ -10,11 +10,12 @@ lazy val ScalaTestVersion = "3.2.15"
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
     name := "scala-repl-pp-shaded-libs",
-    scalacOptions ++= Seq(
+    Compile/compile/scalacOptions ++= Seq(
       "-language:implicitConversions",
       "-Wconf:any:silent", // silence warnings from shaded libraries
       "-explain"
-    )
+    ),
+    Compile/doc/scalacOptions += "-nowarn",
   )
 
 lazy val core = project.in(file("core"))
