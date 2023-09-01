@@ -16,10 +16,11 @@ jobs:
         with:
           jvm: temurin:19
       - name: cs bootstrap
-        run: cs bootstrap com.michaelpollmeier::scala-repl-pp:${{ inputs.version }} -o target/srp
+        run: cs bootstrap com.michaelpollmeier::scala-repl-pp:${{ inputs.version }} -o srp
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ inputs.version }}
-          files: target/srp
+          apps: # by default it installs sbtn, but we don't need anything
+          files: srp
           fail_on_unmatched_files: true
