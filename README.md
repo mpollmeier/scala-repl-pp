@@ -13,11 +13,11 @@ Runs on JDK11+.
 ## TOC
 <!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
 
+- [Installation / quick start](#installation--quick-start)
 - [Benefits over / comparison with](#benefits-over--comparison-with)
   * [Regular Scala REPL](#regular-scala-repl)
   * [Ammonite](#ammonite)
   * [scala-cli](#scala-cli)
-- [Build it locally](#build-it-locally)
 - [REPL](#repl)
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
@@ -36,7 +36,7 @@ Runs on JDK11+.
   * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
-- [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
+- [Global predef file: `~/.srp.sc`](#global-predef-file-srpsc)
 - [Verbose mode](#verbose-mode)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
 - [FAQ](#faq)
@@ -45,10 +45,23 @@ Runs on JDK11+.
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
   * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
 - [Contribution guidelines](#contribution-guidelines)
+  * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
+  * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
   * [Updating the Scala version](#updating-the-scala-version)
-  * [Updating the shaded libraries](#updating-the-shaded-libraries)
+  * [Updating the shaded libraries](#updating-the-shaded-libraries)  
   
+## Installation / quick start
+```
+# download latest release and make executable
+curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp > srp
+chmod +x srp
 
+# move whereever you want to have it - the directory should be on your PATH, e.g.
+sudo mv srp /usr/local/bin/srp
+
+# start srp (a.k.a. scala-repl-pp)
+srp
+```
 
 ## Benefits over / comparison with
 
@@ -77,31 +90,19 @@ Stock Scala REPL:<br/>
 * srp has a 66.6% shorter name :slightly_smiling_face:
 scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Ammonite). It doesn't modify/fix the REPL itself, i.e. the above mentioned differences between srp and the stock scala repl (or alternatively Ammonite) apply, with the exception of dependencies: scala-cli does let you add them on startup as well.
 
-## Build it locally
-
-Prerequisite for all of the below:
-```bash
-sbt stage
-```
-
-Generally speaking, `--help` is your friend!
-```
-./srp --help
-```
-
 ## REPL
 
 ```bash
 # run with defaults
-./srp
+srp
 
 # customize prompt, greeting and exit code
-./srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
+srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
 
 # pass some predef code in file(s)
 echo 'def foo = 42' > foo.sc
 
-./srp --predef foo.sc
+srp --predef foo.sc
 scala> foo
 val res0: Int = 42
 ```
@@ -109,7 +110,7 @@ val res0: Int = 42
 ### Operators: Redirect to file, pipe to external command
 Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
 ```scala
-./srp
+srp
 
 scala> "hey there" #>  "out.txt"
 scala> "hey again" #>> "out.txt"
@@ -153,7 +154,7 @@ All operators are prefixed with `#` in order to avoid naming clashes with more b
 ### Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
-./srp --dep com.michaelpollmeier:versionsort:1.0.7
+srp --dep com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
@@ -163,7 +164,7 @@ Alternatively, use the `//> using dep` directive in predef code or predef files:
 ```
 echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-./srp --predef predef.sc
+srp --predef predef.sc
 
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
@@ -171,7 +172,7 @@ val res0: Int = 1
 
 For Scala dependencies use `::`:
 ```
-./srp --dep com.michaelpollmeier::colordiff:0.36
+srp --dep com.michaelpollmeier::colordiff:0.36
 colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 // color coded diff
 ```
@@ -184,7 +185,7 @@ Implementation note: srp uses [coursier](https://get-coursier.io/) to fetch the 
 ```
 echo 'val bar = foo' > myScript.sc
 
-./srp
+srp
 
 val foo = 1
 //> using file myScript.sc
@@ -203,7 +204,7 @@ You can specify the filename with relative or absolute paths:
 
 Unlike the stock Scala REPL, srp does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
 ```
-./srp --maxHeight 5
+srp --maxHeight 5
 scala> (1 to 100000).toSeq
 val res0: scala.collection.immutable.Range.Inclusive = Range(
   1,
@@ -244,7 +245,7 @@ println("Hello!")
 ```
 
 ```bash
-./srp --script test-simple.sc
+srp --script test-simple.sc
 cat out.txt # prints 'i was here'
 ```
 
@@ -260,7 +261,7 @@ val foo = "Hello, predef file"
 ```
 
 ```bash
-./srp --script test-predef.sc --predef test-predef-file.sc
+srp --script test-predef.sc --predef test-predef-file.sc
 ```
 To import multiple scripts, you can specify this parameter multiple times.
 
@@ -277,7 +278,7 @@ println(foo)
 ```
 
 ```bash
-./srp --script test.sc
+srp --script test.sc
 ```
 
 ### Dependencies
@@ -293,7 +294,7 @@ assert(compareResult == 1,
 ```
 
 ```bash
-./srp --script test-dependencies.sc
+srp --script test-dependencies.sc
 ```
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
@@ -305,7 +306,7 @@ test-main.sc
 ```
 
 ```bash
-./srp --script test-main.sc
+srp --script test-main.sc
 ```
 
 ### multiple @main entrypoints: test-main-multiple.sc
@@ -315,7 +316,7 @@ test-main.sc
 ```
 
 ```bash
-./srp --script test-main-multiple.sc --command foo
+srp --script test-main-multiple.sc --command foo
 ```
 
 ### named parameters
@@ -327,15 +328,15 @@ test-main-withargs.sc
 ```
 
 ```bash
-./srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
+srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
 Note that on windows the parameters need to be triple-quoted:
-`./srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
+`srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
 ```bash
-./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
+srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
 scala> org.gradle.tooling.GradleConnector.newConnector()
 ```
 To add multiple dependency resolvers, you can specify this parameter multiple times.
@@ -349,7 +350,7 @@ script-with-resolver.sc
 println(org.gradle.tooling.GradleConnector.newConnector())
 ```
 ```scala
-./srp --script script-with-resolver.sc
+srp --script script-with-resolver.sc
 ```
 
 If one or multiple of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file):
@@ -367,11 +368,12 @@ The prefix is arbitrary and is only used to specify several credentials in a sin
 
 ### Attach a debugger (remote jvm debug)
 ```
-./srp --script myScript.sc --remoteJvmDebug
+srp --script myScript.sc --remoteJvmDebug
 ```
 Then attach your favorite IDE / debugger on port 5005. 
 
 ## Server mode
+Note: srp-server isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
 ```bash
 ./srp-server
 
@@ -499,6 +501,15 @@ There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via
 
 
 ## Contribution guidelines
+
+### How can I build/stage a local version?
+```bash
+sbt stage
+./srp
+```
+
+### How can I get a new binary (bootstrapped) release?
+While maven central jar releases are created for each commit on master (a new version tag is assigned automatically), the binary (bootstrapped) releases that end up in https://github.com/mpollmeier/scala-repl-pp/releases/latest are being triggered manually. Contributors can run the [bootstrap action](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/bootstrap.yml).
 
 ### Updating the Scala version
 * bump version in [build.sbt](build.sbt)
