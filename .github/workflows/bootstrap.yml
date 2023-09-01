@@ -24,4 +24,3 @@ jobs:
           tag_name: ${{ inputs.version }}
           files: srp
           fail_on_unmatched_files: true
-          apps: [] # by default it installs sbtn, but we don't need anything
