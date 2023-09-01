@@ -2,18 +2,25 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
 
 ## srp: scala-repl-pp (or even longer: Scala REPL PlusPlus)
-srp wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. srp has only one (direct) dependency: the scala3-compiler(*). 
+srp wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. srp has only one (direct) dependency: the scala3-compiler[(*)](#fineprint). 
 
 This is (also) a breeding ground for improvements to the stock Scala REPL: we're forking parts of the REPL to later bring the changes back into the dotty codebase.
 
-Runs on JDK11+.
+## Installation / quick start
+```bash
+# download latest release and make executable
+curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp > srp
+chmod +x srp
 
-(*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the srp classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 
+# move whereever you want to have it - the directory should be on your PATH, e.g.
+sudo mv srp /usr/local/bin/srp
+
+srp
+```
+Prerequisite: jdk11+
 
 ## TOC
-<!-- markdown-toc --maxdepth 3 README.md|tail -n +3 -->
-
-- [Installation / quick start](#installation--quick-start)
+<!-- markdown-toc --maxdepth 3 README.md|tail -n +4 -->
 - [Benefits over / comparison with](#benefits-over--comparison-with)
   * [Regular Scala REPL](#regular-scala-repl)
   * [Ammonite](#ammonite)
@@ -48,21 +55,12 @@ Runs on JDK11+.
   * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
   * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
   * [Updating the Scala version](#updating-the-scala-version)
-  * [Updating the shaded libraries](#updating-the-shaded-libraries)  
+  * [Updating the shaded libraries](#updating-the-shaded-libraries)
+- [Fineprint](#fineprint)
   
-## Installation / quick start
-```
-# download latest release and make executable
-curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp > srp
-chmod +x srp
-
-# move whereever you want to have it - the directory should be on your PATH, e.g.
-sudo mv srp /usr/local/bin/srp
-
-# start srp (a.k.a. scala-repl-pp)
-srp
-```
-
+  
+  
+  
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -527,3 +525,7 @@ git diff $OLD $NEW compiler/src/dotty/tools/repl
 See [import-instructions.md](shaded-libs/import-instructions.md).
 
 
+## Fineprint
+(*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the srp classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 
+  
+  
