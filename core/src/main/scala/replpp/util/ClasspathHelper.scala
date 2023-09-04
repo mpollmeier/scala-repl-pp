@@ -4,6 +4,7 @@ package util
 import replpp.Config
 
 import java.net.URL
+import java.io.File.pathSeparator
 import java.nio.file.Path
 import scala.io.Source
 import scala.util.Using
@@ -20,7 +21,14 @@ object ClasspathHelper {
    * of order, but since we need to concatenate the classpath from different sources, the user can't really depend on
    * the order anyway.
    */
-  def build(config: Config, quiet: Boolean = false): String = {
+  def create(config: Config, quiet: Boolean = false): String = {
+    /** Important: we absolutely have to make sure this starts and ends with a `pathSeparator`.
+     * Otherwise, the last entry is lost somewhere down the line (I didn't find the exact location where things go
+     * wrong, but it looked like somewhere in dotty 3.3.0). */
+    createAsSeq(config, quiet).mkString(pathSeparator, pathSeparator, pathSeparator)
+  }
+
+  protected[util] def createAsSeq(config: Config, quiet: Boolean = false): Seq[String] = {
     val entries = Seq.newBuilder[String]
     System.getProperty("java.class.path").split(pathSeparator).foreach(entries.addOne)
 
@@ -34,15 +42,13 @@ object ClasspathHelper {
     jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
       .foreach(url => entries.addOne(url.getPath))
 
-    /** Important: we absolutely have to make sure this ends with a `pathSeparator`.
-     * Otherwise, the last entry is lost somewhere down the line. I'm still debugging where exactly, but it looks
-     * like somewhere in dotty. Will report upstream once I figured it out, but for now it doesn't harm to add a
-     * pathseparator at the end.
-     */
-    entries.result().distinct.sorted.mkString(pathSeparator, pathSeparator, pathSeparator)
+    onlyHighestVersionForEachJar(entries.result()).sorted
   }
 
-  private def dependencyArtifacts(config: Config): Seq[Path] = {
+  /** for each organisation/name tuple: filter out anything but the highest version */
+  private[util] def onlyHighestVersionForEachJar(entries: Seq[String]): Seq[String] = ???
+
+  private[util] def dependencyArtifacts(config: Config): Seq[Path] = {
     val scriptLines = config.scriptFile.map { path =>
       Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
     }.getOrElse(Seq.empty)

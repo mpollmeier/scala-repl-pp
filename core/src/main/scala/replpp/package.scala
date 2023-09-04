@@ -1,6 +1,7 @@
 import replpp.util.{ClasspathHelper, linesFromFile}
 
 import java.io.File
+import java.io.File.pathSeparator
 import java.lang.System.lineSeparator
 import java.net.URL
 import java.nio.file.{Files, Path, Paths}
@@ -11,9 +12,6 @@ import scala.util.Using
 
 package object replpp {
   enum Colors { case BlackWhite, Default }
-
-  /* ":" on unix */
-  val pathSeparator = java.io.File.pathSeparator
 
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
 
@@ -45,7 +43,7 @@ package object replpp {
 
   def compilerArgs(config: Config): Array[String] = {
     val compilerArgs = Array.newBuilder[String]
-    compilerArgs ++= Array("-classpath", ClasspathHelper.build(config))
+    compilerArgs ++= Array("-classpath", ClasspathHelper.create(config))
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
