@@ -1,6 +1,7 @@
 package replpp.scripting
 
 import replpp.Config
+import replpp.util.ClasspathHelper
 
 import scala.util.{Failure, Success, Try}
 import sys.process.Process
@@ -15,7 +16,7 @@ object ScriptRunner {
   val RemoteJvmDebugConfig = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
 
   def exec(config: Config): Try[Unit] = {
-    val classpath = replpp.classpath(config, quiet = true)
+    val classpath = ClasspathHelper.build(config, quiet = true)
     val mainClass = "replpp.scripting.NonForkingScriptRunner"
     val args = {
       val builder = Seq.newBuilder[String]
