@@ -11,6 +11,13 @@ import java.nio.file.Files
 
 class ClasspathHelperTests extends AnyWordSpec with Matchers {
 
+  "TODO foo bar" in {
+    val deps = ClasspathHelper.createAsSeq(Config(dependencies = Seq(
+      "org.scala-lang:scala-library:2.13.10",
+      "org.scala-lang::scala3-library:3.3.0",
+    ))).foreach(println)
+  }
+
   "basic generation" in {
     ClasspathHelper.createAsSeq(Config()).size should be > 2
     // exact content depends on test run environment, since the current classpath is included as well
