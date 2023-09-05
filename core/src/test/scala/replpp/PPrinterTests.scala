@@ -59,6 +59,11 @@ class PPrinterTests extends AnyWordSpec with Matchers {
     )
   }
 
+  "render strings with string escapes using triple quotes" in {
+    // TODO suggest as PR in fansi upstream - once it's in, this test can be dropped
+    PPrinter("""a\b""", nocolors = true) shouldBe "     \"\"\"a\\b\"\"\"    ".trim
+  }
+
   "don't error on invalid ansi encodings" in {
     val invalidAnsi = Files.readString(ProjectRoot.relativise("core/src/test/resources/invalid-ansi.txt"))
     Try {
