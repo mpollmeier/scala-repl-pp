@@ -1,18 +1,21 @@
 package replpp
 package util
 
-import replpp.Config
+import replpp.shaded.coursier.core.Version
 
 import java.io.ByteArrayInputStream
-import java.net.URL
 import java.io.File.pathSeparator
+import java.net.URL
 import java.nio.file.{Path, Paths}
-import java.util.Map.entry
+import java.util.jar.Attributes.Name
+import java.util.jar.Manifest
 import scala.annotation.nowarn
 import scala.io.Source
+import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
 object ClasspathHelper {
+  case class JarWithManifestInfo(jar: Path, organisation: Option[String], name: Option[String], version: Option[String])
 
   /**
    * Concatenates the classpath from multiple sources, each are required for different scenarios:
@@ -31,58 +34,60 @@ object ClasspathHelper {
     createAsSeq(config, quiet).mkString(pathSeparator, pathSeparator, pathSeparator)
   }
 
-  // TODO drop
-  def main(args: Array[String]): Unit = {
-    import java.util.jar.Attributes.Name
-    import java.util.jar.Manifest
-    import scala.jdk.CollectionConverters.*
-
-    val additionalDep = args.head
-    createAsSeq(Config(dependencies = Seq(additionalDep))).foreach { jar =>
-      //    val file = Paths.get("/home/mp/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/ammonite_2.13.0/2.5.8/ammonite_2.13.0-2.5.8.jar")
-      val file = Paths.get(jar)
-      val manifestBytes = readFileFromZip(file, "META-INF/MANIFEST.MF")
-      val manifest = new Manifest(new ByteArrayInputStream(manifestBytes))
-      val entries = manifest.getMainAttributes.asScala
-
-      @nowarn
-      val organisationMaybe = entries.get(Name.IMPLEMENTATION_VENDOR).orElse(entries.get(Name.IMPLEMENTATION_VENDOR_ID)).map(_.toString)
-      val nameMaybe = entries.get(Name.IMPLEMENTATION_TITLE).orElse(entries.get(new Name("Automatic-Module-Name"))).orElse(entries.get(new Name("Bundle-SymbolicName"))).map(_.toString)
-      val versionMaybe = entries.get(Name.IMPLEMENTATION_VERSION).orElse(entries.get(new Name("Bundle-Version"))).map(_.toString)
-
-      case class JarWithManifestInfo(path: Path, organisation: Option[String], name: Option[String], version: Option[String])
-
-      val ctx = JarWithManifestInfo(file, organisationMaybe, nameMaybe, versionMaybe)
-      println(ctx)
-    }
-
-  }
-
-  protected[util] def createAsSeq(config: Config, quiet: Boolean = false): Seq[String] = {
-    val entries = Seq.newBuilder[String]
-    System.getProperty("java.class.path").split(pathSeparator).foreach(entries.addOne)
+  protected[util] def createAsSeq(config: Config, quiet: Boolean = false): Seq[Path] = {
+    val entries = Seq.newBuilder[Path]
+    System.getProperty("java.class.path").split(pathSeparator).map(Paths.get(_)).foreach(entries.addOne)
 
     val fromDependencies = dependencyArtifacts(config)
-    fromDependencies.foreach(file => entries.addOne(file.toString))
+    fromDependencies.foreach(entries.addOne)
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
     jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader)
-      .foreach(url => entries.addOne(url.getPath))
+      .foreach(url => entries.addOne(Paths.get(url.toURI)))
 
-    onlyHighestVersionForEachJar(entries.result()).sorted
+    onlyHighestVersionForEachJar(entries.result().map(versionInfoFromJar)).sorted
   }
 
   /**
    * Goal: for each organisation/name tuple: filter out anything but the highest version. This is to ensure we don't have jars with different versions on the classpath.
    * Problem: since we don't only get the jars via maven coordinates, but also inherit from existing classpath entries, all we have is a list of jars.
    * The best solution is probably to use separate classloaders for the REPL itself and the code that's executed within. Similar to what ammonite does..
-   * In the interim, we use this hack as a semi-best-effort basis: group by the information in their manifests.  */
-  private[util] def onlyHighestVersionForEachJar(entries: Seq[String]): Seq[String] = {
-//    ???
-    entries
+   * In the interim, we use this hack as a semi-best-effort basis: group by the information in their manifests. */
+  private[util] def onlyHighestVersionForEachJar(dependencyInfos: Seq[JarWithManifestInfo]): Seq[Path] = {
+    dependencyInfos
+      .groupMap(dep => (dep.organisation, dep.name))(dep => (dep.jar, Version(dep.version.getOrElse("0"))))
+      .map { case ((organisation, name), jars) =>
+        if (jars.size == 1) {
+          jars.head._1
+        } else {
+          // choose the jar with the highest version
+          val result = jars.maxBy { case (_, version) => version } match {
+            case (jar, _) => jar
+          }
+          if (jars.size > 1) {
+            println(s"found ${jars.size} alternatives for organisation=${organisation.getOrElse("")} and name=${name.getOrElse("")}")
+            println(s"-> using the jar with the highest version: $result")
+          }
+          result
+        }
+    }.toSeq
+  }
+
+  @nowarn
+  private def versionInfoFromJar(jar: Path): JarWithManifestInfo = {
+    val manifestBytes = readFileFromZip(jar, "META-INF/MANIFEST.MF")
+    val manifest = new Manifest(new ByteArrayInputStream(manifestBytes))
+    val entries = manifest.getMainAttributes.asScala
+
+    JarWithManifestInfo(
+      jar,
+      organisation = entries.get(Name.IMPLEMENTATION_VENDOR).orElse(entries.get(Name.IMPLEMENTATION_VENDOR_ID)).map(_.toString),
+      name = entries.get(Name.IMPLEMENTATION_TITLE).orElse(entries.get(new Name("Automatic-Module-Name"))).orElse(entries.get(new Name("Bundle-SymbolicName"))).map(_.toString),
+      version = entries.get(Name.IMPLEMENTATION_VERSION).orElse(entries.get(new Name("Bundle-Version"))).map(_.toString)
+    )
   }
 
   private[util] def dependencyArtifacts(config: Config): Seq[Path] = {
