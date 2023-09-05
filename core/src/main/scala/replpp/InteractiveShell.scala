@@ -16,7 +16,7 @@ object InteractiveShell {
     val replDriver = new ReplDriver(
       compilerArgs,
       onExitCode = config.onExitCode,
-      greeting = Option(config.greeting),
+      greeting = config.greeting,
       prompt = config.prompt.getOrElse("scala"),
       maxHeight = config.maxHeight
     )

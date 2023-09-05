@@ -17,7 +17,7 @@ case class Config(
 
   // repl only
   prompt: Option[String] = None,
-  greeting: String = "Welcome to scala-repl-pp!",
+  greeting: Option[String] = Some(defaultGreeting),
   onExitCode: Option[String] = None,
   maxHeight: Option[Int] = None,
 
@@ -67,6 +67,13 @@ case class Config(
 
 object Config {
 
+  private def defaultGreeting = {
+    val replppVersion = getClass.getPackage.getImplementationVersion
+    val scalaVersion = scala.util.Properties.versionNumberString
+    val javaVersion = sys.props("java.version")
+   s"Welcome to scala-repl-pp $replppVersion (Scala $scalaVersion, Java $javaVersion)"
+  }
+
   def parse(args: Array[String]): Config = {
     OParser.parse(parser, args, Config())
       .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
@@ -86,7 +93,7 @@ object Config {
 
       note("REPL options"),
       opts.prompt((x, c) => c.copy(prompt = Option(x))),
-      opts.greeting((x, c) => c.copy(greeting = x)),
+      opts.greeting((x, c) => c.copy(greeting = Option(x))),
       opts.onExitCode((x, c) => c.copy(onExitCode = Option(x))),
       opts.maxHeight((x, c) => c.copy(maxHeight = Some(x))),
 
