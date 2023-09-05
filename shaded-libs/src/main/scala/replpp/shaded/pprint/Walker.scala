@@ -68,6 +68,7 @@ abstract class Walker{
       case x: Double => Tree.Literal(x.toString)
       case x: String =>
         // MP: adapted here: added ` || c == '\\'`
+        // MP: upstream PR: https://github.com/com-lihaoyi/PPrint/pull/110
         if (x.exists(c => c == '\n' || c == '\r' || c == '\\')) Tree.Literal("\"\"\"" + x + "\"\"\"")
         else Tree.Literal(Util.literalize(x, escapeUnicode))
 
