@@ -5,6 +5,7 @@ import scala.collection.immutable.Seq
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
 import scala.util.{Try, Using}
+import replpp.shaded.fansi
 
 package object util {
 
@@ -26,6 +27,13 @@ package object util {
       Files.list(path).forEach(deleteRecursively)
 
     Files.deleteIfExists(path)
+  }
+
+  def colorise(value: String, color: fansi.EscapeAttr)(using colors: Colors): String = {
+    colors match {
+      case Colors.BlackWhite => value
+      case Colors.Default => color(value).render
+    }
   }
 
 }
