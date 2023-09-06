@@ -11,11 +11,12 @@ import dotty.tools.dotc.core.{Contexts, MacroClassLoader, Mode, TyperState}
 import dotty.tools.io.{AbstractFile, ClassPath, ClassRepresentation}
 import dotty.tools.repl.*
 import org.jline.reader.*
+import replpp.shaded.fansi
 
 import java.io.PrintStream
 import java.lang.System.lineSeparator
 import java.net.URL
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import javax.naming.InitialContext
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -44,9 +45,13 @@ abstract class ReplDriverBase(args: Array[String],
       // now read and interpret the given file
       val pathStr = line.trim.drop(UsingDirectives.FileDirective.length)
       val path = resolveFile(currentFile, pathStr)
-      val linesFromFile = util.linesFromFile(path)
-      println(s"> importing $path (${linesFromFile.size} lines)")
-      currentState = interpretInput(linesFromFile, currentState, path)
+      if (Files.exists(path)) {
+        val linesFromFile = util.linesFromFile(path)
+        println(s"> importing $path (${linesFromFile.size} lines)")
+        currentState = interpretInput(linesFromFile, currentState, path)
+      } else {
+        System.err.println(util.colorise(s"Warning: given file `$path` does not exist.", fansi.Color.Red))
+      }
     }
 
     for (line <- lines.iterator) {
