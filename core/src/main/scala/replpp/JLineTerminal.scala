@@ -64,7 +64,7 @@ class JLineTerminal extends java.io.Closeable {
    *  - Syntax highlighting
    *  - Auto-completions
    *
-   *  @throws EndOfFileException This exception is thrown when the user types Ctrl-D.
+   *  @throws org.jline.reader.EndOfFileException This exception is thrown when the user types Ctrl-D.
    */
   def readLine(
     completer: Completer // provide auto-completions

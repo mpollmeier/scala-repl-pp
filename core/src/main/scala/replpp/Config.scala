@@ -71,7 +71,7 @@ object Config {
     val replppVersion = getClass.getPackage.getImplementationVersion
     val scalaVersion = scala.util.Properties.versionNumberString
     val javaVersion = sys.props("java.version")
-   s"Welcome to scala-repl-pp $replppVersion (Scala $scalaVersion, Java $javaVersion)"
+    s"Welcome to scala-repl-pp $replppVersion (Scala $scalaVersion, Java $javaVersion)"
   }
 
   def parse(args: Array[String]): Config = {

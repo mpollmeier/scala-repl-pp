@@ -1,6 +1,6 @@
 package replpp
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{FileSystems, Files, Path}
 import scala.collection.immutable.Seq
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
@@ -27,6 +27,12 @@ package object util {
       Files.list(path).forEach(deleteRecursively)
 
     Files.deleteIfExists(path)
+  }
+
+  def readFileFromZip(zipFile: Path, fileName: String): Try[Array[Byte]] = {
+    Using(FileSystems.newFileSystem(zipFile, null)) { fileSystem =>
+      Files.readAllBytes(fileSystem.getPath(fileName))
+    }
   }
 
   def colorise(value: String, color: fansi.EscapeAttr)(using colors: Colors): String = {

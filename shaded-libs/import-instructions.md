@@ -136,3 +136,43 @@ sed -i '2iimport replpp.shaded.fansi' $TARGET/*.scala
 cd $REPLPP_REPO_ROOT
 sbt clean test
 ```
+
+## coursier (only core.Version)
+```
+# start location must be replpp repo root!
+REPLPP_REPO_ROOT=$(pwd)
+TARGET_ROOT=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/coursier/core
+TARGET=${TARGET_ROOT}/Version.scala
+
+cd /tmp
+rm -rf coursier
+git clone https://github.com/coursier/coursier.git
+cd coursier
+git checkout v2.1.5
+
+rm -r $TARGET
+mkdir -p $TARGET_ROOT
+cp -p modules/core/shared/src/main/scala/coursier/core/Version.scala $TARGET
+
+sed -i '1ipackage replpp.shaded' $TARGET
+sed -i '/import coursier.core.compatibility._/d' $TARGET
+sed -i '/import dataclass.data/d' $TARGET
+sed -i '/import scala.collection.compat.immutable.LazyList/d' $TARGET
+sed -i 's/@data /case /g' $TARGET
+
+# insert "RichChar" from coursier.core.compatibility
+sed -i '/^object Version {$/a\
+\
+  implicit class RichChar(val c: Char) extends AnyVal {\
+    private def between(c: Char, lower: Char, upper: Char) = lower <= c && c <= upper\
+\
+    def letterOrDigit: Boolean =\
+      between(c, __0__, __9__) || letter\
+    def letter: Boolean = between(c, __a__, __z__) || between(c, __A__, __Z__)\
+  }' $TARGET
+# i didn't find a better way to escape the single quotes within that sed above...
+sed -i "s/__/'/g" $TARGET
+
+cd $REPLPP_REPO_ROOT
+sbt clean test
+```

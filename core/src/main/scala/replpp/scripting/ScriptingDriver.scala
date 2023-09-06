@@ -4,10 +4,10 @@ import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
-import replpp.pathSeparator
 import replpp.util.deleteRecursively
 import replpp.scripting.ScriptingDriver.*
 
+import java.io.File.pathSeparator
 import java.lang.reflect.{Method, Modifier}
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
