@@ -60,19 +60,15 @@ object ClasspathHelper {
     dependencyInfos
       .groupMap(dep => (dep.organisation, dep.name))(dep => (dep.jar, Version(dep.version.getOrElse("0"))))
       .map { case ((organisation, name), jars) =>
-        if (jars.size == 1) {
-          jars.head._1
-        } else {
-          // choose the jar with the highest version
-          val result = jars.maxBy { case (_, version) => version } match {
-            case (jar, _) => jar
-          }
-          if (jars.size > 1) {
-            println(s"found ${jars.size} alternatives for organisation=${organisation.getOrElse("")} and name=${name.getOrElse("")}")
-            println(s"-> using the jar with the highest version: $result")
-          }
-          result
+        // choose the jar with the highest version
+        val result = jars.maxBy { case (_, version) => version } match {
+          case (jar, _) => jar
         }
+        if (jars.size > 1) {
+          println(s"found ${jars.size} alternatives for organisation=${organisation.getOrElse("")} and name=${name.getOrElse("")}")
+          println(s"-> using the jar with the highest version: $result")
+        }
+        result
     }.toSeq
   }
 
