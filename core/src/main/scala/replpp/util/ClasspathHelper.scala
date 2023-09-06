@@ -12,7 +12,7 @@ import java.util.jar.Manifest
 import scala.annotation.nowarn
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
-import scala.util.Using
+import scala.util.{Failure, Success, Using}
 
 object ClasspathHelper {
   case class JarWithManifestInfo(jar: Path, organisation: Option[String], name: Option[String], version: Option[String])
@@ -72,12 +72,20 @@ object ClasspathHelper {
     }.toSeq
   }
 
-  @nowarn
   private def versionInfoFromJar(jar: Path): JarWithManifestInfo = {
-    val manifestBytes = readFileFromZip(jar, "META-INF/MANIFEST.MF")
-    val manifest = new Manifest(new ByteArrayInputStream(manifestBytes))
-    val entries = manifest.getMainAttributes.asScala
+    readFileFromZip(jar, "META-INF/MANIFEST.MF") match {
+      case Success(manifestBytes) =>
+        val manifest = new Manifest(new ByteArrayInputStream(manifestBytes))
+        versionInfoFromManifest(jar, manifest)
+      case Failure(_) =>
+        // error while trying to read manifest, e.g. since it doesn't exist
+        JarWithManifestInfo(jar, organisation = None, name = None, version = None)
+    }
+  }
 
+  @nowarn
+  private def versionInfoFromManifest(jar: Path, manifest: Manifest): JarWithManifestInfo = {
+    val entries = manifest.getMainAttributes.asScala
     JarWithManifestInfo(
       jar,
       organisation = entries.get(Name.IMPLEMENTATION_VENDOR).orElse(entries.get(Name.IMPLEMENTATION_VENDOR_ID)).map(_.toString),

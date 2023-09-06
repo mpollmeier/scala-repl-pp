@@ -29,8 +29,8 @@ package object util {
     Files.deleteIfExists(path)
   }
 
-  def readFileFromZip(zipFile: Path, fileName: String): Array[Byte] = {
-    Using.resource(FileSystems.newFileSystem(zipFile, null)) { fileSystem =>
+  def readFileFromZip(zipFile: Path, fileName: String): Try[Array[Byte]] = {
+    Using(FileSystems.newFileSystem(zipFile, null)) { fileSystem =>
       Files.readAllBytes(fileSystem.getPath(fileName))
     }
   }
