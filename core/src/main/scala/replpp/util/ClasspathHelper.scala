@@ -57,19 +57,26 @@ object ClasspathHelper {
    * The best solution is probably to use separate classloaders for the REPL itself and the code that's executed within. Similar to what ammonite does..
    * In the interim, we use this hack as a semi-best-effort basis: group by the information in their manifests. */
   private[util] def onlyHighestVersionForEachJar(dependencyInfos: Seq[JarWithManifestInfo]): Seq[Path] = {
-    dependencyInfos
+    val resultJars = Seq.newBuilder[Path]
+
+    val (withName, withoutName) = dependencyInfos.partition(_.name.isDefined)
+    // do not filter out any jars that don't have their name defined in their manifest
+    resultJars ++= withoutName.map(_.jar)
+
+    withName
       .groupMap(dep => (dep.organisation, dep.name))(dep => (dep.jar, Version(dep.version.getOrElse("0"))))
-      .map { case ((organisation, name), jars) =>
+      .foreach { case ((organisation, name), jars) =>
         // choose the jar with the highest version
         val result = jars.maxBy { case (_, version) => version } match {
           case (jar, _) => jar
         }
+        resultJars += result
         if (jars.size > 1) {
           println(s"found ${jars.size} alternatives for organisation=${organisation.getOrElse("")} and name=${name.getOrElse("")}")
           println(s"-> using the jar with the highest version: $result")
         }
-        result
-    }.toSeq
+    }
+    resultJars.result()
   }
 
   private def versionInfoFromJar(jar: Path): JarWithManifestInfo = {
