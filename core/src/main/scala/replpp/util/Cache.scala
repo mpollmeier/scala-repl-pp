@@ -16,13 +16,15 @@ object Cache {
 
   def getOrObtain(cacheKey: String, obtain: () => InputStream): Path = {
     val path = targetPath(cacheKey)
-    if (Files.exists(path)) {
-      path
-    } else {
-      val inputStream = obtain()
-      Files.copy(inputStream, path)
-      inputStream.close()
-      path
+    this.synchronized {
+      if (Files.exists(path)) {
+        path
+      } else {
+        val inputStream = obtain()
+        Files.copy(inputStream, path)
+        inputStream.close()
+        path
+      }
     }
   }
 
