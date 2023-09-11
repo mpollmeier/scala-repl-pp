@@ -17,6 +17,7 @@ import dotty.tools.dotc.core.NameKinds.SimpleNameKind
 import dotty.tools.dotc.core.NameKinds.DefaultGetterName
 import dotty.tools.dotc.core.NameOps.*
 import dotty.tools.dotc.core.Names.Name
+import dotty.tools.dotc.core.Phases.Phase
 import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.core.Symbols.{Symbol, defn}
 import dotty.tools.dotc.interfaces
@@ -32,6 +33,8 @@ import dotty.tools.repl.*
 import dotty.tools.runner.ScalaClassLoader.*
 import org.jline.reader.*
 import DottyRandomStuff.newStoreReporter
+import dotty.tools.dotc.transform.PostTyper
+import dotty.tools.dotc.typer.TyperPhase
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -88,7 +91,17 @@ class DottyReplDriver(settings: Array[String],
     if (rootCtx.settings.outputDir.isDefault(using rootCtx))
       rootCtx = rootCtx.fresh
         .setSetting(rootCtx.settings.outputDir, new VirtualDirectory("<REPL compilation output>"))
-    compiler = new ReplCompiler
+    compiler = new ReplCompiler {
+      /** adapted from https://github.com/lampepfl/dotty/blob/6e86fbe/compiler/src/dotty/tools/repl/ReplCompiler.scala#L35 */
+      override protected def frontendPhases: List[List[Phase]] = List(
+        List(dotty.tools.repl.Parser()),
+        List(ReplPhase()),
+        List(TyperPhase(addRootImports = false)),
+        List(CollectTopLevelImports()),
+        //   List(new AmmonitePhase(userCodeNestingLevel, userCodeNestingLevel == 2)),
+        List(PostTyper()),
+      )
+    }
     rendering = new Rendering(maxHeight, classLoader)
   }
 
