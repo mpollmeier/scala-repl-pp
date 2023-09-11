@@ -511,15 +511,17 @@ While maven central jar releases are created for each commit on master (a new ve
 
 ### Updating the Scala version
 * bump version in [build.sbt](build.sbt)
-* get relevant diff from dotty repo: 
+* get relevant diff from dotty repo
 ```bash
 cd /path/to/dotty
 git fetch
 
 OLD=3.3.0 # set to version that was used before you bumped it
 NEW=3.3.1 # set to version that you bumped it to
-git diff $OLD $NEW compiler/src/dotty/tools/repl
+git checkout $NEW
+git diff $OLD compiler/src/dotty/tools/repl
 ```
+* check if any of those changes need to be reapplied to this repo
 
 ### Updating the shaded libraries
 See [import-instructions.md](shaded-libs/import-instructions.md).
