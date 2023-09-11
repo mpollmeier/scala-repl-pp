@@ -20,11 +20,12 @@ import scala.collection.mutable
 /**
  * originally imported from https://github.com/com-lihaoyi/Ammonite/blob/151446c/amm/compiler/src/main/scala-3/ammonite/compiler/AmmonitePhase.scala
  */
-class AmmonitePhase(
-  userCodeNestingLevel: => Int,
-  needsUsedEarlierDefinitions: => Boolean
-) extends Phase:
+class AmmonitePhase() extends Phase:
   import tpd._
+
+// TODO MP: what's that really?
+  val userCodeNestingLevel: Int = -1
+  val needsUsedEarlierDefinitions: Boolean = false
 
   def phaseName: String = "ammonite"
 
@@ -242,6 +243,7 @@ class AmmonitePhase(
     }
 
   def run(using Context): Unit =
+    println(s"XX AmmonitePhase.run start")
     val elems = unpkg(ctx.compilationUnit.tpdTree)
     def mainStats(trees: List[tpd.Tree]): List[tpd.Tree] =
       trees
@@ -267,3 +269,4 @@ class AmmonitePhase(
       case t: tpd.TypeDef => processTree(t)
       case _ =>
     }
+    println(s"XX AmmonitePhase.run end")

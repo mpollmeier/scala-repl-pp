@@ -98,7 +98,7 @@ class DottyReplDriver(settings: Array[String],
         List(ReplPhase()),
         List(TyperPhase(addRootImports = false)),
         List(CollectTopLevelImports()),
-        //   List(new AmmonitePhase(userCodeNestingLevel, userCodeNestingLevel == 2)),
+        List(AmmonitePhase()),
         List(PostTyper()),
       )
     }
