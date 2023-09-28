@@ -114,11 +114,22 @@ scala> "hey there" #>  "out.txt"
 scala> "hey again" #>> "out.txt"
 scala> Seq("a", "b", "c") #>> "out.txt"
 
-// pipe results to external command and retrieve stdout/stderr - using `cat` as a trivial example
+// pipe results to external command
 scala> Seq("a", "b", "c") #| "cat"
+val res0: String = """a
+b
+c"""
 
-// `#|^` is a variant of `#|` that let's the external command inherit stdin/stdout - useful e.g. for `less`
+// pipe results to external command with arguments
+scala> Seq("foo", "bar", "foobar") #| ("grep", "foo")
+val res1: String = """foo
+foobar"""
+
+// pipe results to external command and let it inherit stdin/stdout
 scala> Seq("a", "b", "c") #|^ "less"
+
+// pipe results to external command with arguments and let it inherit stdin/stdout
+scala> Seq("a", "b", "c") #|^ ("less", "-N")
 ```
 
 All operators use the same pretty-printing that's used within the REPL, i.e. you get structured rendering including product labels etc. 

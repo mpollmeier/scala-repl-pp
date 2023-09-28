@@ -146,6 +146,21 @@ class OperatorsTests extends AnyWordSpec with Matchers {
           }
         }
       }
+
+      "passing arguments to the external command" in {
+        val result1 = Seq("foo", "bar", "foobar") #| ("grep", "foo")
+        result1 shouldBe """foo
+                          |foobar""".stripMargin
+
+
+        val input2 = """foo
+                       |bar
+                       |foobar""".stripMargin
+        val result2 = input2 #| ("grep", "foo")
+        result2 shouldBe
+          """foo
+            |foobar""".stripMargin
+      }
     }
   }
 

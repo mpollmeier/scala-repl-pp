@@ -49,8 +49,8 @@ object Operators {
      * Executing an external command may fail, and this will throw an exception in that case.
      * see `#|^` for a variant that inherits IO (e.g. for `less`)
      */
-    def #|(command: String): String = {
-      val ProcessResults(stdout, stderr) = pipeToCommand(valueAsString, command, inheritIO = false).get
+    def #|(commandAndArguments: String*): String = {
+      val ProcessResults(stdout, stderr) = pipeToCommand(valueAsString, commandAndArguments, inheritIO = false).get
       Seq(stdout, stderr).filter(_.nonEmpty).mkString(lineSeparator)
     }
 
@@ -58,8 +58,8 @@ object Operators {
      * Pipe output into an external process, i.e. pass the valueAsString into the command's InputStream.
      * Executing an external command may fail, and this will throw an exception in that case.
      * This is a variant of `#|` which inherits IO (e.g. for `less`) - therefor it doesn't capture stdout/stderr. */
-    def #|^(command: String): Unit =
-      pipeToCommand(valueAsString, command, inheritIO = true).get
+    def #|^(commandAndArguments: String*): Unit =
+      pipeToCommand(valueAsString, commandAndArguments, inheritIO = true).get
 
 
     /**
@@ -107,12 +107,12 @@ object Operators {
    *
    * @param inheritIO : set to true for commands like `less` that are supposed to capture the entire IO
    */
-  def pipeToCommand(value: String, command: String, inheritIO: Boolean): Try[ProcessResults] = {
+  def pipeToCommand(value: String, commandAndArguments: Seq[String], inheritIO: Boolean): Try[ProcessResults] = {
     val stdout = new StringBuilder
     val stderr = new StringBuilder
 
     Try {
-      os.proc(Seq(command)).call(
+      os.proc(commandAndArguments).call(
         stdin = pipeInput(value),
         stdout =
           if (inheritIO) os.Inherit
