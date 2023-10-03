@@ -88,11 +88,17 @@ package object replpp {
     * resolve absolute or relative paths to an absolute path
     * - if given pathStr is an absolute path, just take that
     * - if it's a relative path, use given base path to resolve it to an absolute path
+    * - if the base path is a file, take it's root directory - anything else doesn't make any sense.
     */
   def resolveFile(base: Path, pathStr: String): Path = {
     val path = Paths.get(pathStr)
     if (path.isAbsolute) path
-    else base.resolve(path)
+    else {
+      val base0 =
+        if (Files.isDirectory(base)) base
+        else base.getParent
+      base0.resolve(path)
+    }
   }
 
 }
