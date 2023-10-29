@@ -4,7 +4,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.Config
 
-import java.nio.file.Paths
 import scala.util.{Failure, Success, Try}
 
 
@@ -15,7 +14,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
   } else {
     "execute simple single-statement script" in {
       execTest { testOutputPath =>
-        TestSetup(s"""os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-simple")""")
+        TestSetup(s"""java.nio.file.Files.writeString(java.nio.file.Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-simple")""")
       }.get shouldBe "iwashere-simple"
     }
 
