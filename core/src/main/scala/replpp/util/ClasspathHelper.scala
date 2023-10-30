@@ -34,14 +34,14 @@ object ClasspathHelper {
     def addToEntriesMaybe(path: Path): Unit = {
       val classpathConfig = config.classpathConfig
       val filename = path.getFileName.toString
-      val whitelisted = classpathConfig.inheritClasspath || classpathConfig.inheritClasspathWhitelist.exists(filename.matches(_))
+      val included = classpathConfig.inheritClasspath || classpathConfig.inheritClasspathIncludes.exists(filename.matches(_))
       val debugPrint = verboseEnabled(config) && !quiet
-      lazy val blacklisted = classpathConfig.inheritClasspathBlacklist.exists(filename.matches(_))
-      if (whitelisted && !blacklisted) {
+      lazy val excluded = classpathConfig.inheritClasspathExcludes.exists(filename.matches(_))
+      if (included && !excluded) {
         if (debugPrint) println(s"using jar from inherited classpath: $path")
         entries.addOne(path)
       } else {
-        if (debugPrint) println(s"exluding jar from inherited classpath (whitelisted=$whitelisted; blacklisted=$blacklisted: $path")
+        if (debugPrint) println(s"exluding jar from inherited classpath (included=$included; excluded=$excluded: $path")
       }
     }
     System.getProperty("java.class.path").split(pathSeparator).map(Paths.get(_)).foreach(addToEntriesMaybe)

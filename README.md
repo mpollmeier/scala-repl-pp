@@ -475,7 +475,7 @@ If verbose mode is enabled, you'll get additional information about classpaths a
 To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
 
 ## Inherited classpath
-srp comes with it's own classpath dependencies, and depending on how you invoke it there are different requirements for controlling the inherited classpath. E.g. if you add `srp` as a dependency to your project and want to simply use all dependencies from that same project, you can configure `--cpinherit` (or programatically `replpp.Config.classpathConfig.inheritClasspath`). You can also whitelist or blacklist dependencies via regex expressions.
+srp comes with it's own classpath dependencies, and depending on how you invoke it there are different requirements for controlling the inherited classpath. E.g. if you add `srp` as a dependency to your project and want to simply use all dependencies from that same project, you can configure `--cpinherit` (or programatically `replpp.Config.classpathConfig.inheritClasspath`). You can also include or exclude dependencies via regex expressions.
 
 ## Parameters cheat sheet: the most important ones
 Here's only the most important ones - run `srp --help` for all parameters.

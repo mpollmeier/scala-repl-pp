@@ -42,14 +42,14 @@ case class Config(
     if (verbose) add("--verbose")
     if (classpathConfig.inheritClasspath) add("--cpinherit")
 
-    classpathConfig.inheritClasspathWhitelist
-      .filterNot(Config.ForClasspath.DefaultInheritClasspathWhitelist.contains)
+    classpathConfig.inheritClasspathIncludes
+      .filterNot(Config.ForClasspath.DefaultInheritClasspathIncludes.contains)
       .foreach { entry =>
-        add("--cpwhitelist", entry)
+        add("--cpincludes", entry)
       }
 
-    classpathConfig.inheritClasspathBlacklist.foreach { entry =>
-      add("--cpblacklist", entry)
+    classpathConfig.inheritClasspathExcludes.foreach { entry =>
+      add("--cpexclude", entry)
     }
 
     classpathConfig.dependencies.foreach { dependency =>
@@ -98,8 +98,8 @@ object Config {
       opts.nocolors((_, c) => c.copy(nocolors = true)),
       opts.verbose((_, c) => c.copy(verbose = true)),
       opts.inheritClasspath((_, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspath = true))),
-      opts.classpathWhitelistEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathWhitelist = c.classpathConfig.inheritClasspathWhitelist :+ x))),
-      opts.classpathBlacklistEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathBlacklist = c.classpathConfig.inheritClasspathBlacklist :+ x))),
+      opts.classpathIncludesEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathIncludes = c.classpathConfig.inheritClasspathIncludes :+ x))),
+      opts.classpathExcludesEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathExcludes = c.classpathConfig.inheritClasspathExcludes :+ x))),
       opts.dependency((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(dependencies = c.classpathConfig.dependencies :+ x))),
       opts.repo((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(resolvers = c.classpathConfig.resolvers :+ x))),
       opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
@@ -165,25 +165,25 @@ object Config {
     }
 
     def inheritClasspath[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
-      builder.opt[Unit]("cpinherit").text("inherit entire classpath (blacklist still applies!)").action(action)
+      builder.opt[Unit]("cpinherit").text("inherit entire classpath (excludes still applies!)").action(action)
     }
 
-    def classpathWhitelistEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.opt[String]("cpwhitelist")
+    def classpathIncludesEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("cpinclude")
         .valueName(".*scala-repl-pp.*")
         .unbounded()
         .optional()
         .action(action)
-        .text("add classpath whitelist entry (regex) for jars inherited from parent classloader - may be passed multiple times")
+        .text("add classpath include entry (regex) for jars inherited from parent classloader - may be passed multiple times")
     }
 
-    def classpathBlacklistEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.opt[String]("cpblacklist")
+    def classpathExcludesEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("cpexclude")
         .valueName(".*scala-repl-pp.*")
         .unbounded()
         .optional()
         .action(action)
-        .text("add classpath blacklist entry (regex) for jars inherited from parent classloader - may be passed multiple times")
+        .text("add classpath exclude entry (regex) for jars inherited from parent classloader - may be passed multiple times")
     }
 
     def remoteJvmDebug[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
@@ -245,21 +245,21 @@ object Config {
    * configure the handling of the inherited classpath (i.e. how we handle the jars that we get from
    * `java.class.path` system property as well as the  current class loaders, recursively).
    *
-   * You can either inherit the entire outer classpath via `inheritEntireClasspath == true` or specify a whitelist
-   * of regexes for jars to keep. Additionally (in combination with both options) you can specify a blacklist of jars
-   * to be excluded. Note that the whitelist has a default list `ForClasspath.DefaultInheritClasspathWhitelist`.
+   * You can either inherit the entire outer classpath via `inheritEntireClasspath == true` or specify an 'includes list'
+   * of regexes for jars to keep. Additionally (in combination with both options) you can specify an 'excludes list' of jars
+   * to be excluded. Note that the 'includes list' has a default list `ForClasspath.DefaultInheritClasspathIncludes`.
    *
-   * Implementation note: the whitelist and blacklists use `String` as the list member type because `Regex` defines
+   * Implementation note: the includes and excludes lists use `String` as the list member type because `Regex` defines
    * equality etc. differently, which breaks common case class conventions.
    */
   case class ForClasspath(inheritClasspath: Boolean = false,
-                          inheritClasspathWhitelist: Seq[String] = ForClasspath.DefaultInheritClasspathWhitelist,
-                          inheritClasspathBlacklist: Seq[String] = Seq.empty,
+                          inheritClasspathIncludes: Seq[String] = ForClasspath.DefaultInheritClasspathIncludes,
+                          inheritClasspathExcludes: Seq[String] = Seq.empty,
                           dependencies: Seq[String] = Seq.empty,
                           resolvers: Seq[String] = Seq.empty)
 
   object ForClasspath {
-    val DefaultInheritClasspathWhitelist: Seq[String] = Seq(
+    val DefaultInheritClasspathIncludes: Seq[String] = Seq(
       "classes",
       ".*scala-repl-pp.*",
       ".*scala3-compiler_3.*",

@@ -18,15 +18,15 @@ object Config {
       replpp.Config.opts.predef((x, c) => c.copy(baseConfig = c.baseConfig.copy(predefFiles = c.baseConfig.predefFiles :+ x))),
       replpp.Config.opts.verbose((_, c) => c.copy(baseConfig = c.baseConfig.copy(verbose = true))),
       replpp.Config.opts.inheritClasspath((_, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(inheritClasspath = true)))),
-      replpp.Config.opts.classpathWhitelistEntry((x, c) => {
+      replpp.Config.opts.classpathIncludesEntry((x, c) => {
         val bc = c.baseConfig
         val cpc = bc.classpathConfig
-        c.copy(baseConfig = bc.copy(classpathConfig = cpc.copy(inheritClasspathWhitelist = cpc.inheritClasspathWhitelist :+ x)))
+        c.copy(baseConfig = bc.copy(classpathConfig = cpc.copy(inheritClasspathIncludes = cpc.inheritClasspathIncludes :+ x)))
       }),
-      replpp.Config.opts.classpathBlacklistEntry((x, c) => {
+      replpp.Config.opts.classpathExcludesEntry((x, c) => {
         val bc = c.baseConfig
         val cpc = bc.classpathConfig
-        c.copy(baseConfig = bc.copy(classpathConfig = cpc.copy(inheritClasspathBlacklist = cpc.inheritClasspathBlacklist :+ x)))
+        c.copy(baseConfig = bc.copy(classpathConfig = cpc.copy(inheritClasspathExcludes = cpc.inheritClasspathExcludes :+ x)))
       }),
       replpp.Config.opts.dependency((x, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(dependencies = c.baseConfig.classpathConfig.dependencies :+ x)))),
       replpp.Config.opts.repo((x, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(resolvers = c.baseConfig.classpathConfig.resolvers :+ x)))),
