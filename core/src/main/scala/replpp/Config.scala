@@ -45,7 +45,7 @@ case class Config(
     classpathConfig.inheritClasspathIncludes
       .filterNot(Config.ForClasspath.DefaultInheritClasspathIncludes.contains)
       .foreach { entry =>
-        add("--cpincludes", entry)
+        add("--cpinclude", entry)
       }
 
     classpathConfig.inheritClasspathExcludes.foreach { entry =>
