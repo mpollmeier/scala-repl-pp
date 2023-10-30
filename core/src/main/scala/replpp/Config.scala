@@ -11,8 +11,7 @@ case class Config(
   predefFiles: Seq[Path] = Nil,
   nocolors: Boolean = false,
   verbose: Boolean = false,
-  dependencies: Seq[String] = Seq.empty,
-  resolvers: Seq[String] = Seq.empty,
+  classpathConfig: Config.ForClasspath = Config.ForClasspath(),
   remoteJvmDebugEnabled: Boolean = false,
 
   // repl only
@@ -41,12 +40,23 @@ case class Config(
 
     if (nocolors) add("--nocolors")
     if (verbose) add("--verbose")
+    if (classpathConfig.inheritClasspath) add("--cpinherit")
 
-    dependencies.foreach { dependency =>
+    classpathConfig.inheritClasspathWhitelist
+      .filterNot(Config.ForClasspath.DefaultInheritClasspathWhitelist.contains)
+      .foreach { entry =>
+        add("--cpwhitelist", entry)
+      }
+
+    classpathConfig.inheritClasspathBlacklist.foreach { entry =>
+      add("--cpblacklist", entry)
+    }
+
+    classpathConfig.dependencies.foreach { dependency =>
       add("--dep", dependency)
     }
 
-    resolvers.foreach { resolver =>
+    classpathConfig.resolvers.foreach { resolver =>
       add("--repo", resolver)
     }
 
@@ -87,8 +97,11 @@ object Config {
       opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
       opts.nocolors((_, c) => c.copy(nocolors = true)),
       opts.verbose((_, c) => c.copy(verbose = true)),
-      opts.dependency((x, c) => c.copy(dependencies = c.dependencies :+ x)),
-      opts.repo((x, c) => c.copy(resolvers = c.resolvers :+ x)),
+      opts.inheritClasspath((_, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspath = true))),
+      opts.classpathWhitelistEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathWhitelist = c.classpathConfig.inheritClasspathWhitelist :+ x))),
+      opts.classpathBlacklistEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathBlacklist = c.classpathConfig.inheritClasspathBlacklist :+ x))),
+      opts.dependency((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(dependencies = c.classpathConfig.dependencies :+ x))),
+      opts.repo((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(resolvers = c.classpathConfig.resolvers :+ x))),
       opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
 
       note("REPL options"),
@@ -115,7 +128,7 @@ object Config {
     type Action[A, C] = (A, C) => C
 
     def predef[C](using builder: OParserBuilder[C])(action: Action[Path, C]) = {
-      builder.opt[Path]('p', "predef")
+      builder.opt[Path]("predef")
         .valueName("myScript.sc")
         .unbounded()
         .optional()
@@ -128,13 +141,13 @@ object Config {
     }
 
     def verbose[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
-      builder.opt[Unit]('v', "verbose")
+      builder.opt[Unit]("verbose")
         .action(action)
         .text("enable verbose output (predef, resolved dependency jars, ...)")
     }
 
     def dependency[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.opt[String]('d', "dep")
+      builder.opt[String]("dep")
         .valueName("com.michaelpollmeier:versionsort:1.0.7")
         .unbounded()
         .optional()
@@ -143,12 +156,34 @@ object Config {
     }
 
     def repo[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.opt[String]('r', "repo")
+      builder.opt[String]("repo")
         .valueName("https://repository.apache.org/content/groups/public/")
         .unbounded()
         .optional()
         .action(action)
         .text("additional repositories to resolve dependencies - may be passed multiple times")
+    }
+
+    def inheritClasspath[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
+      builder.opt[Unit]("cpinherit").text("inherit entire classpath (blacklist still applies!)").action(action)
+    }
+
+    def classpathWhitelistEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("cpwhitelist")
+        .valueName(".*scala-repl-pp.*")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("add classpath whitelist entry (regex) for jars inherited from parent classloader - may be passed multiple times")
+    }
+
+    def classpathBlacklistEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("cpblacklist")
+        .valueName(".*scala-repl-pp.*")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("add classpath blacklist entry (regex) for jars inherited from parent classloader - may be passed multiple times")
     }
 
     def remoteJvmDebug[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
@@ -204,5 +239,35 @@ object Config {
         .action(action)
         .text("key/value pair for main function in script - may be passed multiple times")
     }
+  }
+
+  /** Classpath configuration: specify additional dependencies via maven coordinates and resolvers, as well as
+   * configure the handling of the inherited classpath (i.e. how we handle the jars that we get from
+   * `java.class.path` system property as well as the  current class loaders, recursively).
+   *
+   * You can either inherit the entire outer classpath via `inheritEntireClasspath == true` or specify a whitelist
+   * of regexes for jars to keep. Additionally (in combination with both options) you can specify a blacklist of jars
+   * to be excluded. Note that the whitelist has a default list `ForClasspath.DefaultInheritClasspathWhitelist`.
+   *
+   * Implementation note: the whitelist and blacklists use `String` as the list member type because `Regex` defines
+   * equality etc. differently, which breaks common case class conventions.
+   */
+  case class ForClasspath(inheritClasspath: Boolean = false,
+                          inheritClasspathWhitelist: Seq[String] = ForClasspath.DefaultInheritClasspathWhitelist,
+                          inheritClasspathBlacklist: Seq[String] = Seq.empty,
+                          dependencies: Seq[String] = Seq.empty,
+                          resolvers: Seq[String] = Seq.empty)
+
+  object ForClasspath {
+    val DefaultInheritClasspathWhitelist: Seq[String] = Seq(
+      "classes",
+      ".*scala-repl-pp.*",
+      ".*scala3-compiler_3.*",
+      ".*scala3-interfaces-.*",
+      ".*scala3-library_3.*",
+      ".*scala-library.*",
+      ".*tasty-core_3.*",
+      ".*scala-asm.*"
+    )
   }
 }

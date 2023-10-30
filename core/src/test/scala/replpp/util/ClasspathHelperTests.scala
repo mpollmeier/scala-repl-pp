@@ -25,10 +25,10 @@ class ClasspathHelperTests extends AnyWordSpec with Matchers {
 
   "resolves dependencies" when {
     "declared in config" in {
-      val deps = ClasspathHelper.dependencyArtifacts(Config(dependencies = Seq(
+      val deps = ClasspathHelper.dependencyArtifacts(Config(classpathConfig = Config.ForClasspath(dependencies = Seq(
         "org.scala-lang:scala-library:2.13.10",
         "org.scala-lang::scala3-library:3.3.0",
-      )))
+      ))))
       deps.size shouldBe 2
 
       assert(deps.find(_.endsWith("scala3-library_3-3.3.0.jar")).isDefined)

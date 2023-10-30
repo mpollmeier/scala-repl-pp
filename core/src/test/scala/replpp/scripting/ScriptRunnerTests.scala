@@ -80,7 +80,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           s"""val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
              |os.write.over(os.Path(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-param:" + compareResult)
              |""".stripMargin,
-          adaptConfig = _.copy(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7"))
+          adaptConfig = _.copy(classpathConfig = Config.ForClasspath(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7")))
         )
       }.get shouldBe "iwashere-dependency-param:1"
     }

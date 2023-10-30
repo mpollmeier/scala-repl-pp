@@ -12,8 +12,9 @@ object ClasspathHelper {
   /**
    * Concatenates the classpath from multiple sources, each are required for different scenarios:
    * - `java.class.path` system property
-   * - dependency artifacts as passed via (command-line) configuration
    * - jars from current class loader (recursively)
+   * - dependency artifacts as passed via (command-line) configuration
+   * The exact behaviour regarding inherited classpath (java.class.path and outer classloader) can be configured via `Config.ForClasspath
    *
    * To have reproducible results, we order the classpath entries. This may interfere with the user's deliberate choice
    * of order, but since we need to concatenate the classpath from different sources, the user can't really depend on
@@ -29,26 +30,19 @@ object ClasspathHelper {
   protected[util] def createAsSeq(config: Config, quiet: Boolean = false): Seq[Path] = {
     val entries = Seq.newBuilder[Path]
 
-    val jarsToKeepFromInheritedClasspathRegex = Seq(
-      "classes",
-      ".*scala-repl-pp.*",
-      ".*scala3-compiler_3.*",
-      ".*scala3-interfaces-.*",
-      ".*scala3-library_3.*",
-      ".*scala-library.*",
-      ".*tasty-core_3.*",
-      ".*scala-asm.*"
-    ).map(_.r)
-
     // add select entries from out inherited classpath to the resulting classpath
     def addToEntriesMaybe(path: Path): Unit = {
+      val classpathConfig = config.classpathConfig
       val filename = path.getFileName.toString
-      if (jarsToKeepFromInheritedClasspathRegex.exists(_.matches(filename))) {
-        if (verboseEnabled(config) && !quiet) println(s"using jar from inherited classpath: $path")
+      val whitelisted = classpathConfig.inheritClasspath || classpathConfig.inheritClasspathWhitelist.exists(filename.matches(_))
+      val debugPrint = verboseEnabled(config) && !quiet
+      lazy val blacklisted = classpathConfig.inheritClasspathBlacklist.exists(filename.matches(_))
+      if (whitelisted && !blacklisted) {
+        if (debugPrint) println(s"using jar from inherited classpath: $path")
         entries.addOne(path)
+      } else {
+        if (debugPrint) println(s"exluding jar from inherited classpath (whitelisted=$whitelisted; blacklisted=$blacklisted: $path")
       }
-//      else // only for manual debugging
-//        println(s"X0 not adding: $filename")
     }
     System.getProperty("java.class.path").split(pathSeparator).map(Paths.get(_)).foreach(addToEntriesMaybe)
     jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(url => Paths.get(url.toURI)).foreach(addToEntriesMaybe)
@@ -69,8 +63,8 @@ object ClasspathHelper {
     }.getOrElse(Seq.empty)
     val allLines = allPredefLines(config) ++ scriptLines
 
-    val resolvers = config.resolvers ++ UsingDirectives.findResolvers(allLines)
-    val allDependencies = config.dependencies ++ UsingDirectives.findDeclaredDependencies(allLines)
+    val resolvers = config.classpathConfig.resolvers ++ UsingDirectives.findResolvers(allLines)
+    val allDependencies = config.classpathConfig.dependencies ++ UsingDirectives.findDeclaredDependencies(allLines)
     Dependencies.resolve(allDependencies, resolvers, verboseEnabled(config)).get
   }
 
