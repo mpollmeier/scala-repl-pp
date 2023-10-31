@@ -79,9 +79,9 @@ object Config {
 
   private def defaultGreeting = {
     val replppVersion = getClass.getPackage.getImplementationVersion
-    val scalaVersion = scala.util.Properties.versionNumberString
+    val scalacVersion = classOf[dotty.tools.dotc.Driver].getPackage.getImplementationVersion
     val javaVersion = sys.props("java.version")
-    s"Welcome to scala-repl-pp $replppVersion (Scala $scalaVersion, Java $javaVersion)"
+    s"Welcome to scala-repl-pp $replppVersion (Scala $scalacVersion, Java $javaVersion)"
   }
 
   def parse(args: Array[String]): Config = {
