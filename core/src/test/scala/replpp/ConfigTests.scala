@@ -16,13 +16,18 @@ class ConfigTests extends AnyWordSpec with Matchers {
     Config(nocolors = true).colors shouldBe Colors.BlackWhite
   }
 
-  "asJavaArgs (inverse of Config.parse) for ScriptingDriver" in {
+  "asJavaArgs (inverse of Config.parse)" in {
     val config = Config(
       predefFiles = List(Paths.get("/some/path/predefFile1"), Paths.get("/some/path/predefFile2")),
       nocolors = true,
       verbose = true,
-      dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7", "foo:bar:1.2.3"),
-      resolvers = Seq(apacheRepo, sonatypeRepo),
+      classpathConfig = Config.ForClasspath(
+        inheritClasspath = true,
+        inheritClasspathIncludes = Config.ForClasspath.DefaultInheritClasspathIncludes ++ Seq(".*include1", "include2.*"),
+        inheritClasspathExcludes = Seq(".*exclude1", "exclude2.*"),
+        dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7", "foo:bar:1.2.3"),
+        resolvers = Seq(apacheRepo, sonatypeRepo),
+      ),
       maxHeight = Some(10000),
       scriptFile = Some(Paths.get("/some/script.sc")),
       command = Some("someCommand"),
@@ -35,6 +40,11 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--predef", Paths.get("/some/path/predefFile2").toString,
       "--nocolors",
       "--verbose",
+      "--cpinherit",
+      "--cpinclude", ".*include1",
+      "--cpinclude", "include2.*",
+      "--cpexclude", ".*exclude1",
+      "--cpexclude", "exclude2.*",
       "--dep", "com.michaelpollmeier:versionsort:1.0.7",
       "--dep", "foo:bar:1.2.3",
       "--repo", apacheRepo,

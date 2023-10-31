@@ -45,6 +45,7 @@ Prerequisite: jdk11+
 - [Embed into your own project](#embed-into-your-own-project)
 - [Global predef file: `~/.srp.sc`](#global-predef-file-srpsc)
 - [Verbose mode](#verbose-mode)
+- [Inherited classpath](#inherited-classpath)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
@@ -56,8 +57,7 @@ Prerequisite: jdk11+
   * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
-- [Fineprint](#fineprint)
-  
+- [Fineprint](#fineprint)  
   
   
   
@@ -473,6 +473,9 @@ val res2: Int = 92
 ## Verbose mode
 If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
 To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
+
+## Inherited classpath
+srp comes with it's own classpath dependencies, and depending on how you invoke it there are different requirements for controlling the inherited classpath. E.g. if you add `srp` as a dependency to your project and want to simply use all dependencies from that same project, you can configure `--cpinherit` (or programatically `replpp.Config.classpathConfig.inheritClasspath`). You can also include or exclude dependencies via regex expressions.
 
 ## Parameters cheat sheet: the most important ones
 Here's only the most important ones - run `srp --help` for all parameters.
