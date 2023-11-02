@@ -415,7 +415,16 @@ curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
 # {"success":true,"stdout":"val baz: Int = 100\n",...}
 ```
 
-There's also has an asynchronous mode:
+Adding dependencies:
+```
+echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > foo.sc
+./srp-server --predef foo.sc
+
+curl http://localhost:8080/query-sync -X POST -d '{"query": "versionsort.VersionHelper.compare(\"1.0\", \"0.9\")"}'
+# {"success":true,"stdout":"val res0: Int = 1\n",...}%
+```
+
+srp-server can be used in an asynchronous mode:
 ```
 ./srp-server
 

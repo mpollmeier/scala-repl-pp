@@ -13,7 +13,7 @@ import scala.concurrent.duration.Duration
 class EmbeddedReplTests extends AnyWordSpec with Matchers {
 
   "execute commands synchronously" in {
-    val repl = new EmbeddedRepl()
+    val repl = new EmbeddedRepl(defaultCompilerArgs)
 
     repl.query("val x = 0").output.trim shouldBe "val x: Int = 0"
     repl.query("x + 1").output.trim     shouldBe "val res0: Int = 1"
@@ -22,11 +22,21 @@ class EmbeddedReplTests extends AnyWordSpec with Matchers {
   }
 
   "execute a command asynchronously" in {
-    val repl = new EmbeddedRepl()
+    val repl = new EmbeddedRepl(defaultCompilerArgs)
     val (uuid, futureResult) = repl.queryAsync("val x = 0")
     val result = Await.result(futureResult, Duration.Inf)
     result.trim shouldBe "val x: Int = 0"
     repl.shutdown()
+  }
+
+  val defaultCompilerArgs = {
+    val inheritedClasspath = System.getProperty("java.class.path")
+    Array(
+      "-classpath", inheritedClasspath,
+      "-explain", // verbose scalac error messages
+      "-deprecation",
+      "-color", "never"
+    )
   }
 
 }
