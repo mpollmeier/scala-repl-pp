@@ -52,7 +52,7 @@ object Config {
       help("help").text("Print this help text"),
     )
 
-    OParser.parse(parser, args, Config(replpp.Config()))
+    OParser.parse(parser, args, Config(replpp.Config(nocolors = true)))
       .getOrElse(throw new AssertionError("error while parsing commandline args - see errors above"))
   }
 }

@@ -4,7 +4,6 @@ import cask.util.Logger.Console.*
 import castor.Context.Simple.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import replpp.Config
 import requests.RequestFailedException
 import ujson.Value.Value
 
@@ -371,9 +370,18 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 }
 
 object Fixture {
+  val defaultCompilerArgs = {
+    val inheritedClasspath = System.getProperty("java.class.path")
+    Array(
+      "-classpath", inheritedClasspath,
+      "-explain", // verbose scalac error messages
+      "-deprecation",
+      "-color", "never"
+    )
+  }
 
   def apply[T](predefCode: String = "")(urlToResult: String => T): T = {
-    val embeddedRepl = new EmbeddedRepl(predefLines = predefCode.linesIterator)
+    val embeddedRepl = new EmbeddedRepl(defaultCompilerArgs, predefLines = predefCode.linesIterator)
 
     val host = "localhost"
     val port = 8081

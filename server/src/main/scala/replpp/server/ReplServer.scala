@@ -21,7 +21,9 @@ object ReplServer {
       password <- config.serverAuthPassword
     } yield UsernamePasswordAuth(username, password)
 
-    val embeddedRepl = new EmbeddedRepl(allPredefLines(config.baseConfig))
+    val predefLines = replpp.allPredefLines(config.baseConfig)
+    val compilerArgs = replpp.compilerArgs(config.baseConfig)
+    val embeddedRepl = new EmbeddedRepl(compilerArgs, predefLines)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()

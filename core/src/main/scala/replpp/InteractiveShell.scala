@@ -1,10 +1,7 @@
 package replpp
 
-import dotty.tools.Settings
-import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
 import dotty.tools.repl.State
 
-import java.lang.System.lineSeparator
 import scala.util.control.NoStackTrace
 
 object InteractiveShell {

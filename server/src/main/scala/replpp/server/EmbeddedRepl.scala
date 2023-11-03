@@ -1,34 +1,24 @@
 package replpp.server
 
-import dotty.tools.dotc.config.Printers.config
 import dotty.tools.repl.State
 import org.slf4j.{Logger, LoggerFactory}
 import replpp.Colors.BlackWhite
-import replpp.{Config, ReplDriverBase, pwd}
+import replpp.{ReplDriverBase, pwd}
 
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.UUID
-import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue, Semaphore}
+import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
-import scala.concurrent.impl.Promise
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
-import scala.util.{Failure, Success}
 
-class EmbeddedRepl(predefLines: IterableOnce[String] = Seq.empty) {
+class EmbeddedRepl(compilerArgs: Array[String], predefLines: IterableOnce[String] = Seq.empty) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
   private val replOutputStream = new ByteArrayOutputStream()
 
   private val replDriver: ReplDriver = {
-    val inheritedClasspath = System.getProperty("java.class.path")
-    val compilerArgs = Array(
-      "-classpath", inheritedClasspath,
-      "-explain", // verbose scalac error messages
-      "-deprecation",
-      "-color", "never"
-    )
     new ReplDriver(compilerArgs, new PrintStream(replOutputStream), classLoader = None)
   }
 
