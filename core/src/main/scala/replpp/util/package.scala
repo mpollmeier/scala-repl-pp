@@ -1,11 +1,11 @@
 package replpp
 
+import replpp.shaded.fansi
+
 import java.nio.file.{FileSystems, Files, Path}
 import scala.collection.immutable.Seq
 import scala.io.Source
-import scala.jdk.CollectionConverters.*
 import scala.util.{Try, Using}
-import replpp.shaded.fansi
 
 package object util {
 
@@ -41,5 +41,11 @@ package object util {
       case Colors.Default => color(value).render
     }
   }
+
+  /** Lookup the current terminal width - useful e.g. if you want to render something using the maximum space available.
+    * Uses jline-jna, which therefor needs to be in the repl's classpath, which is why it's listed in
+    * {{{replpp.Config.ForClasspath.DefaultInheritClasspathIncludes}}} */
+  def terminalWidth: Try[Int] =
+    Using(org.jline.terminal.TerminalBuilder.terminal)(_.getWidth)
 
 }
