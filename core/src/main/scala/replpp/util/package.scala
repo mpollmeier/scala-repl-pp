@@ -45,15 +45,7 @@ package object util {
   /** Lookup the current terminal width - useful e.g. if you want to render something using the maximum space available.
     * Uses jline-jna, which therefor needs to be in the repl's classpath, which is why it's listed in
     * {{{replpp.Config.ForClasspath.DefaultInheritClasspathIncludes}}} */
-  def terminalWidth: Try[Int] = {
-    Try {
-      if (scala.util.Properties.isLinux)
-        org.jline.terminal.impl.jna.linux.LinuxNativePty.current.getSize.getColumns
-      else if (scala.util.Properties.isMac)
-        org.jline.terminal.impl.jna.osx.OsXNativePty.current.getSize.getColumns
-      else
-      throw new NotImplementedError("terminal width lookup only supported for linux and mac for now")
-    }
-  }
+  def terminalWidth: Try[Int] =
+    Using(org.jline.terminal.TerminalBuilder.terminal)(_.getWidth)
 
 }
