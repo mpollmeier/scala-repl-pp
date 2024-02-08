@@ -267,7 +267,11 @@ object Config {
       ".*scala3-library_3.*",
       ".*scala-library.*",
       ".*tasty-core_3.*",
-      ".*scala-asm.*"
+      ".*scala-asm.*",
+
+      // for replpp.util.terminalWidth
+      ".*jline-terminal-.*",
+      ".*net.java.dev.jna.jna.*",
     )
   }
 }

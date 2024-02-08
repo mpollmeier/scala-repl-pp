@@ -1,14 +1,9 @@
 import replpp.util.{ClasspathHelper, linesFromFile}
 
 import java.io.File
-import java.io.File.pathSeparator
 import java.lang.System.lineSeparator
-import java.net.URL
 import java.nio.file.{Files, Path, Paths}
-import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.io.Source
-import scala.util.Using
 
 package object replpp {
   enum Colors { case BlackWhite, Default }
@@ -23,6 +18,7 @@ package object replpp {
 
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
+
   private[replpp] def DefaultPredefLines(using colors: Colors) = {
     val colorsImport = colors match {
       case Colors.BlackWhite => "replpp.Colors.BlackWhite"
@@ -33,6 +29,7 @@ package object replpp {
       s"given replpp.Colors = $colorsImport"
     )
   }
+
   private[replpp] def DefaultPredef(using Colors) = DefaultPredefLines.mkString(lineSeparator)
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
