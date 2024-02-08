@@ -31,6 +31,7 @@ Prerequisite: jdk11+
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Rendering of output](#rendering-of-output)
   * [Exiting the REPL](#exiting-the-repl)
+  * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
   * [Predef file(s) used in script](#predef-files-used-in-script)
@@ -58,7 +59,6 @@ Prerequisite: jdk11+
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)  
-  
   
   
 ## Benefits over / comparison with
@@ -241,6 +241,14 @@ Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c aga
 $
 ```
 Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
+
+### Looking up the current terminal width
+In case you want to adjust your output rendering to the available terminal size, you can look it up:
+
+```
+scala> replpp.util.terminalWidth
+val res0: util.Try[Int] = Success(value = 202)
+```
 
 ## Scripting
 
