@@ -192,7 +192,7 @@ Implementation note: srp uses [coursier](https://get-coursier.io/) to fetch the 
 
 ### Importing additional script files interactively
 ```
-echo 'val bar = foo' > myScript.sc
+echo 'val bar = "foo"' > myScript.sc
 
 srp
 
@@ -384,10 +384,18 @@ otherone.host=nexus.other.com
 The prefix is arbitrary and is only used to specify several credentials in a single file. srp uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
 ### Attach a debugger (remote jvm debug)
+For the REPL itself:
+```
+export JAVA_OPTS='-Xdebug -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y'
+srp
+unset JAVA_OPTS
+```
+Then attach your favorite IDE / debugger on port 5005. 
+
+If you want to debug a script, it's slightly different. Scripts are executed in a separate subprocess - just specify the following parameter (and make sure `JAVA_OPTS` isn't also set).
 ```
 srp --script myScript.sc --remoteJvmDebug
 ```
-Then attach your favorite IDE / debugger on port 5005. 
 
 ## Server mode
 Note: srp-server isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
