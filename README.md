@@ -208,6 +208,31 @@ You can specify the filename with relative or absolute paths:
 //> using file /path/to/myScript.sc
 ```
 
+### Adding classpath entries
+Prerequisite: create some .class files:
+```bash
+mkdir foo
+cd foo
+echo 'class Foo { def foo = 42 } ' > Foo.scala
+scalac Foo.scala
+cd ..
+```
+
+Now let's start the repl with those in the classpath:
+```bash
+srp --classpath foo
+
+scala> new Foo().foo
+val res0: Int = 42
+```
+
+For scripts you can use the `//> using classpath` directive:
+```bash
+echo '//> using classpath foo
+println(new Foo().foo)' > myScript.sc
+
+srp --script myScript.sc
+```
 
 ### Rendering of output
 

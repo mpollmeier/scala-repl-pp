@@ -47,20 +47,24 @@ object ClasspathHelper {
     System.getProperty("java.class.path").split(pathSeparator).map(Paths.get(_)).foreach(addToEntriesMaybe)
     jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(url => Paths.get(url.toURI)).foreach(addToEntriesMaybe)
 
-    val fromDependencies = dependencyArtifacts(config)
+    val scriptLines = config.scriptFile.map { path =>
+      Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
+    }.getOrElse(Seq.empty)
+
+    val fromDependencies = dependencyArtifacts(config, scriptLines)
     fromDependencies.foreach(entries.addOne)
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
+    val additionalEntries = config.classpathConfig.additionalClasspathEntries ++ UsingDirectives.findClasspathEntries(scriptLines)
+    additionalEntries.map(Paths.get(_)).foreach(entries.addOne)
+
     entries.result().sorted
   }
 
-  private[util] def dependencyArtifacts(config: Config): Seq[Path] = {
-    val scriptLines = config.scriptFile.map { path =>
-      Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
-    }.getOrElse(Seq.empty)
+  private[util] def dependencyArtifacts(config: Config, scriptLines: Seq[String]): Seq[Path] = {
     val allLines = allPredefLines(config) ++ scriptLines
 
     val resolvers = config.classpathConfig.resolvers ++ UsingDirectives.findResolvers(allLines)

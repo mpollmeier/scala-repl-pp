@@ -22,6 +22,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
       nocolors = true,
       verbose = true,
       classpathConfig = Config.ForClasspath(
+        additionalClasspathEntries = Seq("cp1", "../path/to/cp2"),
         inheritClasspath = true,
         inheritClasspathIncludes = Config.ForClasspath.DefaultInheritClasspathIncludes ++ Seq(".*include1", "include2.*"),
         inheritClasspathExcludes = Seq(".*exclude1", "exclude2.*"),
@@ -40,6 +41,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--predef", Paths.get("/some/path/predefFile2").toString,
       "--nocolors",
       "--verbose",
+      "--classpathEntry", "cp1",
+      "--classpathEntry", "../path/to/cp2",
       "--cpinherit",
       "--cpinclude", ".*include1",
       "--cpinclude", "include2.*",
