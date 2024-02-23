@@ -8,6 +8,7 @@ object UsingDirectives {
   val LibDirective      = s"$Prefix dep "
   val FileDirective     = s"$Prefix file "
   val ResolverDirective = s"$Prefix resolver"
+  val ClasspathDirective = s"$Prefix classpath"
 
   def findImportedFilesRecursively(path: Path, visited: Set[Path] = Set.empty): Seq[Path] = {
     val rootDir: Path =
@@ -45,6 +46,9 @@ object UsingDirectives {
 
   def findResolvers(lines: IterableOnce[String]): Seq[String] =
     scanFor(ResolverDirective, lines)
+
+  def findClasspathEntries(lines: IterableOnce[String]): Seq[String] =
+    scanFor(ClasspathDirective, lines)
 
   private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {
     lines

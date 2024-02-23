@@ -78,4 +78,18 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
     results should not contain "https://commented.out/repo"
   }
 
+  "find declared classpath entries" in {
+    val source =
+      """
+        |//> using classpath /path/to/cp1
+        |//> using classpath ../path/to/cp2
+        |// //> using classpath cp3
+        |""".stripMargin
+
+    val results = UsingDirectives.findClasspathEntries(source.linesIterator)
+    results should contain("/path/to/cp1")
+    results should contain("../path/to/cp2")
+    results should not contain "cp3"
+  }
+
 }

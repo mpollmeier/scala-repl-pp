@@ -40,6 +40,11 @@ case class Config(
 
     if (nocolors) add("--nocolors")
     if (verbose) add("--verbose")
+
+    classpathConfig.additionalClasspathEntries.foreach { resolver =>
+      add("--classpathEntry", resolver)
+    }
+
     if (classpathConfig.inheritClasspath) add("--cpinherit")
 
     classpathConfig.inheritClasspathIncludes
@@ -91,12 +96,13 @@ object Config {
 
   lazy val parser = {
     given builder: OParserBuilder[Config] = OParser.builder[Config]
-    import builder._
+    import builder.*
     OParser.sequence(
       programName("scala-repl-pp"),
       opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
       opts.nocolors((_, c) => c.copy(nocolors = true)),
       opts.verbose((_, c) => c.copy(verbose = true)),
+      opts.classpathEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(additionalClasspathEntries = c.classpathConfig.additionalClasspathEntries :+ x))),
       opts.inheritClasspath((_, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspath = true))),
       opts.classpathIncludesEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathIncludes = c.classpathConfig.inheritClasspathIncludes :+ x))),
       opts.classpathExcludesEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(inheritClasspathExcludes = c.classpathConfig.inheritClasspathExcludes :+ x))),
@@ -162,6 +168,15 @@ object Config {
         .optional()
         .action(action)
         .text("additional repositories to resolve dependencies - may be passed multiple times")
+    }
+
+    def classpathEntry[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("classpathEntry")
+        .valueName("path/to/classpath")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("additional classpath entries - may be passed multiple times")
     }
 
     def inheritClasspath[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
@@ -252,11 +267,13 @@ object Config {
    * Implementation note: the includes and excludes lists use `String` as the list member type because `Regex` defines
    * equality etc. differently, which breaks common case class conventions.
    */
-  case class ForClasspath(inheritClasspath: Boolean = false,
+  case class ForClasspath(additionalClasspathEntries: Seq[String] = Seq.empty,
+                          inheritClasspath: Boolean = false,
                           inheritClasspathIncludes: Seq[String] = ForClasspath.DefaultInheritClasspathIncludes,
                           inheritClasspathExcludes: Seq[String] = Seq.empty,
                           dependencies: Seq[String] = Seq.empty,
                           resolvers: Seq[String] = Seq.empty)
+
 
   object ForClasspath {
     val DefaultInheritClasspathIncludes: Seq[String] = Seq(
