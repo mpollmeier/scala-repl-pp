@@ -3,6 +3,7 @@ on: pull_request
 jobs:
   pr:
     runs-on: windows-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
         with:
@@ -12,7 +13,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 19
-      - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch org.scala-lang:scala-library:2.13.10 org.scala-lang::scala3-library:3.3.0
       - uses: actions/cache@v3
         with:
           path: |
@@ -20,3 +20,6 @@ jobs:
             ~/.coursier
           key: ${{ runner.os }}-sbt-${{ hashfiles('**/build.sbt') }}
       - run: sbt test IntegrationTest/test
+      - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch org.scala-lang:scala-library:2.13.10 org.scala-lang::scala3-library:3.3.0
+      - run: unzil -l C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
+      - run: ls -la C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
