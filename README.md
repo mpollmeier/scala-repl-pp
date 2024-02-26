@@ -220,7 +220,7 @@ cd ..
 
 Now let's start the repl with those in the classpath:
 ```bash
-srp --classpath foo
+srp --classpathEntry foo
 
 scala> new Foo().foo
 val res0: Int = 42
