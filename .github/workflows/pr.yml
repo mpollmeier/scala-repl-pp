@@ -23,6 +23,6 @@ jobs:
         continue-on-error: true
       - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch io.shiftleft:overflowdb-core:1.171
         continue-on-error: true
-      - run: unzil -l C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
+      - run: dir C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
         continue-on-error: true
-      - run: ls -la C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
+      - run: Get-ZipEntry C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
