@@ -2,10 +2,7 @@ name: pr
 on: pull_request
 jobs:
   pr:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -15,6 +12,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 19
+      - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch org.scala-lang:scala-library:2.13.10 org.scala-lang::scala3-library:3.3.0
       - uses: actions/cache@v3
         with:
           path: |
