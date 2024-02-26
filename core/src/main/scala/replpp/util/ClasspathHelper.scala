@@ -58,7 +58,8 @@ object ClasspathHelper {
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
-    val additionalEntries = config.classpathConfig.additionalClasspathEntries ++ UsingDirectives.findClasspathEntries(scriptLines)
+    val allLines = allPredefLines(config) ++ scriptLines
+    val additionalEntries = config.classpathConfig.additionalClasspathEntries ++ UsingDirectives.findClasspathEntries(allLines)
     additionalEntries.map(Paths.get(_)).foreach(entries.addOne)
 
     entries.result().sorted
