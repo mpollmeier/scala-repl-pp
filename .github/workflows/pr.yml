@@ -23,9 +23,13 @@ jobs:
         continue-on-error: true
       - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch org.scala-lang:scala-library:2.13.10 org.scala-lang::scala3-library:3.3.0
         continue-on-error: true
+      - run: java -jar C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar fetch io.shiftleft:overflowdb-core:1.171
+        continue-on-error: true
       - run: dir C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
         continue-on-error: true
       - run: jar -tf C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar
         continue-on-error: true
-      - run: Expand-Archive C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar -DestinationPath C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar/unzip/ -force
+      - run: Expand-Archive C:\Users\runneradmin\.cache\scala-repl-pp\coursier.jar -DestinationPath C:\Users\runneradmin\.cache\scala-repl-pp\coursier-unzipped -force
+        continue-on-error: true
+      - run: sbt test IntegrationTest/test
         continue-on-error: true
