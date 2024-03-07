@@ -30,7 +30,7 @@ package object util {
   }
 
   def readFileFromZip(zipFile: Path, fileName: String): Try[Array[Byte]] = {
-    Using(FileSystems.newFileSystem(zipFile, null)) { fileSystem =>
+    Using(FileSystems.newFileSystem(zipFile)) { fileSystem =>
       Files.readAllBytes(fileSystem.getPath(fileName))
     }
   }

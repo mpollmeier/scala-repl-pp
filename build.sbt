@@ -27,6 +27,10 @@ lazy val core = project.in(file("core"))
     executableScriptName := "srp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.jline" % "jansi" % "3.25.1",
+      "org.jline" % "jline-terminal-jansi" % "3.25.1",
+      "org.jline" % "jline-terminal-jna" % "3.25.1",
+      "org.jline" % "jline-terminal-ffm" % "3.25.1",
     ),
     assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
   )
@@ -56,11 +60,11 @@ ThisBuild / libraryDependencies ++= Seq(
 
 ThisBuild / javacOptions ++= Seq(
   "-g", //debug symbols
-  "--release", "11"
+  // "--release", "11"
 )
 
 ThisBuild / scalacOptions ++= Seq(
-  "-release", "11",
+  // "-release", "11",
   "-deprecation",
   "-feature",
 )
