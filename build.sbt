@@ -27,6 +27,7 @@ lazy val core = project.in(file("core"))
     executableScriptName := "srp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
     ),
     assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
   )
@@ -43,7 +44,6 @@ lazy val server = project.in(file("server"))
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
-      "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
