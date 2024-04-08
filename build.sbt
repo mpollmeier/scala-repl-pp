@@ -44,7 +44,7 @@ lazy val server = project.in(file("server"))
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
-      "com.lihaoyi"   %% "requests"     % "0.8.0" % Test,
+      "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
   )
