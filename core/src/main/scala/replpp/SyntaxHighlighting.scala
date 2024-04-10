@@ -15,9 +15,10 @@ import dotty.tools.dotc.util.SourceFile
 
 import java.util.Arrays
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC6/compiler/src/dotty/tools/dotc/printing/SyntaxHighlighting.scala * and adapted for our needs
-  *
-  * This object provides functions for syntax highlighting in the REPL */
+/** Based on https://github.com/lampepfl/dotty/blob/3.3.3/compiler/src/dotty/tools/dotc/printing/SyntaxHighlighting.scala
+ * and adapted for our needs
+ *
+ * This object provides functions for syntax highlighting in the REPL */
 object SyntaxHighlighting {
 
   /** if true, log erroneous positions being highlighted */
@@ -84,8 +85,8 @@ object SyntaxHighlighting {
         }
       }
 
-      for (span <- scanner.commentSpans)
-        highlightPosition(span, CommentColor)
+      for (comment <- scanner.comments)
+        highlightPosition(comment.span, CommentColor)
 
       object TreeHighlighter extends untpd.UntypedTreeTraverser {
         import untpd._
