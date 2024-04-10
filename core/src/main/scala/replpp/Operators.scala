@@ -68,7 +68,7 @@ object Operators {
      * This is to ensure we get the same output as we would get on the REPL (apart from the list-unwrapping).
      */
     private def valueAsString: String = {
-      val topLevelListTypeMaybe: Option[Iterator[_]] =
+      val topLevelListTypeMaybe: Option[Iterator[?]] =
         value match {
           case iter: IterableOnce[_] => Some(iter.iterator)
           case iter: java.lang.Iterable[_] => Some(iter.iterator.asScala)

@@ -8,12 +8,12 @@ import dotty.tools.repl.AbstractFileClassLoader
 import Contexts.*, Denotations.*, Flags.*, NameOps.*, StdNames.*, Symbols.*
 import printing.ReplPrinter
 import reporting.Diagnostic
-import transform.ValueClasses
 import util.StackTraceOps.*
 
+import scala.compiletime.uninitialized
 import scala.util.control.NonFatal
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/Rendering.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/repl/Rendering.scala
  *
  * This rendering object uses `ClassLoader`s to accomplish crossing the 4th
  *  wall (i.e. fetching back values from the compiled class files put into a
@@ -25,12 +25,12 @@ import scala.util.control.NonFatal
  */
 private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Option[ClassLoader] = None)(using colors: Colors):
 
-  import Rendering._
+  import Rendering.*
 
-  var myClassLoader: AbstractFileClassLoader = _
+  var myClassLoader: AbstractFileClassLoader = uninitialized
 
   /** (value, maxElements, maxCharacters) => String */
-  var myReplStringOf: (Object, Int, Int) => String = _
+  var myReplStringOf: (Object, Int, Int) => String = uninitialized
 
   /** Class loader used to load compiled code */
   private[replpp] def classLoader()(using Context) =
@@ -116,7 +116,7 @@ private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Optio
    * @param value underlying value
    */
   private def rewrapValueClass(sym: Symbol, value: Object)(using Context): Option[Object] =
-    if ValueClasses.isDerivedValueClass(sym) then
+    if sym.isDerivedValueClass then
       val valueClass = Class.forName(sym.binaryClassName, true, classLoader())
       valueClass.getConstructors.headOption.map(_.newInstance(value))
     else

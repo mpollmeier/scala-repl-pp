@@ -4,18 +4,18 @@ import scala.language.unsafeNulls
 
 import dotty.tools.dotc.CompilationUnit
 import dotty.tools.dotc.ast.untpd
-import dotty.tools.dotc.core.Contexts._
-import dotty.tools.dotc.core.StdNames._
+import dotty.tools.dotc.core.Contexts.*
+import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.parsing.Parsers.Parser
 import dotty.tools.dotc.parsing.Scanners.Scanner
-import dotty.tools.dotc.parsing.Tokens._
+import dotty.tools.dotc.parsing.Tokens.*
 import dotty.tools.dotc.reporting.Reporter
 import dotty.tools.dotc.util.Spans.Span
 import dotty.tools.dotc.util.SourceFile
 
 import java.util.Arrays
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.3.3/compiler/src/dotty/tools/dotc/printing/SyntaxHighlighting.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/dotc/printing/SyntaxHighlighting.scala
  * and adapted for our needs
  *
  * This object provides functions for syntax highlighting in the REPL */
@@ -89,7 +89,7 @@ object SyntaxHighlighting {
         highlightPosition(comment.span, CommentColor)
 
       object TreeHighlighter extends untpd.UntypedTreeTraverser {
-        import untpd._
+        import untpd.*
 
         def ignored(tree: NameTree) = {
           val name = tree.name.toTermName
