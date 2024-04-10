@@ -285,6 +285,7 @@ object Config {
       ".*scala-library.*",
       ".*tasty-core_3.*",
       ".*scala-asm.*",
+      ".*compiler-interface.*",
 
       // for replpp.util.terminalWidth
       ".*jline-terminal-.*",

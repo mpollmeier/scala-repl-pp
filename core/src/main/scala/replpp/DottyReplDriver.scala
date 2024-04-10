@@ -1,15 +1,17 @@
 package replpp
 
 import scala.language.unsafeNulls
-import java.io.{PrintStream, File as JFile}
+
+import java.io.{File => JFile, PrintStream}
 import java.nio.charset.StandardCharsets
+
 import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.{tpd, untpd}
 import dotty.tools.dotc.config.CommandLineParser.tokenize
 import dotty.tools.dotc.config.Properties.{javaVersion, javaVmName, simpleVersionString}
 import dotty.tools.dotc.core.Contexts.*
 import dotty.tools.dotc.core.Decorators.*
-import dotty.tools.dotc.core.Phases.{typerPhase, unfusedPhases}
+import dotty.tools.dotc.core.Phases.{unfusedPhases, typerPhase}
 import dotty.tools.dotc.core.Denotations.Denotation
 import dotty.tools.dotc.core.Flags.*
 import dotty.tools.dotc.core.Mode
@@ -22,25 +24,29 @@ import dotty.tools.dotc.core.Symbols.{Symbol, defn}
 import dotty.tools.dotc.interfaces
 import dotty.tools.dotc.interactive.Completion
 import dotty.tools.dotc.printing.SyntaxHighlighting
-import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, StoreReporter, UniqueMessagePositions}
+import dotty.tools.dotc.reporting.{ConsoleReporter, StoreReporter}
+import dotty.tools.dotc.reporting.Diagnostic
 import dotty.tools.dotc.util.Spans.Span
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
 import dotty.tools.dotc.{CompilationUnit, Driver}
 import dotty.tools.dotc.config.CompilerCommand
 import dotty.tools.io.*
 import dotty.tools.repl.*
+import dotty.tools.repl.Rendering.showUser
 import dotty.tools.runner.ScalaClassLoader.*
 import org.jline.reader.*
-import DottyRandomStuff.newStoreReporter
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/ReplDriver.scala
+import DottyRandomStuff.newStoreReporter
+
+/** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
 class DottyReplDriver(settings: Array[String],
@@ -92,10 +98,10 @@ class DottyReplDriver(settings: Array[String],
     rendering = new Rendering(maxHeight, classLoader)
   }
 
-  private var rootCtx: Context = _
-  private var shouldStart: Boolean = _
-  private var compiler: ReplCompiler = _
-  protected var rendering: Rendering = _
+  private var rootCtx: Context = uninitialized
+  private var shouldStart: Boolean = uninitialized
+  private var compiler: ReplCompiler = uninitialized
+  protected var rendering: Rendering = uninitialized
 
   // initialize the REPL session as part of the constructor so that once `run`
   // is called, we're in business
@@ -227,10 +233,11 @@ class DottyReplDriver(settings: Array[String],
       given state: State = newRun(state0)
       compiler
         .typeCheck(expr, errorsAllowed = true)
-        .map { tree =>
+        .map { (untpdTree, tpdTree) =>
           val file = SourceFile.virtual("<completions>", expr, maybeIncomplete = true)
           val unit = CompilationUnit(file)(using state.context)
-          unit.tpdTree = tree
+          unit.untpdTree = untpdTree
+          unit.tpdTree = tpdTree
           given Context = state.context.fresh.setCompilationUnit(unit)
           val srcPos = SourcePosition(file, Span(cursor))
           val completions = try Completion.completions(srcPos)._2 catch case NonFatal(_) => Nil

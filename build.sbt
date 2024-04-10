@@ -2,7 +2,7 @@ name := "root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.4.1"
 
 lazy val ScalaCollectionCompatVersion = "2.11.0"
 lazy val ScalaTestVersion = "3.2.15"
@@ -27,7 +27,7 @@ lazy val core = project.in(file("core"))
     executableScriptName := "srp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-      "org.slf4j"      % "slf4j-simple" % "2.0.7" % Optional,
+      "org.slf4j"       % "slf4j-simple" % "2.0.7" % Optional,
     ),
     assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
   )

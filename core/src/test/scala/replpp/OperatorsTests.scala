@@ -39,7 +39,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
 
     "using IterableOnce" in {
-      val values: IterableOnce[_] = Seq("foo", PrettyPrintable("two", 2))
+      val values: IterableOnce[?] = Seq("foo", PrettyPrintable("two", 2))
       withTempFile { path =>
         values #> path
         "-----" #>> path
@@ -54,7 +54,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
 
     "using java.lang.Iterable" in {
-      val values: java.lang.Iterable[_] = Seq("foo", PrettyPrintable("two", 2)).asJava
+      val values: java.lang.Iterable[?] = Seq("foo", PrettyPrintable("two", 2)).asJava
       withTempFile { path =>
         values #> path
         "-----" #>> path
@@ -69,7 +69,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
 
     "using Array" in {
-      val values: Array[_] = Seq("foo", PrettyPrintable("two", 2)).toArray
+      val values: Array[?] = Seq("foo", PrettyPrintable("two", 2)).toArray
       withTempFile { path =>
         values #> path
         "-----" #>> path
@@ -84,7 +84,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
 
     "using Iterator" in {
-      def values: Iterator[_] = Seq("foo", PrettyPrintable("two", 2)).iterator
+      def values: Iterator[?] = Seq("foo", PrettyPrintable("two", 2)).iterator
       withTempFile { path =>
         values #> path
         "-----" #>> path
@@ -99,7 +99,7 @@ class OperatorsTests extends AnyWordSpec with Matchers {
     }
 
     "using java.util.Iterator" in {
-      def values: java.util.Iterator[_] = Seq("foo", PrettyPrintable("two", 2)).asJava.iterator()
+      def values: java.util.Iterator[?] = Seq("foo", PrettyPrintable("two", 2)).asJava.iterator()
       withTempFile { path =>
         values #> path
         "-----" #>> path
@@ -132,11 +132,11 @@ class OperatorsTests extends AnyWordSpec with Matchers {
       "using list types" when {
         val values = Seq("foo", PrettyPrintable("two", 2))
         Seq(
-          ("IterableOnce", values: IterableOnce[_]),
-          ("java.lang.Iterable", values.asJava: java.lang.Iterable[_]),
-          ("Array", values.toArray: Array[_]),
-          ("Iterator", values.iterator: Iterator[_]),
-          ("java.util.Iterator", values.asJava.iterator: java.util.Iterator[_]),
+          ("IterableOnce", values: IterableOnce[?]),
+          ("java.lang.Iterable", values.asJava: java.lang.Iterable[?]),
+          ("Array", values.toArray: Array[?]),
+          ("Iterator", values.iterator: Iterator[?]),
+          ("java.util.Iterator", values.asJava.iterator: java.util.Iterator[?]),
         ).foreach { case (listType, list) =>
           listType in {
             val result = list #| "cat"

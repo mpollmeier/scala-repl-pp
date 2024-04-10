@@ -21,7 +21,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.3.0-RC6/compiler/src/dotty/tools/repl/JLineTerminal.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/repl/JLineTerminal.scala
   * and adapted for our needs */
 class JLineTerminal extends java.io.Closeable {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -81,8 +81,8 @@ class JLineTerminal extends java.io.Closeable {
   def readLine(
     completer: Completer // provide auto-completions
   )(using Context): String = {
-    import LineReader.Option._
-    import LineReader._
+    import LineReader.Option.*
+    import LineReader.*
     val userHome = System.getProperty("user.home")
     val lineReader = LineReaderBuilder
       .builder()
