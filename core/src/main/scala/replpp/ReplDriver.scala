@@ -3,6 +3,7 @@ package replpp
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.repl.*
+import dotty.tools.repl.Rendering.showUser
 import org.jline.reader.*
 
 import java.io.PrintStream
@@ -61,11 +62,42 @@ class ReplDriver(args: Array[String],
     * our input. That way, we import the file in-place, while preserving line numbers for user feedback.  */
   private def readLine(terminal: replpp.JLineTerminal, state: State): IterableOnce[String] = {
     given Context = state.context
-    val completer: Completer = { (_, line, candidates) =>
-      val comps = completions(line.cursor, line.line, state)
-      candidates.addAll(comps.asJava)
+    val completer: Completer = { (lineReader, line, candidates) =>
+      def makeCandidate(label: String) = {
+        new Candidate(
+          /* value    = */ label,
+          /* displ    = */ stripBackTicks(label), // displayed value
+          /* group    = */ null,  // can be used to group completions together
+          /* descr    = */ null,  // TODO use for documentation?
+          /* suffix   = */ null,
+          /* key      = */ null,
+          /* complete = */ false  // if true adds space when completing
+        )
+      }
+      val comps = completionsWithSignatures(line.cursor, line.line, state)
+      candidates.addAll(comps.map(_.label).distinct.map(makeCandidate).asJava)
+      val lineWord = line.word()
+      comps.filter(c => c.label == lineWord && c.symbols.nonEmpty) match
+        case Nil =>
+        case exachMatches =>
+          val terminal = lineReader.nn.getTerminal
+          lineReader.callWidget(LineReader.CLEAR)
+          terminal.writer.println()
+          exachMatches.foreach: exact =>
+            exact.symbols.foreach: sym =>
+              terminal.writer.println(SyntaxHighlighting.highlight(sym.showUser))
+          lineReader.callWidget(LineReader.REDRAW_LINE)
+          lineReader.callWidget(LineReader.REDISPLAY)
+          terminal.flush()
     }
+
     terminal.readLine(completer).linesIterator
   }
+
+  private def stripBackTicks(label: String) =
+    if label.startsWith("`") && label.endsWith("`") then
+      label.drop(1).dropRight(1)
+    else
+      label
 
 }

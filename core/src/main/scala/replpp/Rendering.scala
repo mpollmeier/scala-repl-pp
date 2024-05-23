@@ -13,7 +13,7 @@ import util.StackTraceOps.*
 import scala.compiletime.uninitialized
 import scala.util.control.NonFatal
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/repl/Rendering.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/Rendering.scala
  *
  * This rendering object uses `ClassLoader`s to accomplish crossing the 4th
  *  wall (i.e. fetching back values from the compiled class files put into a
@@ -76,13 +76,18 @@ private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Optio
     }
 
   /** Return a String representation of a value we got from `classLoader()`. */
-  private[replpp] def replStringOf(value: Object)(using Context): String =
+  private[replpp] def replStringOf(sym: Symbol, value: Object)(using Context): String =
     assert(myReplStringOf != null,
       "replStringOf should only be called on values creating using `classLoader()`, but `classLoader()` has not been called so far")
     val maxPrintElements = ctx.settings.VreplMaxPrintElements.valueIn(ctx.settingsState)
     val maxPrintCharacters = ctx.settings.VreplMaxPrintCharacters.valueIn(ctx.settingsState)
-    val res = myReplStringOf(value, maxPrintElements, maxPrintCharacters)
-    if res == null then "null // non-null reference has null-valued toString" else res
+    // stringOf returns null if value.toString returns null. Show some text as a fallback.
+    def fallback = s"""null // result of "${sym.name}.toString" is null"""
+    if value == null then "null" else
+      myReplStringOf(value, maxPrintElements, maxPrintCharacters) match
+        case null => fallback
+        case res  => res
+    end if
 
   /** Load the value of the symbol using reflection.
    *
@@ -92,23 +97,17 @@ private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Optio
     val objectName = sym.owner.fullName.encode.toString.stripSuffix("$")
     val resObj: Class[?] = Class.forName(objectName, true, classLoader())
     val symValue = resObj
-      .getDeclaredMethods
-      .find(_.getName == sym.name.encode.toString)
-      .flatMap { method =>
-        val invocationResult = method.invoke(null)
-        rewrapValueClass(sym.info.classSymbol, invocationResult)
-      }
-    val valueString = symValue.map(replStringOf)
+      .getDeclaredMethods.find(_.getName == sym.name.encode.toString)
+      .flatMap(result => rewrapValueClass(sym.info.classSymbol, result.invoke(null)))
+    symValue
+      .filter(_ => sym.is(Flags.Method) || sym.info != defn.UnitType)
+      .map(value => stripReplPrefix(replStringOf(sym, value)))
 
-    if (!sym.is(Flags.Method) && sym.info == defn.UnitType)
-      None
+  private def stripReplPrefix(s: String): String =
+    if (s.startsWith(REPL_WRAPPER_NAME_PREFIX))
+      s.drop(REPL_WRAPPER_NAME_PREFIX.length).dropWhile(c => c.isDigit || c == '$')
     else
-      valueString.map { s =>
-        if (s.startsWith(REPL_WRAPPER_NAME_PREFIX))
-          s.drop(REPL_WRAPPER_NAME_PREFIX.length).dropWhile(c => c.isDigit || c == '$')
-        else
-          s
-      }
+      s
 
   /** Rewrap value class to their Wrapper class
    *
