@@ -372,8 +372,11 @@ test-main-withargs.sc
 ```bash
 srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
-Note that on windows the parameters need to be triple-quoted:
+If your parameter value contains whitespace, just wrap it quotes so that your shell doesn't split it up, e.g. `--param "text=value with whitespace"`
+
+Note that on windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
+
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
