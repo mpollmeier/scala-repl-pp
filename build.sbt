@@ -5,7 +5,7 @@ ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.4.2"
 
 lazy val ScalaCollectionCompatVersion = "2.11.0"
-lazy val ScalaTestVersion = "3.2.15"
+lazy val ScalaTestVersion = "3.2.18"
 
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
