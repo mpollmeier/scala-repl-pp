@@ -44,10 +44,9 @@ object NonForkingScriptRunner {
     val predefPlusScriptFileTmp = Files.createTempFile("scala-repl-pp-script-with-predef", ".sc")
     Files.writeString(predefPlusScriptFileTmp, scriptContent)
 
-    val compilerArgs = replpp.compilerArgs(config) :+ "-nowarn"
     val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(
-      compilerArgs = compilerArgs,
+      compilerArgs = replpp.compilerArgs(config) :+ "-nowarn",
       predefFiles = allPredefFiles(config),
       scriptFile = predefPlusScriptFileTmp,
       scriptArgs = scriptArgs.toArray,
