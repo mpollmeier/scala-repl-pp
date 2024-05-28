@@ -44,6 +44,7 @@ package object replpp {
     compilerArgs += "-explain" // verbose scalac error messages
     compilerArgs += "-deprecation"
     if (config.nocolors) compilerArgs ++= Array("-color", "never")
+    compilerArgs ++= config.predefFiles.map(_.toAbsolutePath.toString)
 
     compilerArgs.result()
   }
@@ -60,13 +61,13 @@ package object replpp {
       val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
       allPredefFiles ++= importedFiles
     }
-    
+
     // the script (if any) might also reference additional files via `using` directive
     config.scriptFile.foreach { file =>
       val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
       allPredefFiles ++= importedFiles
     }
-    
+
     allPredefFiles.toSeq.sorted
   }
 

@@ -49,7 +49,7 @@ import DottyRandomStuff.newStoreReporter
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
-class DottyReplDriver(settings: Array[String],
+class DottyReplDriver(compilerArgs: Array[String],
                       out: PrintStream,
                       maxHeight: Option[Int],
                       classLoader: Option[ClassLoader])(using Colors) extends Driver:
@@ -64,7 +64,7 @@ class DottyReplDriver(settings: Array[String],
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
     rootCtx.setSetting(rootCtx.settings.YcookComments, true)
     rootCtx.setSetting(rootCtx.settings.YreadComments, true)
-    setupRootCtx(this.settings ++ settings, rootCtx)
+    setupRootCtx(this.compilerArgs ++ settings, rootCtx)
   }
 
   private def setupRootCtx(settings: Array[String], rootCtx: Context) = {
