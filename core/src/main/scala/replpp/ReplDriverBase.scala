@@ -1,6 +1,5 @@
 package replpp
 
-import dotty.tools.dotc.core.Contexts
 import dotty.tools.repl.*
 import replpp.shaded.fansi
 

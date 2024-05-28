@@ -21,7 +21,6 @@ import scala.language.unsafeNulls
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
 class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) extends Driver {
-
   if (verbose) {
     println(s"predefFiles: ${predefFiles.mkString(";")}")
     println(s"full script content (including wrapper code) -> $scriptFile:")
@@ -48,7 +47,7 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
-        Some(ScriptingException(s"Errors encountered during compilation$msgAddonMaybe"))
+        Some(CompilerError(s"Errors encountered during compilation$msgAddonMaybe"))
       } else {
         val classpath = s"${outDir.toAbsolutePath}$pathSeparator${ctx.settings.classpath.value}"
         val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
@@ -73,4 +72,4 @@ object ScriptingDriver {
   val MainClassName  = "ScalaReplPP"
   val MainMethodName = "main"
 }
-case class ScriptingException(msg: String) extends RuntimeException(msg)
+case class CompilerError(msg: String) extends RuntimeException(msg)
