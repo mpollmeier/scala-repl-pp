@@ -8,7 +8,7 @@ import replpp.util.deleteRecursively
 import replpp.scripting.ScriptingDriver.*
 
 import java.io.File.pathSeparator
-import java.lang.reflect.{Method, Modifier}
+import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
@@ -20,9 +20,10 @@ import scala.language.unsafeNulls
   * Main difference: we don't (need to) recursively look for main method entrypoints in the entire classpath,
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
-class ScriptingDriver(compilerArgs: Array[String], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) extends Driver {
+class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) extends Driver {
 
   if (verbose) {
+    println(s"predefFiles: ${predefFiles.mkString(";")}")
     println(s"full script content (including wrapper code) -> $scriptFile:")
     println(Files.readString(scriptFile))
     println(s"script arguments: ${scriptArgs.mkString(",")}")
@@ -30,7 +31,8 @@ class ScriptingDriver(compilerArgs: Array[String], scriptFile: Path, scriptArgs:
   }
 
   def compileAndRun(): Option[Throwable] = {
-    setup(compilerArgs :+ scriptFile.toAbsolutePath.toString, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
+    val inputFiles = (scriptFile +: predefFiles).map(_.toAbsolutePath.toString).toArray
+    setup(compilerArgs ++ inputFiles, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
       val outDir = Files.createTempDirectory("scala3-scripting")
 
       given Context = {

@@ -1,12 +1,8 @@
 package replpp.scripting
 
-import java.util.stream.Collectors
-import replpp.Config
-import replpp.allPredefCode
+import replpp.{Config, allPredefFiles}
 
 import java.nio.file.Files
-import scala.collection.immutable.{AbstractSeq, LinearSeq}
-import scala.jdk.CollectionConverters.*
 
 /**
   * Main entrypoint for ScriptingDriver, i.e. it takes commandline arguments and executes a script on the current JVM. 
@@ -43,9 +39,8 @@ object NonForkingScriptRunner {
     // script file, so instead we'll just write it to the beginning of the script file.
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
-    val predefCode = allPredefCode(config)
-    val scriptCode = Files.readString(scriptFile)
-    val scriptContent = wrapForMainargs(predefCode, scriptCode)
+    val predefCode = "" // TODO drop
+    val scriptContent = wrapForMainargs(predefCode, Files.readString(scriptFile))
     val predefPlusScriptFileTmp = Files.createTempFile("scala-repl-pp-script-with-predef", ".sc")
     Files.writeString(predefPlusScriptFileTmp, scriptContent)
 
@@ -53,6 +48,7 @@ object NonForkingScriptRunner {
     val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(
       compilerArgs = compilerArgs,
+      predefFiles = allPredefFiles(config),
       scriptFile = predefPlusScriptFileTmp,
       scriptArgs = scriptArgs.toArray,
       verbose = verboseEnabled

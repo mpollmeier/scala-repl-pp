@@ -7,17 +7,17 @@ import scala.collection.mutable
 
 package object replpp {
   enum Colors { case BlackWhite, Default }
-
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
-
-  /** The user's home directory */
-  lazy val home: Path = Paths.get(System.getProperty("user.home"))
-
-  /** The current working directory for this process. */
   lazy val pwd: Path = Paths.get(".").toAbsolutePath
-
+  lazy val home: Path = Paths.get(System.getProperty("user.home"))
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
+
+  def createTemporaryFileWithDefaultPredef(using colors: Colors): Path = {
+    val file = Files.createTempFile("scala-repl-pp-default-predef", "sc")
+    Files.writeString(file, DefaultPredefLines.mkString(lineSeparator))
+    file
+  }
 
   private[replpp] def DefaultPredefLines(using colors: Colors) = {
     val colorsImport = colors match {
@@ -48,9 +48,33 @@ package object replpp {
     compilerArgs.result()
   }
 
+  def allPredefFiles(config: Config): Seq[Path] = {
+    val allPredefFiles  = mutable.Set.empty[Path]
+    allPredefFiles += createTemporaryFileWithDefaultPredef(using config.colors)
+    allPredefFiles ++= config.predefFiles
+    globalPredefFileMaybe.foreach(allPredefFiles.addOne)
+
+    // the directly resolved predef files might reference additional files via `using` directive
+    val predefFilesDirect = allPredefFiles.toSet
+    predefFilesDirect.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+      allPredefFiles ++= importedFiles
+    }
+    
+    // the script (if any) might also reference additional files via `using` directive
+    config.scriptFile.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+      allPredefFiles ++= importedFiles
+    }
+    
+    allPredefFiles.toSeq.sorted
+  }
+
+  // TODO drop? use `allPredefFiles` instead...
   def allPredefCode(config: Config): String =
     allPredefLines(config).mkString(lineSeparator)
 
+  // TODO drop? use `allPredefFiles` instead...
   def allPredefLines(config: Config): Seq[String] = {
     val resultLines = Seq.newBuilder[String]
     val visited = mutable.Set.empty[Path]
