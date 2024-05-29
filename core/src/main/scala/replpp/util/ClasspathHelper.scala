@@ -21,7 +21,7 @@ object ClasspathHelper {
    * the order anyway.
    */
   def create(config: Config, quiet: Boolean = false): String =
-    create(fromConfig(config, quiet).map(_.toAbsolutePath.toString))
+    create(fromConfig(config, quiet).map(util.pathAsString))
 
   def create(entries: Seq[String]): String = {
     /** Important: we absolutely have to make sure this starts and ends with a `pathSeparator`.

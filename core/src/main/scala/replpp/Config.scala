@@ -277,7 +277,7 @@ object Config {
                           dependencies: Seq[String] = Seq.empty,
                           resolvers: Seq[String] = Seq.empty) {
     def withAdditionalClasspathEntries(additionalEntries: Seq[Path]): ForClasspath =
-      copy(additionalClasspathEntries = additionalClasspathEntries ++ additionalEntries.map(_.toAbsolutePath.toString))
+      copy(additionalClasspathEntries = additionalClasspathEntries ++ additionalEntries.map(util.pathAsString))
   }
 
 

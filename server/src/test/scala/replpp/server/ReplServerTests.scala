@@ -375,7 +375,7 @@ object Fixture {
   
   def compilerArgs(additionalClasspathEntries: Seq[Path]) = {
     val inheritedClasspath = System.getProperty("java.class.path")
-    val classpath = ClasspathHelper.create(inheritedClasspath +: additionalClasspathEntries.map(_.toAbsolutePath.toString))
+    val classpath = ClasspathHelper.create(inheritedClasspath +: additionalClasspathEntries.map(replpp.util.pathAsString))
     
     Array(
       "-classpath", classpath,

@@ -30,7 +30,7 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
   }
 
   def compileAndRun(): Option[Throwable] = {
-    val inputFiles = (scriptFile +: predefFiles).map(_.toAbsolutePath.toString).toArray
+    val inputFiles = (scriptFile +: predefFiles).map(replpp.util.pathAsString).toArray
     setup(compilerArgs ++ inputFiles, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
       val outDir = Files.createTempDirectory("scala3-scripting")
 

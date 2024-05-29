@@ -20,7 +20,7 @@ class SimpleDriver extends Driver {
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
       println(s"inputFiles: ${inputFiles.mkString(";")}")
     }
-    val inputFiles0 = inputFiles.map(_.toAbsolutePath.toString).toArray
+    val inputFiles0 = inputFiles.map(pathAsString).toArray
     setup(compilerArgs ++ inputFiles0, initCtx.fresh).map { case (toCompile, rootCtx) =>
       val outDir = Files.createTempDirectory("scala-repl-pp")
       /** TODO: use a VirtualDirectory for the output - I didn't manage to find a good way to pass those to the

@@ -8,7 +8,6 @@ import scala.io.Source
 import scala.util.{Try, Using}
 
 package object util {
-
   def sequenceTry[A](tries: Seq[Try[A]]): Try[Seq[A]] = {
     tries.foldRight(Try(Seq.empty[A])) {
       case (next, accumulator) => 
@@ -48,4 +47,6 @@ package object util {
   def terminalWidth: Try[Int] =
     Using(org.jline.terminal.TerminalBuilder.terminal)(_.getWidth)
 
+  def pathAsString(path: Path): String =
+    path.toAbsolutePath.toString
 }

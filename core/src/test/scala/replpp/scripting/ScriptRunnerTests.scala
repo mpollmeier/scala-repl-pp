@@ -233,7 +233,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   private def execTest(setupTest: TestOutputPath => TestSetup): Try[TestOutput] = {
     val testOutputFile = os.temp(deleteOnExit = false)
-    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    val testOutputPath = replpp.util.pathAsString(testOutputFile.toNIO)
 
     val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
     val scriptFile = os.temp(scriptSrc).toNIO

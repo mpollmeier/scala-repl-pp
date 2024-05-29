@@ -24,7 +24,7 @@ object Dependencies {
     val repositoryArgs = additionalRepositories.flatMap { repo =>
       Seq("--repository", repo)
     }
-    val command = Seq("java", "-jar", coursierJarPath.toAbsolutePath.toString, "fetch") ++ repositoryArgs ++ coordinates
+    val command = Seq("java", "-jar", util.pathAsString(coursierJarPath), "fetch") ++ repositoryArgs ++ coordinates
     if (verbose) println(s"executing `${command.mkString(" ")}`")
 
     Try(os.proc(command).call()) match {
