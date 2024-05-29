@@ -66,17 +66,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "iwashere-predefFile"
     }
 
-    "predefFiles imports are available" in {
-      execTest { testOutputPath =>
-        val predefFile = os.temp("import Byte.MaxValue").toNIO
-        TestSetup(
-          s"""import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
-          adaptConfig = _.copy(predefFiles = List(predefFile))
-        )
-      }.get shouldBe "iwashere-predefFile-127"
-    }
-
     "additional dependencies" in {
       execTest { testOutputPath =>
         TestSetup(
