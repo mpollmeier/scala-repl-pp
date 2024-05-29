@@ -41,7 +41,9 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try, Using}
 import DottyRandomStuff.newStoreReporter
+import dotty.tools.dotc.core.Decorators.i
 import replpp.scripting.CompilerError
+
 import java.nio.file.Files
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
@@ -58,60 +60,24 @@ class DottyReplDriver(compilerArgs: Array[String],
   override def sourcesRequired: Boolean = false
 
   /** Create a fresh and initialized context with IDE mode enabled */
-  private def initialCtx(settings: List[String]): Try[Context] = {
+  private def initialCtx(settings: List[String]): Context = {
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
     rootCtx.setSetting(rootCtx.settings.YcookComments, true)
     rootCtx.setSetting(rootCtx.settings.YreadComments, true)
     setupRootCtx(this.compilerArgs ++ settings, rootCtx)
   }
 
-  private def setupRootCtx(settings: Array[String], rootCtx: Context): Try[Context] = {
-    setup(settings, rootCtx) match {
-      case Some((toCompile, ictx)) =>
-        inContext(ictx) {
-//           TODO pass as argument
-          val verbose = true
-  //        val ctx = {
-  //          val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
-  //          if (verbose) {
-  //            ctx.setSetting(rootCtx.settings.help, true)
-  //              .setSetting(rootCtx.settings.XshowPhases, true)
-  //              .setSetting(rootCtx.settings.Vhelp, true)
-  //              .setSetting(rootCtx.settings.Vprofile, true)
-  //              .setSetting(rootCtx.settings.explain, true)
-  //          } else ctx
-  //        }
-
-          // TODO bring back error handling
-//          given Context = ictx
-//          if (doCompile(newCompiler, toCompile).hasErrors) {
-//            val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
-//            Failure(ScriptingException(s"Errors encountered during compilation$msgAddonMaybe"))
-//          } else {
-
-          // TODO cleanup: properly pass this around via arguments
-//          val ictx2 = {
-            // this doesn't work, classpath is a string, but I want to pass the virtual directory...
-//            ictx.fresh.setSetting(ictx.settings.classpath)
-//          }
-          ictx.base.initialize()
-//          val compiler = newCompiler(using ictx)
-          /** TODO continue here
-           * status: as soon as I compile those files, it all breaks into pieces...
-           *   java.lang.ArrayIndexOutOfBoundsException: Index 95 out of bounds for length 91 at dotty.tools.dotc.core.Contexts$Context.withPhase(Contexts.scala:308)
-           *   -> i.e. when we're in the repl, using the regular ReplCompiler, it's trying to invoke phase 95, but that's not a valid phase for us for some reason
-           *
-           * idea: compile with separate Compiler/Driver and bring the results over into this context somehow?
-           * idea, testing next: compile the predef prior to this and load in regular classpath
-           */
-//          doCompile(newCompiler, toCompile)
-          shouldStart = true
-          Success(ictx)
-        }
+  private def setupRootCtx(settings: Array[String], rootCtx: Context): Context = {
+    setup(settings, rootCtx) match
+      case Some((files, ictx)) => inContext(ictx) {
+        shouldStart = true
+        if files.nonEmpty then out.println(i"Ignoring spurious arguments: $files%, %")
+        ictx.base.initialize()
+        ictx
+      }
       case None =>
         shouldStart = false
-        Success(rootCtx)
-    }
+        rootCtx
   }
 
   /** the initial, empty state of the REPL session */
@@ -124,8 +90,7 @@ class DottyReplDriver(compilerArgs: Array[String],
    *  everything properly
    */
   protected def resetToInitial(settings: List[String] = Nil): Unit = {
-    // TODO nicer error case handling
-    rootCtx = initialCtx(settings).get
+    rootCtx = initialCtx(settings)
     if (rootCtx.settings.outputDir.isDefault(using rootCtx))
       rootCtx = rootCtx.fresh
         .setSetting(rootCtx.settings.outputDir, new VirtualDirectory("<REPL compilation output>"))
@@ -553,8 +518,7 @@ class DottyReplDriver(compilerArgs: Array[String],
           out.println(s"${s.name} = ${if s.value == "" then "\"\"" else s.value}")
         state
       case _  =>
-        // TODO nicer error case handling
-        rootCtx = setupRootCtx(tokenize(arg).toArray, rootCtx).get
+        rootCtx = setupRootCtx(tokenize(arg).toArray, rootCtx)
         state.copy(context = rootCtx)
 
     case Quit =>
