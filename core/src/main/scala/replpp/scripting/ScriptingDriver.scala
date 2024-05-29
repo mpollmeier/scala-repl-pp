@@ -49,8 +49,8 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
         Some(CompilerError(s"Errors encountered during compilation$msgAddonMaybe"))
       } else {
-        val classpath = s"${outDir.toAbsolutePath}$pathSeparator${ctx.settings.classpath.value}"
-        val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
+        val inheritedClasspath = ctx.settings.classpath.value
+        val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
         val mainMethod = lookupMainMethod(outDir, classpathEntries)
         try {
           mainMethod.invoke(null, scriptArgs)
