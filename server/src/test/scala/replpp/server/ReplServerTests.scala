@@ -390,7 +390,8 @@ object Fixture {
       else {
         val predefFile = Files.createTempFile(getClass.getName, "scala")
         Files.writeString(predefFile, predefCode)
-        val predefClassfiles = new SimpleDriver().compile(compilerArgs(additionalClasspathEntryMaybe = None), inputFiles = Seq(predefFile), verbose = false)
+        val predefClassfiles = new SimpleDriver().compileAndGetOutputDir(compilerArgs(additionalClasspathEntryMaybe = None), inputFiles = Seq(predefFile), verbose = false)
+          
         Files.delete(predefFile)
         predefClassfiles
       }

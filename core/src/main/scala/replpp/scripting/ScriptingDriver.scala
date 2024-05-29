@@ -1,11 +1,10 @@
 package replpp.scripting
 
-import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
-import dotty.tools.dotc.core.Contexts.{Context, ctx}
-import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
-import replpp.util.deleteRecursively
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.io.ClassPath
 import replpp.scripting.ScriptingDriver.*
+import replpp.util.{SimpleDriver, deleteRecursively}
 
 import java.lang.reflect.Method
 import java.net.URLClassLoader
@@ -19,7 +18,7 @@ import scala.language.unsafeNulls
   * Main difference: we don't (need to) recursively look for main method entrypoints in the entire classpath,
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
-class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) extends Driver {
+class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) {
   if (verbose) {
     println(s"predefFiles: ${predefFiles.mkString(";")}")
     println(s"full script content (including wrapper code) -> $scriptFile:")
@@ -28,38 +27,21 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     println(s"compiler arguments: ${compilerArgs.mkString(",")}")
   }
 
+  // TODO change return type to Try[A]?
   def compileAndRun(): Option[Throwable] = {
-    val inputFiles = (scriptFile +: predefFiles).map(replpp.util.pathAsString).toArray
-    setup(compilerArgs ++ inputFiles, initCtx.fresh).flatMap { case (toCompile, rootCtx) =>
-      val outDir = Files.createTempDirectory("scala3-scripting")
-
-      given Context = {
-        // TODO use VirtualDirectory to safe the round trip to the filesystem - we might need to implement a custom classloader
-        val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
-        if (verbose) {
-          ctx.setSetting(rootCtx.settings.help, true)
-             .setSetting(rootCtx.settings.XshowPhases, true)
-             .setSetting(rootCtx.settings.Vhelp, true)
-             .setSetting(rootCtx.settings.Vprofile, true)
-             .setSetting(rootCtx.settings.explain, true)
-        } else ctx
-      }
-
-      if (doCompile(newCompiler, toCompile).hasErrors) {
-        val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
-        Some(CompilerError(s"Errors encountered during compilation$msgAddonMaybe"))
-      } else {
-        val inheritedClasspath = ctx.settings.classpath.value
-        val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
-        val mainMethod = lookupMainMethod(outDir, classpathEntries)
-        try {
-          mainMethod.invoke(null, scriptArgs)
-          None // i.e. no Throwable - this is the 'good case' in the Driver api
-        } catch {
-          case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
-        } finally deleteRecursively(outDir)
-      }
-    }
+    val inputFiles = (scriptFile +: predefFiles)
+    new SimpleDriver().compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+      given Context = ctx
+      val inheritedClasspath = ctx.settings.classpath.value
+      val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
+      val mainMethod = lookupMainMethod(outDir, classpathEntries)
+      try {
+        mainMethod.invoke(null, scriptArgs)
+        None // i.e. no Throwable - this is the 'good case' in the Driver api
+      } catch {
+        case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
+      } finally deleteRecursively(outDir)
+    }.flatten
   }
 
   private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
@@ -68,6 +50,7 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     clazz.getMethod(MainMethodName, classOf[Array[String]])
   }
 }
+
 object ScriptingDriver {
   val MainClassName  = "ScalaReplPP"
   val MainMethodName = "main"

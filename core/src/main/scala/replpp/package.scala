@@ -75,7 +75,7 @@ package object replpp {
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
   def precompilePredefFiles(config: Config): Config = {
     if (config.predefFiles.nonEmpty) {
-      val predefClassfilesDir = new SimpleDriver().compile(
+      val predefClassfilesDir = new SimpleDriver().compileAndGetOutputDir(
         replpp.compilerArgs(config),
         inputFiles = config.predefFiles,
         verbose = config.verbose
