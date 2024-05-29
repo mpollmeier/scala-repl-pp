@@ -49,9 +49,9 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
         Some(CompilerError(s"Errors encountered during compilation$msgAddonMaybe"))
       } else {
-        val classpath = s"$pathSeparator${ctx.settings.classpath.value}"
+        val classpath = s"${outDir.toAbsolutePath}$pathSeparator${ctx.settings.classpath.value}"
         val classpathEntries = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-        val mainMethod = lookupMainMethod(classpathEntries)
+        val mainMethod = lookupMainMethod(outDir, classpathEntries)
         try {
           mainMethod.invoke(null, scriptArgs)
           None // i.e. no Throwable - this is the 'good case' in the Driver api
@@ -62,8 +62,8 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     }
   }
 
-  private def lookupMainMethod(classpathEntries: Seq[Path]): Method = {
-    val classpathUrls = classpathEntries.map(_.toUri.toURL)
+  private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
+    val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
     val clazz = URLClassLoader(classpathUrls.toArray).loadClass(MainClassName)
     clazz.getMethod(MainMethodName, classOf[Array[String]])
   }
