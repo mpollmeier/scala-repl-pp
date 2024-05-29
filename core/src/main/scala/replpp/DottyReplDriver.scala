@@ -89,6 +89,11 @@ class DottyReplDriver(compilerArgs: Array[String],
 //            Failure(ScriptingException(s"Errors encountered during compilation$msgAddonMaybe"))
 //          } else {
 
+          // TODO cleanup: properly pass this around via arguments
+//          val ictx2 = {
+            // this doesn't work, classpath is a string, but I want to pass the virtual directory...
+//            ictx.fresh.setSetting(ictx.settings.classpath)
+//          }
           ictx.base.initialize()
 //          val compiler = newCompiler(using ictx)
           /** TODO continue here

@@ -1,5 +1,8 @@
 package replpp
 
+import dotty.tools.dotc.classpath.ClassPathFactory
+import dotty.tools.io.VirtualDirectory
+import dotty.tools.runner.ScalaClassLoader
 import replpp.scripting.CompilerError
 
 import java.nio.file.Path
@@ -48,6 +51,12 @@ object FooHelper {
       predefFiles = Seq(Path.of("/home/mp/tmp/aaa.scala"))
     )
     val compilerArgs = replpp.compilerArgs(config)
+
+    /** TODO using a VirtualDirectory for the classes output would make a lot of sense, but I didn't manage to find a
+     * good way to pass it to the Context of the DottyReplDriver yet...
+     * val virtualDirectory = new VirtualDirectory("(virtual)")
+     * val cp = ClassPathFactory.newClassPath(virtualDirectory)
+     */
 
     println(new Driver0().compile(compilerArgs, config.predefFiles, config.verbose))
     // TODO allow to configure output directory, and/or get that here
