@@ -4,7 +4,7 @@ import cask.util.Logger.Console.*
 import castor.Context.Simple.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import replpp.util.{ClasspathHelper, SimpleDriver}
+import replpp.util.{ClasspathHelper, SimpleDriver, pathAsString}
 import requests.RequestFailedException
 import ujson.Value.Value
 
@@ -373,10 +373,9 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
 object Fixture {
   
-  def compilerArgs(additionalClasspathEntries: Seq[Path]) = {
+  def compilerArgs(additionalClasspathEntryMaybe: Option[Path]) = {
     val inheritedClasspath = System.getProperty("java.class.path")
-    val classpath = ClasspathHelper.create(inheritedClasspath +: additionalClasspathEntries.map(replpp.util.pathAsString))
-    
+    val classpath = ClasspathHelper.create(inheritedClasspath +: additionalClasspathEntryMaybe.toSeq.map(pathAsString))
     Array(
       "-classpath", classpath,
       "-explain", // verbose scalac error messages
@@ -386,15 +385,16 @@ object Fixture {
   }
 
   def apply[T](predefCode: String = "")(urlToResult: String => T): T = {
-    val additionalClasspathEntries =
-      if (predefCode.trim.isEmpty) Nil
+    val additionalClasspathEntryMaybe =
+      if (predefCode.trim.isEmpty) None
       else {
         val predefFile = Files.createTempFile(getClass.getName, "scala")
-        val predefClassfiles = new SimpleDriver().compile(compilerArgs(additionalClasspathEntries = Nil), inputFiles = Seq(predefFile), verbose = false).get
+        Files.writeString(predefFile, predefCode)
+        val predefClassfiles = new SimpleDriver().compile(compilerArgs(additionalClasspathEntryMaybe = None), inputFiles = Seq(predefFile), verbose = false)
         Files.delete(predefFile)
         predefClassfiles
       }
-    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntries))
+    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe))
 
     val host = "localhost"
     val port = 8081

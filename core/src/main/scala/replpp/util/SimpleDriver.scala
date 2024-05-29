@@ -2,12 +2,12 @@ package replpp.util
 
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
-import dotty.tools.dotc.core.Contexts.{Context, ctx}
-import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
 
-import java.io.File.pathSeparator
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
+import scala.jdk.CollectionConverters.*
 import scala.language.unsafeNulls
 
 /** Compiles input files to a temporary directory
@@ -15,7 +15,8 @@ import scala.language.unsafeNulls
  */
 class SimpleDriver extends Driver {
 
-  def compile(compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Option[Seq[Path]] = {
+  /** compiles given inputFiles and returns root directory that contains the class and tasty files */
+  def compile(compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Option[Path] = {
     if (verbose) {
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
       println(s"inputFiles: ${inputFiles.mkString(";")}")
@@ -50,9 +51,7 @@ class SimpleDriver extends Driver {
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
         throw CompilerError(s"Errors encountered during compilation$msgAddonMaybe")
       } else {
-        val classpath = s"${outDir.toAbsolutePath}$pathSeparator${ctx.settings.classpath.value}"
-        val classpathEntries: Seq[Path] = ClassPath.expandPath(classpath, expandStar = true).map(Paths.get(_))
-        classpathEntries
+        outDir
       }
     }
   }

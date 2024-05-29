@@ -27,7 +27,7 @@ object ClasspathHelper {
     /** Important: we absolutely have to make sure this starts and ends with a `pathSeparator`.
      * Otherwise, the last entry is lost somewhere down the line (I didn't find the exact location where things go
      * wrong, but it looked like somewhere in dotty 3.3.0). */
-    entries.mkString(pathSeparator, pathSeparator, pathSeparator)
+    entries.distinct.mkString(pathSeparator, pathSeparator, pathSeparator)
   }
 
   protected[util] def fromConfig(config: Config, quiet: Boolean = false): Seq[Path] = {
