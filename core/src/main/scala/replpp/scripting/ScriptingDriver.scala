@@ -7,7 +7,6 @@ import dotty.tools.io.{ClassPath, Directory, PlainDirectory}
 import replpp.util.deleteRecursively
 import replpp.scripting.ScriptingDriver.*
 
-import java.io.File.pathSeparator
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
@@ -35,6 +34,7 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
       val outDir = Files.createTempDirectory("scala3-scripting")
 
       given Context = {
+        // TODO use VirtualDirectory to safe the round trip to the filesystem - we might need to implement a custom classloader
         val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
         if (verbose) {
           ctx.setSetting(rootCtx.settings.help, true)

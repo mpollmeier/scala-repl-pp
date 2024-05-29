@@ -7,12 +7,9 @@ import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
 
 import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.*
 import scala.language.unsafeNulls
 
-/** Compiles input files to a temporary directory
- *
- */
+/** Compiles input files to a temporary directory */
 class SimpleDriver extends Driver {
 
   /** compiles given inputFiles and returns root directory that contains the class and tasty files */
@@ -28,7 +25,6 @@ class SimpleDriver extends Driver {
        * Context of the DottyReplDriver yet...
        * val virtualDirectory = new VirtualDirectory("(virtual)")
        * val cp = ClassPathFactory.newClassPath(virtualDirectory)
-       *
        */
 
       /** TODO: cache results
