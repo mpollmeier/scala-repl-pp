@@ -18,8 +18,7 @@ object InteractiveShell {
         verbose = false
       ).get
 
-    val updatedConfig = config.copy(classpathConfig = config.classpathConfig.withAdditionalClasspathEntries(compilationResults))
-    val compilerArgs = replpp.compilerArgs(updatedConfig)
+    val compilerArgs = replpp.compilerArgs(config.withAdditionalClasspathEntries(compilationResults))
 
     if (verboseEnabled(config))
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
