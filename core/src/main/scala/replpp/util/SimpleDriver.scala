@@ -12,12 +12,6 @@ import scala.language.unsafeNulls
 
 /** Compiles input files to a temporary directory
  *
- * TODO: use a VirtualDirectory for the output - I didn't manage to find a good way to pass those to the
- * Context of the DottyReplDriver yet...
- * val virtualDirectory = new VirtualDirectory("(virtual)")
- * val cp = ClassPathFactory.newClassPath(virtualDirectory)
- *
- * TODO: allow caching, i.e. store hash of inputs? maybe dottyc does that already?
  */
 class SimpleDriver extends Driver {
 
@@ -29,6 +23,17 @@ class SimpleDriver extends Driver {
     val inputFiles0 = inputFiles.map(_.toAbsolutePath.toString).toArray
     setup(compilerArgs ++ inputFiles0, initCtx.fresh).map { case (toCompile, rootCtx) =>
       val outDir = Files.createTempDirectory("scala-repl-pp")
+      /** TODO: use a VirtualDirectory for the output - I didn't manage to find a good way to pass those to the
+       * Context of the DottyReplDriver yet...
+       * val virtualDirectory = new VirtualDirectory("(virtual)")
+       * val cp = ClassPathFactory.newClassPath(virtualDirectory)
+       *
+       */
+
+      /** TODO: cache results
+       * i.e. store hash of all inputs? 
+       * that functionality must exist somewhere already, e.g. zinc incremental compiler, or even in dotty itself?
+       */
 
       given Context = {
         val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
