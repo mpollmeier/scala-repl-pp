@@ -1,4 +1,4 @@
-import replpp.util.{ClasspathHelper, linesFromFile}
+import replpp.util.{ClasspathHelper, SimpleDriver, linesFromFile}
 
 import java.io.File
 import java.lang.System.lineSeparator
@@ -103,6 +103,18 @@ package object replpp {
     }
 
     resultLines.result().filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
+  }
+
+  /** precompile given predef files (if any) and update Config to include the results in the classpath */
+  def precompilePredefFiles(config: Config): Config = {
+    if (config.predefFiles.nonEmpty) {
+      val predefClassfiles = new SimpleDriver().compile(
+        replpp.compilerArgs(config),
+        inputFiles = config.predefFiles,
+        verbose = config.verbose
+      ).get
+      config.withAdditionalClasspathEntries(predefClassfiles)
+    } else config
   }
 
   /**

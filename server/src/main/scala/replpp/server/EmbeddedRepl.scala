@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
-class EmbeddedRepl(compilerArgs: Array[String], predefLines: IterableOnce[String] = Seq.empty) {
+class EmbeddedRepl(compilerArgs: Array[String]) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
@@ -22,13 +22,7 @@ class EmbeddedRepl(compilerArgs: Array[String], predefLines: IterableOnce[String
     new ReplDriver(compilerArgs, new PrintStream(replOutputStream), classLoader = None)
   }
 
-  private var state: State = {
-    val state = replDriver.execute(predefLines)(using replDriver.initialState)
-    val output = readAndResetReplOutputStream()
-    if (output.nonEmpty)
-      logger.info(output)
-    state
-  }
+  private var state: State = replDriver.initialState
 
   private val singleThreadedJobExecutor: ExecutionContextExecutorService =
     ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())

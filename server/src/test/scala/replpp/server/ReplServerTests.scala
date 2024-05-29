@@ -4,10 +4,12 @@ import cask.util.Logger.Console.*
 import castor.Context.Simple.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.util.{ClasspathHelper, SimpleDriver}
 import requests.RequestFailedException
 import ujson.Value.Value
 
 import java.net.URLEncoder
+import java.nio.file.{Files, Path}
 import java.util.UUID
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 import scala.collection.mutable.ListBuffer
@@ -370,10 +372,13 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 }
 
 object Fixture {
-  val defaultCompilerArgs = {
+  
+  def compilerArgs(additionalClasspathEntries: Seq[Path]) = {
     val inheritedClasspath = System.getProperty("java.class.path")
+    val classpath = ClasspathHelper.create(inheritedClasspath +: additionalClasspathEntries.map(_.toAbsolutePath.toString))
+    
     Array(
-      "-classpath", inheritedClasspath,
+      "-classpath", classpath,
       "-explain", // verbose scalac error messages
       "-deprecation",
       "-color", "never"
@@ -381,7 +386,15 @@ object Fixture {
   }
 
   def apply[T](predefCode: String = "")(urlToResult: String => T): T = {
-    val embeddedRepl = new EmbeddedRepl(defaultCompilerArgs, predefLines = predefCode.linesIterator)
+    val additionalClasspathEntries =
+      if (predefCode.trim.isEmpty) Nil
+      else {
+        val predefFile = Files.createTempFile(getClass.getName, "scala")
+        val predefClassfiles = new SimpleDriver().compile(compilerArgs(additionalClasspathEntries = Nil), inputFiles = Seq(predefFile), verbose = false).get
+        Files.delete(predefFile)
+        predefClassfiles
+      }
+    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntries))
 
     val host = "localhost"
     val port = 8081

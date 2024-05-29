@@ -1,14 +1,17 @@
 package replpp
 
 import scala.language.unsafeNulls
-import java.io.{PrintStream, File as JFile}
+
+import java.io.{File => JFile, PrintStream}
 import java.nio.charset.StandardCharsets
+
 import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.{tpd, untpd}
 import dotty.tools.dotc.config.CommandLineParser.tokenize
 import dotty.tools.dotc.config.Properties.{javaVersion, javaVmName, simpleVersionString}
 import dotty.tools.dotc.core.Contexts.*
-import dotty.tools.dotc.core.Phases.{typerPhase, unfusedPhases}
+import dotty.tools.dotc.core.Decorators.*
+import dotty.tools.dotc.core.Phases.{unfusedPhases, typerPhase}
 import dotty.tools.dotc.core.Denotations.Denotation
 import dotty.tools.dotc.core.Flags.*
 import dotty.tools.dotc.core.Mode
@@ -39,17 +42,12 @@ import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try, Using}
-import DottyRandomStuff.newStoreReporter
-import dotty.tools.dotc.core.Decorators.i
-import replpp.scripting.CompilerError
-
-import java.nio.file.Files
+import scala.util.Using
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
-class DottyReplDriver(compilerArgs: Array[String],
+class DottyReplDriver(settings: Array[String],
                       out: PrintStream,
                       maxHeight: Option[Int],
                       classLoader: Option[ClassLoader])(using Colors) extends Driver:
@@ -64,7 +62,7 @@ class DottyReplDriver(compilerArgs: Array[String],
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
     rootCtx.setSetting(rootCtx.settings.YcookComments, true)
     rootCtx.setSetting(rootCtx.settings.YreadComments, true)
-    setupRootCtx(this.compilerArgs ++ settings, rootCtx)
+    setupRootCtx(this.settings ++ settings, rootCtx)
   }
 
   private def setupRootCtx(settings: Array[String], rootCtx: Context): Context = {
@@ -224,7 +222,7 @@ class DottyReplDriver(compilerArgs: Array[String],
     else op
   }
 
-  private def newRun(state: State, reporter: StoreReporter = newStoreReporter) = {
+  private def newRun(state: State, reporter: StoreReporter = DottyRandomStuff.newStoreReporter) = {
     val run = compiler.newRun(rootCtx.fresh.setReporter(reporter), state)
     state.copy(context = run.runContext)
   }

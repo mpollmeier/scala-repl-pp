@@ -1,22 +1,10 @@
 package replpp
 
-import replpp.util.SimpleDriver
-
 object InteractiveShell {
 
   def run(config: Config): Unit = {
     import config.colors
-
-    val config0 = {
-      if (config.predefFiles.nonEmpty) {
-        val predefClassfiles = new SimpleDriver().compile(
-          replpp.compilerArgs(config),
-          inputFiles = config.predefFiles,
-          verbose = config.verbose
-        ).get
-        config.withAdditionalClasspathEntries(predefClassfiles)
-      } else config
-    }
+    val config0 = precompilePredefFiles(config)
 
     val compilerArgs = replpp.compilerArgs(config0)
     if (verboseEnabled(config0))
@@ -30,5 +18,5 @@ object InteractiveShell {
       maxHeight = config0.maxHeight
     ).runUntilQuit()
   }
-
+  
 }

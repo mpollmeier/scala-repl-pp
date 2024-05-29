@@ -2,7 +2,7 @@ package replpp.server
 
 import cask.model.{Request, Response}
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.allPredefLines
+import replpp.precompilePredefFiles
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
@@ -15,27 +15,27 @@ case class QueryResult(output: String, uuid: UUID, success: Boolean) extends Has
 object ReplServer {
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def startHttpServer(config: Config): Unit = {
+  def startHttpServer(serverConfig: Config): Unit = {
     val authenticationMaybe = for {
-      username <- config.serverAuthUsername
-      password <- config.serverAuthPassword
+      username <- serverConfig.serverAuthUsername
+      password <- serverConfig.serverAuthPassword
     } yield UsernamePasswordAuth(username, password)
 
-    val predefLines = replpp.allPredefLines(config.baseConfig)
-    val compilerArgs = replpp.compilerArgs(config.baseConfig)
-    val embeddedRepl = new EmbeddedRepl(compilerArgs, predefLines)
+    val baseConfig = precompilePredefFiles(serverConfig.baseConfig)
+    val compilerArgs = replpp.compilerArgs(baseConfig)
+    val embeddedRepl = new EmbeddedRepl(compilerArgs)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()
     }))
 
-    val server = new ReplServer(embeddedRepl, config.serverHost, config.serverPort, authenticationMaybe)
+    val server = new ReplServer(embeddedRepl, serverConfig.serverHost, serverConfig.serverPort, authenticationMaybe)
     logger.info("Starting REPL server ...")
     try {
       server.main(Array.empty)
     } catch {
       case _: java.net.BindException =>
-        logger.error(s"Could not bind socket on port ${config.serverPort} - exiting.")
+        logger.error(s"Could not bind socket on port ${serverConfig.serverPort} - exiting.")
         embeddedRepl.shutdown()
         System.exit(1)
       case e: Throwable =>
