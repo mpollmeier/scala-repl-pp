@@ -1,6 +1,5 @@
 import replpp.util.{ClasspathHelper, SimpleDriver, linesFromFile}
 
-import java.io.File
 import java.lang.System.lineSeparator
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable
@@ -70,40 +69,8 @@ package object replpp {
     allPredefFiles.toSeq.sorted
   }
 
-  // TODO drop? use `allPredefFiles` instead...
-  def allPredefCode(config: Config): String =
-    allPredefLines(config).mkString(lineSeparator)
-
-  // TODO drop? use `allPredefFiles` instead...
-  def allPredefLines(config: Config): Seq[String] = {
-    val resultLines = Seq.newBuilder[String]
-    val visited = mutable.Set.empty[Path]
-    import config.colors
-
-    resultLines ++= DefaultPredefLines
-
-    val allPredefFiles = globalPredefFileMaybe ++ config.predefFiles
-    allPredefFiles.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-      visited ++= importedFiles
-      importedFiles.foreach { file =>
-        resultLines ++= linesFromFile(file)
-      }
-
-      resultLines ++= linesFromFile(file)
-      visited += file
-    }
-
-    config.scriptFile.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-      visited ++= importedFiles
-      importedFiles.foreach { file =>
-        resultLines ++= linesFromFile(file)
-      }
-    }
-
-    resultLines.result().filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
-  }
+  def allPredefLines(config: Config): Seq[String] =
+    allPredefFiles(config).flatMap(linesFromFile)
 
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
   def precompilePredefFiles(config: Config): Config = {
