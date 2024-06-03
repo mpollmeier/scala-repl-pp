@@ -39,8 +39,7 @@ object NonForkingScriptRunner {
     // script file, so instead we'll just write it to the beginning of the script file.
     // That's obviously suboptimal, e.g. because it messes with the line numbers.
     // Therefor, we'll display the temp script file name to the user and not delete it, in case the script errors.
-    val predefCode = "" // TODO drop
-    val scriptContent = wrapForMainargs(predefCode, Files.readString(scriptFile))
+    val scriptContent = wrapForMainargs(Files.readString(scriptFile))
     val predefPlusScriptFileTmp = Files.createTempFile("scala-repl-pp-script-with-predef", ".sc")
     Files.writeString(predefPlusScriptFileTmp, scriptContent)
 
@@ -64,7 +63,7 @@ object NonForkingScriptRunner {
     }
   }
 
-  private def wrapForMainargs(predefCode: String, scriptCode: String): String = {
+  private def wrapForMainargs(scriptCode: String): String = {
     val mainImpl =
       if (scriptCode.contains("@main")) scriptCode
       else
@@ -78,8 +77,6 @@ object NonForkingScriptRunner {
        |
        |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
        |object ${ScriptingDriver.MainClassName} {
-       |
-       |$predefCode
        |
        |$mainImpl
        |
