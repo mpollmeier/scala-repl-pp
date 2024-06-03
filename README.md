@@ -283,12 +283,10 @@ See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.sca
 test-simple.sc
 ```scala
 println("Hello!")
-"i was here" #> "out.txt"
 ```
 
 ```bash
 srp --script test-simple.sc
-cat out.txt # prints 'i was here'
 ```
 
 ### Predef file(s) used in script

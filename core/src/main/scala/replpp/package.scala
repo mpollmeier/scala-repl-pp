@@ -12,12 +12,6 @@ package object replpp {
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
 
-  def createTemporaryFileWithDefaultPredef(using colors: Colors): Path = {
-    val file = Files.createTempFile("scala-repl-pp-default-predef", "sc")
-    Files.writeString(file, DefaultPredefLines.mkString(lineSeparator))
-    file
-  }
-
   private[replpp] def DefaultPredefLines(using colors: Colors) = {
     val colorsImport = colors match {
       case Colors.BlackWhite => "replpp.Colors.BlackWhite"
@@ -49,7 +43,6 @@ package object replpp {
 
   def allPredefFiles(config: Config): Seq[Path] = {
     val allPredefFiles  = mutable.Set.empty[Path]
-    allPredefFiles += createTemporaryFileWithDefaultPredef(using config.colors)
     allPredefFiles ++= config.predefFiles
     globalPredefFileMaybe.foreach(allPredefFiles.addOne)
 
