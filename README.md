@@ -136,7 +136,7 @@ All operators use the same pretty-printing that's used within the REPL, i.e. you
 ```scala
 scala> case class PrettyPrintable(s: String, i: Int)
 scala> PrettyPrintable("two", 2) #> "out.txt"
-// out.txt now contains `PrettyPrintable(s = "two", i = 2)`
+// out.txt now contains `PrettyPrintable(s = "two", i = 2)` - in pretty colors
 ```
 
 The operators have a special handling for two common use cases that are applied at the root level of the object you hand them: list- or iterator-type objects are unwrapped and their elements are rendered in separate lines, and Strings are rendered without the surrounding `""`. Examples:
@@ -182,6 +182,7 @@ val res0: Int = 1
 For Scala dependencies use `::`:
 ```
 srp --dep com.michaelpollmeier::colordiff:0.36
+
 colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 // color coded diff
 ```
@@ -196,9 +197,8 @@ echo 'val bar = "foo"' > myScript.sc
 
 srp
 
-val foo = 1
 //> using file myScript.sc
-println(bar) //1
+println(bar) //foo
 ```
 
 You can specify the filename with relative or absolute paths:
@@ -287,17 +287,13 @@ println("Hello!")
 
 ```bash
 srp --script test-simple.sc
+cat out.txt # prints 'i was here'
 ```
 
 ### Predef file(s) used in script
-test-predef.sc
-```scala
-println(foo)
-```
-
-test-predef-file.sc
-```scala
-val foo = "Hello, predef file"
+```bash
+echo 'println(foo)' > test-predef.sc
+echo 'val foo = "Hello, predef file"' > test-predef-file.sc
 ```
 
 ```bash
@@ -306,18 +302,12 @@ srp --script test-predef.sc --predef test-predef-file.sc
 To import multiple scripts, you can specify this parameter multiple times.
 
 ### Importing files / scripts
-foo.sc:
-```scala
-val foo = 42
-```
-
-test.sc:
-```scala
-//> using file foo.sc
-println(foo)
-```
-
 ```bash
+echo 'val foo = 42' > foo.sc
+
+echo '//> using file foo.sc
+println(foo)' > test.sc
+
 srp --script test.sc
 ```
 
