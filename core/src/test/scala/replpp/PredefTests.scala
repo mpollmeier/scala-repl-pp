@@ -19,8 +19,6 @@ class PredefTests extends AnyWordSpec with Matchers {
       Seq(
         s"//> using file $additionalScript1",
         s"//> using file $additionalScript2",
-        "given replpp.Colors = replpp.Colors.Default",
-        "import replpp.Operators.*",
         "val additionalScript1 = 10",
         "val additionalScript2 = 20",
         "val predefCode = 1"
@@ -49,8 +47,6 @@ class PredefTests extends AnyWordSpec with Matchers {
       Seq(
         s"//> using file $additionalScript1",
         s"//> using file $additionalScript2",
-        "given replpp.Colors = replpp.Colors.Default",
-        "import replpp.Operators.*",
         "val additionalScript1 = 10",
         "val additionalScript2 = 20",
         "val predefCode = 1"
