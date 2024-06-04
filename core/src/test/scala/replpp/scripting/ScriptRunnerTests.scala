@@ -3,9 +3,7 @@ package replpp.scripting
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.Config
-
 import scala.util.{Failure, Success, Try}
-
 
 class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
@@ -66,17 +64,6 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           adaptConfig = _.copy(predefFiles = List(predefFile))
         )
       }.get shouldBe "iwashere-predefFile"
-    }
-
-    "predefFiles imports are available" in {
-      execTest { testOutputPath =>
-        val predefFile = os.temp("import Byte.MaxValue").toNIO
-        TestSetup(
-          s"""import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-predefFile-" + MaxValue)""".stripMargin,
-          adaptConfig = _.copy(predefFiles = List(predefFile))
-        )
-      }.get shouldBe "iwashere-predefFile-127"
     }
 
     "additional dependencies" in {
@@ -185,21 +172,47 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "iwashere-using-file-test5:99"
     }
 
-    "fail on compilation error" in {
-      execTest { _ =>
-        val additionalScript = os.temp()
-        os.write.over(additionalScript,
-          s"""val foo = 42
-             |val thisWillNotCompile: Int = "because we need an Int"
-             |""".stripMargin)
-        TestSetup(
-          s"""//> using file $additionalScript
-             |val bar = 34
-             |""".stripMargin
-        )
-      } match
-        case Failure(exception) => exception.getMessage should include("exit code was 1")
-        case Success(_) => fail("the script was supposed to fail, but it succeeded...")
+    "fail on compilation error" when {
+      "error is in main script" in {
+        ensureErrors { () =>
+          TestSetup(
+            s"""val thisWillNotCompile: Int = "because we need an Int""""
+          )
+        }
+        // TODO: this isn't the case yet: note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 1
+      }
+
+      "error is in imported file" in {
+        ensureErrors { () =>
+          val additionalScript = os.temp()
+          os.write.over(additionalScript,
+            s"""val foo = 42
+               |val thisWillNotCompile: Int = "because we need an Int"
+               |""".stripMargin)
+          TestSetup(
+            s"""//> using file $additionalScript
+               |val bar = 34
+               |""".stripMargin
+          )
+        }
+        // note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 2
+      }
+
+      "error is in predef file" in {
+        ensureErrors { () =>
+          val predefFile = os.temp()
+          os.write.over(predefFile,
+            s"""val foo = 42
+               |val thisWillNotCompile: Int = "because we need an Int"
+               |""".stripMargin)
+          TestSetup(
+            "val bar = 34".stripMargin,
+            adaptConfig = _.copy(predefFiles = Seq(predefFile.toNIO))
+          )
+        }
+        // note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 2
+      }
+
     }
   }
 
@@ -209,12 +222,19 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
   private def execTest(setupTest: TestOutputPath => TestSetup): Try[TestOutput] = {
     val testOutputFile = os.temp(deleteOnExit = false)
-    val testOutputPath = testOutputFile.toNIO.toAbsolutePath.toString
+    val testOutputPath = replpp.util.pathAsString(testOutputFile.toNIO)
 
     val TestSetup(scriptSrc, adaptConfig) = setupTest(testOutputPath)
     val scriptFile = os.temp(scriptSrc).toNIO
     val config = adaptConfig(Config(scriptFile = Some(scriptFile), verbose = false))
     ScriptRunner.exec(config).map { _ => os.read(testOutputFile) }
+  }
+
+  private def ensureErrors(fun: () => TestSetup): Unit = {
+    execTest(_ => fun()) match {
+      case Success(_) => fail("the script was supposed to fail, but it succeeded...")
+      case Failure(exception) => exception.getMessage should include("exit code was 1")
+    }
   }
 }
 

@@ -20,14 +20,17 @@ object ClasspathHelper {
    * of order, but since we need to concatenate the classpath from different sources, the user can't really depend on
    * the order anyway.
    */
-  def create(config: Config, quiet: Boolean = false): String = {
+  def create(config: Config, quiet: Boolean = false): String =
+    create(fromConfig(config, quiet).map(util.pathAsString))
+
+  def create(entries: Seq[String]): String = {
     /** Important: we absolutely have to make sure this starts and ends with a `pathSeparator`.
      * Otherwise, the last entry is lost somewhere down the line (I didn't find the exact location where things go
      * wrong, but it looked like somewhere in dotty 3.3.0). */
-    createAsSeq(config, quiet).mkString(pathSeparator, pathSeparator, pathSeparator)
+    entries.distinct.mkString(pathSeparator, pathSeparator, pathSeparator)
   }
 
-  protected[util] def createAsSeq(config: Config, quiet: Boolean = false): Seq[Path] = {
+  protected[util] def fromConfig(config: Config, quiet: Boolean = false): Seq[Path] = {
     val entries = Seq.newBuilder[Path]
 
     // add select entries from out inherited classpath to the resulting classpath

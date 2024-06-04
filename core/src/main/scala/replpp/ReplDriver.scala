@@ -11,14 +11,14 @@ import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
-class ReplDriver(args: Array[String],
+class ReplDriver(compilerArgs: Array[String],
                  out: PrintStream = scala.Console.out,
                  onExitCode: Option[String] = None,
                  greeting: Option[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
                  classLoader: Option[ClassLoader] = None)(using Colors)
-  extends ReplDriverBase(args, out, maxHeight, classLoader) {
+  extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c

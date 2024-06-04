@@ -44,8 +44,6 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
 
-import DottyRandomStuff.newStoreReporter
-
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
@@ -60,14 +58,14 @@ class DottyReplDriver(settings: Array[String],
   override def sourcesRequired: Boolean = false
 
   /** Create a fresh and initialized context with IDE mode enabled */
-  private def initialCtx(settings: List[String]) = {
+  private def initialCtx(settings: List[String]): Context = {
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
     rootCtx.setSetting(rootCtx.settings.YcookComments, true)
     rootCtx.setSetting(rootCtx.settings.YreadComments, true)
     setupRootCtx(this.settings ++ settings, rootCtx)
   }
 
-  private def setupRootCtx(settings: Array[String], rootCtx: Context) = {
+  private def setupRootCtx(settings: Array[String], rootCtx: Context): Context = {
     setup(settings, rootCtx) match
       case Some((files, ictx)) => inContext(ictx) {
         shouldStart = true
@@ -224,7 +222,7 @@ class DottyReplDriver(settings: Array[String],
     else op
   }
 
-  private def newRun(state: State, reporter: StoreReporter = newStoreReporter) = {
+  private def newRun(state: State, reporter: StoreReporter = DottyRandomStuff.newStoreReporter) = {
     val run = compiler.newRun(rootCtx.fresh.setReporter(reporter), state)
     state.copy(context = run.runContext)
   }

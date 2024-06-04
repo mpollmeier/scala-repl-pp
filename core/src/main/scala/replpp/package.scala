@@ -1,21 +1,14 @@
-import replpp.util.{ClasspathHelper, linesFromFile}
+import replpp.util.{ClasspathHelper, SimpleDriver, linesFromFile}
 
-import java.io.File
 import java.lang.System.lineSeparator
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable
 
 package object replpp {
   enum Colors { case BlackWhite, Default }
-
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
-
-  /** The user's home directory */
-  lazy val home: Path = Paths.get(System.getProperty("user.home"))
-
-  /** The current working directory for this process. */
   lazy val pwd: Path = Paths.get(".").toAbsolutePath
-
+  lazy val home: Path = Paths.get(System.getProperty("user.home"))
   lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
   lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
 
@@ -48,37 +41,40 @@ package object replpp {
     compilerArgs.result()
   }
 
-  def allPredefCode(config: Config): String =
-    allPredefLines(config).mkString(lineSeparator)
+  def allPredefFiles(config: Config): Seq[Path] = {
+    val allPredefFiles  = mutable.Set.empty[Path]
+    allPredefFiles ++= config.predefFiles
+    globalPredefFileMaybe.foreach(allPredefFiles.addOne)
 
-  def allPredefLines(config: Config): Seq[String] = {
-    val resultLines = Seq.newBuilder[String]
-    val visited = mutable.Set.empty[Path]
-    import config.colors
-
-    resultLines ++= DefaultPredefLines
-
-    val allPredefFiles = globalPredefFileMaybe ++ config.predefFiles
-    allPredefFiles.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-      visited ++= importedFiles
-      importedFiles.foreach { file =>
-        resultLines ++= linesFromFile(file)
-      }
-
-      resultLines ++= linesFromFile(file)
-      visited += file
+    // the directly resolved predef files might reference additional files via `using` directive
+    val predefFilesDirect = allPredefFiles.toSet
+    predefFilesDirect.foreach { file =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+      allPredefFiles ++= importedFiles
     }
 
+    // the script (if any) might also reference additional files via `using` directive
     config.scriptFile.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited.toSet)
-      visited ++= importedFiles
-      importedFiles.foreach { file =>
-        resultLines ++= linesFromFile(file)
-      }
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+      allPredefFiles ++= importedFiles
     }
 
-    resultLines.result().filterNot(_.trim.startsWith(UsingDirectives.FileDirective))
+    allPredefFiles.toSeq.sorted
+  }
+
+  def allPredefLines(config: Config): Seq[String] =
+    allPredefFiles(config).flatMap(linesFromFile)
+
+  /** precompile given predef files (if any) and update Config to include the results in the classpath */
+  def precompilePredefFiles(config: Config): Config = {
+    if (config.predefFiles.nonEmpty) {
+      val predefClassfilesDir = new SimpleDriver().compileAndGetOutputDir(
+        replpp.compilerArgs(config),
+        inputFiles = config.predefFiles,
+        verbose = config.verbose
+      ).get
+      config.withAdditionalClasspathEntry(predefClassfilesDir)
+    } else config
   }
 
   /**

@@ -13,7 +13,7 @@ object UsingDirectives {
   def findImportedFilesRecursively(path: Path, visited: Set[Path] = Set.empty): Seq[Path] = {
     val rootDir: Path =
       if (Files.isDirectory(path)) path
-      else path.getParent
+      else path.toAbsolutePath.getParent
 
     val importedFiles = findImportedFiles(util.linesFromFile(path), rootDir)
     val recursivelyImportedFiles = importedFiles.filterNot(visited.contains).flatMap { file =>
@@ -24,7 +24,7 @@ object UsingDirectives {
 
   def findImportedFiles(lines: IterableOnce[String], rootPath: Path): Seq[Path] =
     scanFor(FileDirective, lines).iterator.map(resolveFile(rootPath, _)).toSeq
-    
+
   def findImportedFilesRecursively(lines: IterableOnce[String], rootPath: Path): Seq[Path] = {
     val results = Seq.newBuilder[Path]
     val visited = mutable.Set.empty[Path]

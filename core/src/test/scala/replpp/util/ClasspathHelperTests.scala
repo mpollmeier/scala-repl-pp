@@ -5,14 +5,11 @@ import org.scalatest.wordspec.AnyWordSpec
 import replpp.Config
 
 import java.io.File.pathSeparator
-import java.io.FileInputStream
-import java.net.URI
-import java.nio.file.{Files, Paths}
 
 class ClasspathHelperTests extends AnyWordSpec with Matchers {
 
   "basic generation" in {
-    ClasspathHelper.createAsSeq(Config()).size should be > 2
+    ClasspathHelper.fromConfig(Config()).size should be > 2
     // exact content depends on test run environment, since the current classpath is included as well
   }
 

@@ -5,20 +5,23 @@ import dotty.tools.repl.State
 import scala.util.control.NoStackTrace
 
 object InteractiveShell {
-  def run(config: Config): Unit = {
 
-    val predefCode = allPredefCode(config)
-    val compilerArgs = replpp.compilerArgs(config)
+  def run(config: Config): Unit = {
     import config.colors
+    val config0 = precompilePredefFiles(config)
+
+    val compilerArgs = replpp.compilerArgs(config0)
+
     val replDriver = new ReplDriver(
       compilerArgs,
-      onExitCode = config.onExitCode,
-      greeting = config.greeting,
-      prompt = config.prompt.getOrElse("scala"),
-      maxHeight = config.maxHeight
+      onExitCode = config0.onExitCode,
+      greeting = config0.greeting,
+      prompt = config0.prompt.getOrElse("scala"),
+      maxHeight = config0.maxHeight
     )
 
     val initialState: State = replDriver.initialState
+    val predefCode = DefaultPredef
     val state: State = {
       if (verboseEnabled(config)) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
@@ -35,4 +38,5 @@ object InteractiveShell {
 
     replDriver.runUntilQuit(using state)()
   }
+  
 }

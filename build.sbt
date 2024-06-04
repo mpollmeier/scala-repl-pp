@@ -1,4 +1,4 @@
-name := "root"
+name := "scala-repl-pp-root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"

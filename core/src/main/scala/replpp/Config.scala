@@ -29,6 +29,9 @@ case class Config(
     if (nocolors) Colors.BlackWhite
     else Colors.Default
 
+  def withAdditionalClasspathEntry(entry: Path): Config =
+    copy(classpathConfig = classpathConfig.withAdditionalClasspathEntry(entry))
+
   /** inverse of `Config.parse` */
   lazy val asJavaArgs: Seq[String] = {
     val args = Seq.newBuilder[String]
@@ -272,7 +275,10 @@ object Config {
                           inheritClasspathIncludes: Seq[String] = ForClasspath.DefaultInheritClasspathIncludes,
                           inheritClasspathExcludes: Seq[String] = Seq.empty,
                           dependencies: Seq[String] = Seq.empty,
-                          resolvers: Seq[String] = Seq.empty)
+                          resolvers: Seq[String] = Seq.empty) {
+    def withAdditionalClasspathEntry(entry: Path): ForClasspath =
+      copy(additionalClasspathEntries = additionalClasspathEntries :+ util.pathAsString(entry))
+  }
 
 
   object ForClasspath {

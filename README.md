@@ -29,6 +29,7 @@ Prerequisite: jdk11+
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
+  * [Adding classpath entries](#adding-classpath-entries)
   * [Rendering of output](#rendering-of-output)
   * [Exiting the REPL](#exiting-the-repl)
   * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
@@ -38,7 +39,7 @@ Prerequisite: jdk11+
   * [Importing files / scripts](#importing-files--scripts)
   * [Dependencies](#dependencies)
   * [@main entrypoints](#main-entrypoints)
-  * [multiple @main entrypoints: test-main-multiple.sc](#multiple-main-entrypoints-test-main-multiplesc)
+  * [multiple @main entrypoints](#multiple-main-entrypoints)
   * [named parameters](#named-parameters)
 - [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
   * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
@@ -59,7 +60,6 @@ Prerequisite: jdk11+
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)  
-  
   
 ## Benefits over / comparison with
 
@@ -136,7 +136,7 @@ All operators use the same pretty-printing that's used within the REPL, i.e. you
 ```scala
 scala> case class PrettyPrintable(s: String, i: Int)
 scala> PrettyPrintable("two", 2) #> "out.txt"
-// out.txt now contains `PrettyPrintable(s = "two", i = 2)`
+// out.txt now contains `PrettyPrintable(s = "two", i = 2)` - in pretty colors
 ```
 
 The operators have a special handling for two common use cases that are applied at the root level of the object you hand them: list- or iterator-type objects are unwrapped and their elements are rendered in separate lines, and Strings are rendered without the surrounding `""`. Examples:
@@ -182,6 +182,7 @@ val res0: Int = 1
 For Scala dependencies use `::`:
 ```
 srp --dep com.michaelpollmeier::colordiff:0.36
+
 colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 // color coded diff
 ```
@@ -196,9 +197,8 @@ echo 'val bar = "foo"' > myScript.sc
 
 srp
 
-val foo = 1
 //> using file myScript.sc
-println(bar) //1
+println(bar) //foo
 ```
 
 You can specify the filename with relative or absolute paths:
@@ -280,26 +280,17 @@ val res0: util.Try[Int] = Success(value = 202)
 See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
 
 ### Simple "Hello world" script
-test-simple.sc
-```scala
-println("Hello!")
-"i was here" #> "out.txt"
-```
-
 ```bash
+echo 'println("Hello!")' > test-simple.sc
+
 srp --script test-simple.sc
 cat out.txt # prints 'i was here'
 ```
 
 ### Predef file(s) used in script
-test-predef.sc
-```scala
-println(foo)
-```
-
-test-predef-file.sc
-```scala
-val foo = "Hello, predef file"
+```bash
+echo 'println(foo)' > test-predef.sc
+echo 'val foo = "Hello, predef file"' > test-predef-file.sc
 ```
 
 ```bash
@@ -308,75 +299,61 @@ srp --script test-predef.sc --predef test-predef-file.sc
 To import multiple scripts, you can specify this parameter multiple times.
 
 ### Importing files / scripts
-foo.sc:
-```scala
-val foo = 42
-```
-
-test.sc:
-```scala
-//> using file foo.sc
-println(foo)
-```
-
 ```bash
+echo 'val foo = 42' > foo.sc
+
+echo '//> using file foo.sc
+println(foo)' > test.sc
+
 srp --script test.sc
 ```
 
 ### Dependencies
 Dependencies can be added via `//> using dep` syntax (like in scala-cli).
 
-test-dependencies.sc:
-```scala
-//> using dep com.michaelpollmeier:versionsort:1.0.7
+```bash
+echo '//> using dep com.michaelpollmeier:versionsort:1.0.7
 
 val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
 assert(compareResult == 1,
        s"result of comparison should be `1`, but was `$compareResult`")
-```
+' > test-dependencies.sc
 
-```bash
 srp --script test-dependencies.sc
 ```
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
 ### @main entrypoints
-test-main.sc
-```scala
-@main def main() = println("Hello, world!")
-```
-
 ```bash
+echo '@main def main() = println("Hello, world!")' > test-main.sc
+
 srp --script test-main.sc
 ```
 
-### multiple @main entrypoints: test-main-multiple.sc
-```scala
+### multiple @main entrypoints
+```bash
+echo '
 @main def foo() = println("foo!")
 @main def bar() = println("bar!")
-```
+' > test-main-multiple.sc
 
-```bash
 srp --script test-main-multiple.sc --command foo
 ```
 
 ### named parameters
-test-main-withargs.sc
-```scala
+```bash
+echo '
 @main def main(first: String, last: String) = {
   println(s"Hello, $first $last!")
-}
-```
+} ' > test-main-withargs.sc
 
-```bash
 srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
 If your parameter value contains whitespace, just wrap it quotes so that your shell doesn't split it up, e.g. `--param "text=value with whitespace"`
 
-Note that on windows the parameters need to be triple-quoted in any case:
+On windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
-
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
@@ -388,13 +365,13 @@ To add multiple dependency resolvers, you can specify this parameter multiple ti
 
 Or via `//> using resolver` directive as part of your script or predef code:
 
-script-with-resolver.sc
-```scala
+```bash
+echo '
 //> using resolver https://repo.gradle.org/gradle/libs-releases
 //> using dep org.gradle:gradle-tooling-api:7.6.1
 println(org.gradle.tooling.GradleConnector.newConnector())
-```
-```scala
+' > script-with-resolver.sc
+
 srp --script script-with-resolver.sc
 ```
 
