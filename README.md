@@ -29,6 +29,7 @@ Prerequisite: jdk11+
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
+  * [Adding classpath entries](#adding-classpath-entries)
   * [Rendering of output](#rendering-of-output)
   * [Exiting the REPL](#exiting-the-repl)
   * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
@@ -38,7 +39,7 @@ Prerequisite: jdk11+
   * [Importing files / scripts](#importing-files--scripts)
   * [Dependencies](#dependencies)
   * [@main entrypoints](#main-entrypoints)
-  * [multiple @main entrypoints: test-main-multiple.sc](#multiple-main-entrypoints-test-main-multiplesc)
+  * [multiple @main entrypoints](#multiple-main-entrypoints)
   * [named parameters](#named-parameters)
 - [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
   * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
@@ -59,7 +60,6 @@ Prerequisite: jdk11+
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)  
-  
   
 ## Benefits over / comparison with
 
@@ -280,12 +280,9 @@ val res0: util.Try[Int] = Success(value = 202)
 See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
 
 ### Simple "Hello world" script
-test-simple.sc
-```scala
-println("Hello!")
-```
-
 ```bash
+echo 'println("Hello!")' > test-simple.sc
+
 srp --script test-simple.sc
 cat out.txt # prints 'i was here'
 ```
@@ -314,57 +311,49 @@ srp --script test.sc
 ### Dependencies
 Dependencies can be added via `//> using dep` syntax (like in scala-cli).
 
-test-dependencies.sc:
-```scala
-//> using dep com.michaelpollmeier:versionsort:1.0.7
+```bash
+echo '//> using dep com.michaelpollmeier:versionsort:1.0.7
 
 val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
 assert(compareResult == 1,
        s"result of comparison should be `1`, but was `$compareResult`")
-```
+' > test-dependencies.sc
 
-```bash
 srp --script test-dependencies.sc
 ```
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
 ### @main entrypoints
-test-main.sc
-```scala
-@main def main() = println("Hello, world!")
-```
-
 ```bash
+echo '@main def main() = println("Hello, world!")' > test-main.sc
+
 srp --script test-main.sc
 ```
 
-### multiple @main entrypoints: test-main-multiple.sc
-```scala
+### multiple @main entrypoints
+```bash
+echo '
 @main def foo() = println("foo!")
 @main def bar() = println("bar!")
-```
+' > test-main-multiple.sc
 
-```bash
 srp --script test-main-multiple.sc --command foo
 ```
 
 ### named parameters
-test-main-withargs.sc
-```scala
+```bash
+echo '
 @main def main(first: String, last: String) = {
   println(s"Hello, $first $last!")
-}
-```
+} ' > test-main-withargs.sc
 
-```bash
 srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
 If your parameter value contains whitespace, just wrap it quotes so that your shell doesn't split it up, e.g. `--param "text=value with whitespace"`
 
-Note that on windows the parameters need to be triple-quoted in any case:
+On windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
-
 
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
@@ -376,13 +365,13 @@ To add multiple dependency resolvers, you can specify this parameter multiple ti
 
 Or via `//> using resolver` directive as part of your script or predef code:
 
-script-with-resolver.sc
-```scala
+```bash
+echo '
 //> using resolver https://repo.gradle.org/gradle/libs-releases
 //> using dep org.gradle:gradle-tooling-api:7.6.1
 println(org.gradle.tooling.GradleConnector.newConnector())
-```
-```scala
+' > script-with-resolver.sc
+
 srp --script script-with-resolver.sc
 ```
 
