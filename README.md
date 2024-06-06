@@ -51,7 +51,6 @@ Prerequisite: jdk11+
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
-  * [Why are script line numbers incorrect?](#why-are-script-line-numbers-incorrect)
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
   * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
 - [Contribution guidelines](#contribution-guidelines)
@@ -526,13 +525,6 @@ Technically it is a fork, i.e. we copied parts of the ReplDriver to make some ad
 However, semantically, srp can be considered an extension of the stock repl. We don't want to create and maintain a competing REPL implementation, 
 instead the idea is to provide a space for exploring new ideas and bringing them back into the dotty codebase. 
 [When we forked](https://github.com/mpollmeier/scala-repl-pp/commit/eb2bf9a3bed681bffa945f657ada14781c6a7a14) the stock ReplDriver, we made sure to separate the commits into bitesized chunks so we can easily rebase. The changes are clearly marked, and whenever there's a new dotty version we're bringing in the relevant changes here (`git diff 3.3.0-RC5..3.3.0-RC6 compiler/src/dotty/tools/repl/`).
-
-### Why are script line numbers incorrect?
-srp currently uses a simplistic model for predef code|files and additionally imported files, and just copies everything into one large script. That simplicity naturally comes with a few limitations, e.g. line numbers may be different from the input script(s). 
-
-A better approach would be to work with a separate compiler phase, similar to what Ammonite does. That way, we could inject all previously defined values|imports|... into the compiler, and extract all results from the compiler context. That's a goal for the future. 
-
-If there's a compilation issue, the temporary script file will not be deleted and the error output will tell you it's path, in order to help with debugging.
 
 ### Why do we ship a shaded copy of other libraries and not use dependencies?
 srp includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of how to (re-) import then and which versions were used are available in [import-instructions.md](shaded-libs/import-instructions.md).
