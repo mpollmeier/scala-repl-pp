@@ -15,7 +15,7 @@ object WrapForMainArgs {
       } else {
         linesBeforeWrappedCode += 1
         s"""@main def _execMain(): Unit = {
-           |  $scriptCode
+           |$scriptCode
            |}""".stripMargin
       }
 
