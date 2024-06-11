@@ -3,6 +3,8 @@ package replpp.util
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
+import dotty.tools.dotc.util.SourcePosition
 import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
 
@@ -20,7 +22,7 @@ import scala.language.unsafeNulls
  * i.e. store hash of all inputs?
  * that functionality must exist somewhere already, e.g. zinc incremental compiler, or even in dotty itself?
  */
-class SimpleDriver extends Driver {
+class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
   
   def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Option[Path] =
     compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) => outDir }
@@ -33,12 +35,15 @@ class SimpleDriver extends Driver {
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
       println(s"inputFiles: ${inputFiles.mkString(";")}")
     }
+
     val inputFiles0 = inputFiles.map(pathAsString).toArray
     setup(compilerArgs ++ inputFiles0, initCtx.fresh).map { case (toCompile, rootCtx) =>
       val outDir = Files.createTempDirectory("scala-repl-pp")
 
       given ctx0: Context = {
         val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
+        if (lineNumberReportingAdjustment != 0) ctx.setReporter(createAdjustedReporter(rootCtx.reporter))
+
         if (verbose) {
           ctx.setSetting(rootCtx.settings.help, true)
             .setSetting(rootCtx.settings.XshowPhases, true)
@@ -57,4 +62,15 @@ class SimpleDriver extends Driver {
     }
   }
 
+  // creates a new reporter based on the original reporter that copies Diagnostic and changes line numbers
+  private def createAdjustedReporter(originalReporter: Reporter): Reporter = {
+    new Reporter {
+      override def doReport(dia: Diagnostic)(using Context): Unit = {
+        val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
+          override def line: Int = super.line + lineNumberReportingAdjustment
+        }
+        originalReporter.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
+      }
+    }
+  }
 }

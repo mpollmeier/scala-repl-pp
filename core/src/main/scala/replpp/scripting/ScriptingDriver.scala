@@ -19,29 +19,39 @@ import scala.language.unsafeNulls
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
 class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) {
+  val wrappingResult = WrapForMainArgs(Files.readString(scriptFile))
+  val wrappedScript = Files.createTempFile("wrapped-script", ".sc")
+  Files.writeString(wrappedScript, wrappingResult.fullScript)
+
   if (verbose) {
     println(s"predefFiles: ${predefFiles.mkString(";")}")
-    println(s"full script content (including wrapper code) -> $scriptFile:")
-    println(Files.readString(scriptFile))
+    println(s"full script content (including wrapper code) ($wrappedScript)")
+    println(wrappingResult.fullScript)
     println(s"script arguments: ${scriptArgs.mkString(",")}")
     println(s"compiler arguments: ${compilerArgs.mkString(",")}")
   }
 
   // TODO change return type to Try[A]?
   def compileAndRun(): Option[Throwable] = {
-    val inputFiles = (scriptFile +: predefFiles)
-    new SimpleDriver().compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
-      given Context = ctx
-      val inheritedClasspath = ctx.settings.classpath.value
-      val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
-      val mainMethod = lookupMainMethod(outDir, classpathEntries)
-      try {
-        mainMethod.invoke(null, scriptArgs)
-        None // i.e. no Throwable - this is the 'good case' in the Driver api
-      } catch {
-        case e: java.lang.reflect.InvocationTargetException => Some(e.getCause)
-      } finally deleteRecursively(outDir)
-    }.flatten
+    val inputFiles = wrappedScript +: predefFiles
+    new SimpleDriver(lineNumberReportingAdjustment = -wrappingResult.linesBeforeWrappedCode)
+      .compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+        given Context = ctx
+        val inheritedClasspath = ctx.settings.classpath.value
+        val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
+        val mainMethod = lookupMainMethod(outDir, classpathEntries)
+        try {
+          mainMethod.invoke(null, scriptArgs)
+          None // i.e. no Throwable - this is the 'good case' in the Driver api
+        } catch {
+          case e: java.lang.reflect.InvocationTargetException =>
+            System.err.println(s"note: we wrapped the given script in some additional code. Use --verbose to see the full script content")
+            Some(e.getCause)
+        } finally {
+          deleteRecursively(outDir)
+          Files.deleteIfExists(wrappedScript)
+        }
+      }.flatten
   }
 
   private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
