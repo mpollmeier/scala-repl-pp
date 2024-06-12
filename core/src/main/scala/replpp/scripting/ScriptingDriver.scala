@@ -10,6 +10,8 @@ import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
+import scala.util.control.NonFatal
+import scala.util.{Failure, Try}
 
 /**
   * Runs a given script on the current JVM.
@@ -19,9 +21,13 @@ import scala.language.unsafeNulls
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
 class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) {
-  val wrappingResult = WrapForMainArgs(Files.readString(scriptFile))
-  val wrappedScript = Files.createTempFile("wrapped-script", ".sc")
+  private val wrappingResult = WrapForMainArgs(Files.readString(scriptFile))
+  private val wrappedScript = Files.createTempFile("wrapped-script", ".sc")
+  private val tempFiles = Seq.newBuilder[Path]
+  private var executed = false
+
   Files.writeString(wrappedScript, wrappingResult.fullScript)
+  tempFiles += wrappedScript
 
   if (verbose) {
     println(s"predefFiles: ${predefFiles.mkString(";")}")
@@ -31,27 +37,26 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     println(s"compiler arguments: ${compilerArgs.mkString(",")}")
   }
 
-  // TODO change return type to Try[A]?
-  def compileAndRun(): Option[Throwable] = {
-    val inputFiles = wrappedScript +: predefFiles
-    new SimpleDriver(lineNumberReportingAdjustment = -wrappingResult.linesBeforeWrappedCode)
-      .compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
-        given Context = ctx
-        val inheritedClasspath = ctx.settings.classpath.value
-        val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
-        val mainMethod = lookupMainMethod(outDir, classpathEntries)
-        try {
+  def compileAndRun(): Try[Unit] = {
+    assert(!executed, "scripting driver can only be used once, and this instance has already been used.")
+    executed = true
+    val inputFiles = (wrappedScript +: predefFiles).filter(Files.exists(_))
+    try {
+      new SimpleDriver(lineNumberReportingAdjustment = -wrappingResult.linesBeforeWrappedCode)
+        .compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+          given Context = ctx
+          tempFiles += outDir
+
+          val inheritedClasspath = ctx.settings.classpath.value
+          val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
+          val mainMethod = lookupMainMethod(outDir, classpathEntries)
           mainMethod.invoke(null, scriptArgs)
-          None // i.e. no Throwable - this is the 'good case' in the Driver api
-        } catch {
-          case e: java.lang.reflect.InvocationTargetException =>
-            System.err.println(s"note: we wrapped the given script in some additional code. Use --verbose to see the full script content")
-            Some(e.getCause)
-        } finally {
-          deleteRecursively(outDir)
-          Files.deleteIfExists(wrappedScript)
         }
-      }.flatten
+    } catch {
+      case NonFatal(e) => Failure(e)
+    } finally {
+      tempFiles.result().foreach(deleteRecursively)
+    }
   }
 
   private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {

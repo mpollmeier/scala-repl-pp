@@ -45,7 +45,7 @@ Prerequisite: jdk11+
   * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
-- [Global predef file: `~/.srp.sc`](#global-predef-file-srpsc)
+- [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
 - [Verbose mode](#verbose-mode)
 - [Inherited classpath](#inherited-classpath)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
@@ -479,11 +479,11 @@ stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
 ```
 
-## Global predef file: `~/.srp.sc`
-Code that should be available across all srp sessions can be written into your local `~/.srp.sc`. 
+## Global predef file: `~/.scala-repl-pp.sc`
+Code that should be available across all srp sessions can be written into your local `~/.scala-repl-pp.sc`. 
 
 ```
-echo 'def bar = 90' > ~/.srp.sc
+echo 'def bar = 90' > ~/.scala-repl-pp.sc
 echo 'def baz = 91' > script1.sc
 echo 'def bam = 92' > script2.sc
 

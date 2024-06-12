@@ -10,6 +10,7 @@ import replpp.scripting.CompilerError
 
 import java.nio.file.{Files, Path}
 import scala.language.unsafeNulls
+import scala.util.Try
 
 /** Compiles input files to a temporary directory
  *
@@ -24,20 +25,22 @@ import scala.language.unsafeNulls
  */
 class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
   
-  def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Option[Path] =
+  def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Try[Path] =
     compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) => outDir }
     
-
-  // TODO change return type to `Try[A]?`
   /** compiles given inputFiles and returns root directory that contains the class and tasty files */
-  def compile[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean)(fun: (Context, Path) => A): Option[A] = {
+  def compile[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean)(fun: (Context, Path) => A): Try[A] = {
     if (verbose) {
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
       println(s"inputFiles: ${inputFiles.mkString(";")}")
     }
 
     val inputFiles0 = inputFiles.map(pathAsString).toArray
-    setup(compilerArgs ++ inputFiles0, initCtx.fresh).map { case (toCompile, rootCtx) =>
+    val allArgs = compilerArgs ++ inputFiles0
+    Try {
+      val (toCompile, rootCtx) = setup(allArgs, initCtx.fresh)
+        .getOrElse(throw CompilerError(s"error during setup with args=`${allArgs.mkString(" ")}`, details should have been reported already on stderr/stdout"))
+
       val outDir = Files.createTempDirectory("scala-repl-pp")
 
       given ctx0: Context = {
