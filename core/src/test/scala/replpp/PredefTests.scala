@@ -7,6 +7,7 @@ class PredefTests extends AnyWordSpec with Matchers {
   given Colors = Colors.BlackWhite
 
   "recursively resolve `//> using file` directive" in {
+    val script = os.temp("val mainScript = 5")
     val additionalScript1 = os.temp("val additionalScript1 = 10")
     val additionalScript2 = os.temp("val additionalScript2 = 20")
     val predefFile = os.temp(
@@ -15,17 +16,19 @@ class PredefTests extends AnyWordSpec with Matchers {
          |//> using file $additionalScript2
          |""".stripMargin)
 
-    allPredefLines(Config(predefFiles = Seq(predefFile.toNIO))).sorted shouldBe
+    allSourceLines(Config(predefFiles = Seq(predefFile.toNIO), scriptFile = Some(script.toNIO))).sorted shouldBe
       Seq(
         s"//> using file $additionalScript1",
         s"//> using file $additionalScript2",
         "val additionalScript1 = 10",
         "val additionalScript2 = 20",
-        "val predefCode = 1"
+        "val mainScript = 5",
+        "val predefCode = 1",
       ).sorted
   }
 
   "recursively resolve `//> using file` directive - with recursive loops" in {
+    val script = os.temp("val mainScript = 5")
     val additionalScript1 = os.temp(suffix = "-script1")
     val additionalScript2 = os.temp(suffix = "-script2")
 
@@ -43,13 +46,14 @@ class PredefTests extends AnyWordSpec with Matchers {
          |""".stripMargin)
 
     // most importantly, this should not loop endlessly due to the recursive imports
-    allPredefLines(Config(predefFiles = Seq(predefFile.toNIO))).distinct.sorted shouldBe
+    allSourceLines(Config(predefFiles = Seq(predefFile.toNIO), scriptFile = Some(script.toNIO))).distinct.sorted shouldBe
       Seq(
         s"//> using file $additionalScript1",
         s"//> using file $additionalScript2",
         "val additionalScript1 = 10",
         "val additionalScript2 = 20",
-        "val predefCode = 1"
+        "val mainScript = 5",
+        "val predefCode = 1",
       ).sorted
   }
 }

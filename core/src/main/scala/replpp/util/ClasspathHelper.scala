@@ -54,23 +54,21 @@ object ClasspathHelper {
       Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
     }.getOrElse(Seq.empty)
 
-    val fromDependencies = dependencyArtifacts(config, scriptLines)
+    val fromDependencies = dependencyArtifacts(config)
     fromDependencies.foreach(entries.addOne)
     if (fromDependencies.nonEmpty && !quiet) {
       println(s"resolved dependencies - adding ${fromDependencies.size} artifact(s) to classpath - to list them, enable verbose mode")
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
-    val allLines = allPredefLines(config) ++ scriptLines
-    val additionalEntries = config.classpathConfig.additionalClasspathEntries ++ UsingDirectives.findClasspathEntries(allLines)
-    additionalEntries.map(Paths.get(_)).foreach(entries.addOne)
+    config.classpathConfig.additionalClasspathEntries.map(Paths.get(_)).foreach(entries.addOne)
+    UsingDirectives.findClasspathEntries(allSourceFiles(config)).iterator.foreach(entries.addOne)
 
-    entries.result().sorted
+    entries.result().distinct.sorted
   }
 
-  private[util] def dependencyArtifacts(config: Config, scriptLines: Seq[String]): Seq[Path] = {
-    val allLines = allPredefLines(config) ++ scriptLines
-
+  private[util] def dependencyArtifacts(config: Config): Seq[Path] = {
+    val allLines = allSourceLines(config)
     val resolvers = config.classpathConfig.resolvers ++ UsingDirectives.findResolvers(allLines)
     val allDependencies = config.classpathConfig.dependencies ++ UsingDirectives.findDeclaredDependencies(allLines)
     Dependencies.resolve(allDependencies, resolvers, verboseEnabled(config)).get

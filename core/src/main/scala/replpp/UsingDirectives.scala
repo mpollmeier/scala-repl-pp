@@ -47,8 +47,13 @@ object UsingDirectives {
   def findResolvers(lines: IterableOnce[String]): Seq[String] =
     scanFor(ResolverDirective, lines)
 
-  def findClasspathEntries(lines: IterableOnce[String]): Seq[String] =
-    scanFor(ClasspathDirective, lines)
+  def findClasspathEntries(files: IterableOnce[Path]): Seq[Path] = {
+    for {
+      file <- files.iterator.toSeq
+      classpathEntry <- scanFor(ClasspathDirective, util.linesFromFile(file))
+      pathRelativeToDeclaringFile = file.getParent.resolve(classpathEntry)
+    } yield pathRelativeToDeclaringFile
+  }
 
   private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {
     lines

@@ -29,7 +29,7 @@ class ClasspathHelperTests extends AnyWordSpec with Matchers {
             "org.scala-lang:scala-library:2.13.10",
             "org.scala-lang::scala3-library:3.3.0",
           )))
-        val deps = ClasspathHelper.dependencyArtifacts(config, scriptLines = Seq.empty)
+        val deps = ClasspathHelper.dependencyArtifacts(config)
         deps.size shouldBe 2
 
         assert(deps.find(_.endsWith("scala3-library_3-3.3.0.jar")).isDefined)
@@ -37,7 +37,8 @@ class ClasspathHelperTests extends AnyWordSpec with Matchers {
       }
 
       "declared in scriptFile" in {
-        val deps = ClasspathHelper.dependencyArtifacts(Config(), scriptLines = Seq("//> using dep com.michaelpollmeier::colordiff:0.36"))
+        val script = os.temp("//> using dep com.michaelpollmeier::colordiff:0.36")
+        val deps = ClasspathHelper.dependencyArtifacts(Config(scriptFile = Some(script.toNIO)))
         deps.size shouldBe 4
 
         assert(deps.find(_.endsWith("colordiff_3-0.36.jar")).isDefined)
