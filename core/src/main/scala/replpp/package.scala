@@ -41,6 +41,11 @@ package object replpp {
     compilerArgs.result()
   }
 
+  /** recursively find all relevant source files from main script, global predef file, 
+    * provided predef files, other scripts that were imported with `using file` directive */
+  def allSourceFiles(config: Config): Seq[Path] =
+    (allPredefFiles(config) ++ config.scriptFile).distinct.sorted
+
   def allPredefFiles(config: Config): Seq[Path] = {
     val allPredefFiles  = mutable.Set.empty[Path]
     allPredefFiles ++= config.predefFiles
@@ -48,22 +53,22 @@ package object replpp {
 
     // the directly resolved predef files might reference additional files via `using` directive
     val predefFilesDirect = allPredefFiles.toSet
-    predefFilesDirect.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+    predefFilesDirect.foreach { predefFile =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(predefFile, visited = allPredefFiles.toSet)
       allPredefFiles ++= importedFiles
     }
 
     // the script (if any) might also reference additional files via `using` directive
-    config.scriptFile.foreach { file =>
-      val importedFiles = UsingDirectives.findImportedFilesRecursively(file, visited = allPredefFiles.toSet)
+    config.scriptFile.foreach { scriptFile =>
+      val importedFiles = UsingDirectives.findImportedFilesRecursively(scriptFile, visited = allPredefFiles.toSet)
       allPredefFiles ++= importedFiles
     }
 
     allPredefFiles.toSeq.sorted
   }
 
-  def allPredefLines(config: Config): Seq[String] =
-    allPredefFiles(config).flatMap(linesFromFile)
+  def allSourceLines(config: Config): Seq[String] =
+    allSourceFiles(config).flatMap(linesFromFile)
 
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
   def precompilePredefFiles(config: Config): Config = {

@@ -1,6 +1,6 @@
 package replpp.scripting
 
-import replpp.{Config, allPredefFiles}
+import replpp.{Config, allPredefFiles, allSourceFiles}
 
 import java.nio.file.Files
 import scala.util.{Failure, Success}

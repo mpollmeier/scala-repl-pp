@@ -1,8 +1,9 @@
 package replpp
 
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
 import scala.jdk.CollectionConverters.*
 
 class UsingDirectivesTests extends AnyWordSpec with Matchers {
@@ -78,18 +79,28 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
     results should not contain "https://commented.out/repo"
   }
 
-  "find declared classpath entries" in {
-    val source =
-      """
-        |//> using classpath /path/to/cp1
-        |//> using classpath ../path/to/cp2
-        |// //> using classpath cp3
-        |""".stripMargin
+  if (scala.util.Properties.isWin) {
+    info("paths work differently on windows - ignoring some tests")
+  } else {
+    "find declared classpath entries" in {
+      val scriptFile = os.temp(
+        """
+          |//> using classpath /path/to/cp1
+          |//> using classpath path/to/cp2
+          |//> using classpath ../path/to/cp3
+          |// //> using classpath cp4
+          |""".stripMargin
+      ).toNIO
 
-    val results = UsingDirectives.findClasspathEntries(source.linesIterator)
-    results should contain("/path/to/cp1")
-    results should contain("../path/to/cp2")
-    results should not contain "cp3"
+      val scriptParentDir = scriptFile.getParent
+
+      val results = UsingDirectives.findClasspathEntries(Seq(scriptFile))
+      results should contain(Path.of("/path/to/cp1"))
+      results should contain(scriptParentDir.resolve("path/to/cp2"))
+      results should contain(scriptParentDir.resolve("../path/to/cp3"))
+      results should not contain Path.of("cp3")
+      results.size shouldBe 3 // just to triple check
+    }
   }
 
 }
