@@ -385,7 +385,7 @@ object Fixture {
   }
 
   def apply[T](predefCode: String = "")(urlToResult: String => T): T = {
-    val additionalClasspathEntryMaybe =
+    val additionalClasspathEntryMaybe: Option[Path] =
       if (predefCode.trim.isEmpty) None
       else {
         val predefFile = Files.createTempFile(getClass.getName, "scala")
@@ -393,7 +393,7 @@ object Fixture {
         val predefClassfiles = new SimpleDriver().compileAndGetOutputDir(compilerArgs(additionalClasspathEntryMaybe = None), inputFiles = Seq(predefFile), verbose = false)
           
         Files.delete(predefFile)
-        predefClassfiles
+        predefClassfiles.toOption
       }
     val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe))
 

@@ -3,6 +3,7 @@ package replpp.scripting
 import replpp.{Config, allPredefFiles}
 
 import java.nio.file.Files
+import scala.util.{Failure, Success}
 
 /**
   * Main entrypoint for ScriptingDriver, i.e. it takes commandline arguments and executes a script on the current JVM. 
@@ -43,13 +44,12 @@ object NonForkingScriptRunner {
       scriptArgs = scriptArgs.toArray,
       verbose = verboseEnabled
     ).compileAndRun() match {
-      case Some(exception) =>
+      case Success(_) => // no exception, i.e. all is good
+        if (verboseEnabled) System.err.println(s"script finished successfully")
+      case Failure(exception) =>
         System.err.println(s"error during script execution: ${exception.getMessage}")
         throw exception
-      case None => // no exception, i.e. all is good
-        if (verboseEnabled) System.err.println(s"script finished successfully")
     }
   }
-
 
 }
