@@ -29,6 +29,9 @@ object ClasspathHelper {
      * wrong, but it looked like somewhere in dotty 3.3.0). */
     entries.distinct.mkString(pathSeparator, pathSeparator, pathSeparator)
   }
+  
+  def createAsURLs(config: Config, quiet: Boolean = false): Seq[URL] =
+    fromConfig(config, quiet).map(_.toUri.toURL)
 
   protected[util] def fromConfig(config: Config, quiet: Boolean = false): Seq[Path] = {
     val entries = Seq.newBuilder[Path]

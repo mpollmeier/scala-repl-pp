@@ -2,12 +2,13 @@ package replpp.scripting
 
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.io.ClassPath
+import dotty.tools.io.{ClassPath, VirtualDirectory}
+import dotty.tools.repl.AbstractFileClassLoader
 import replpp.scripting.ScriptingDriver.*
 import replpp.util.{SimpleDriver, deleteRecursively}
 
 import java.lang.reflect.Method
-import java.net.URLClassLoader
+import java.net.{URL, URLClassLoader}
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
 import scala.util.control.NonFatal
@@ -43,13 +44,12 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     val inputFiles = (wrappedScript +: predefFiles).filter(Files.exists(_))
     try {
       new SimpleDriver(lineNumberReportingAdjustment = -wrappingResult.linesBeforeWrappedCode)
-        .compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+        .compile(compilerArgs, inputFiles, verbose) { (ctx, classesDir) =>
           given Context = ctx
-          tempFiles += outDir
 
           val inheritedClasspath = ctx.settings.classpath.value
-          val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
-          val mainMethod = lookupMainMethod(outDir, classpathEntries)
+          val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_).toUri.toURL)
+          val mainMethod = lookupMainMethod(classesDir, classpathEntries)
           mainMethod.invoke(null, scriptArgs)
         }
     } catch {
@@ -59,9 +59,9 @@ class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scrip
     }
   }
 
-  private def lookupMainMethod(outDir: Path, classpathEntries: Seq[Path]): Method = {
-    val classpathUrls = (classpathEntries :+ outDir).map(_.toUri.toURL)
-    val clazz = URLClassLoader(classpathUrls.toArray).loadClass(MainClassName)
+  private def lookupMainMethod(classesDir: VirtualDirectory, classpathEntries: Seq[URL]): Method = {
+    val classLoader = AbstractFileClassLoader(classesDir, parent = URLClassLoader(classpathEntries.toArray))
+    val clazz = classLoader.loadClass(MainClassName)
     clazz.getMethod(MainMethodName, classOf[Array[String]])
   }
 }

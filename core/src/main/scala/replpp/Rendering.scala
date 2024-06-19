@@ -38,6 +38,10 @@ private[replpp] class Rendering(maxHeight: Option[Int], parentClassLoader: Optio
     else {
       val parent = Option(myClassLoader).orElse(parentClassLoader).getOrElse {
         val compilerClasspath = ctx.platform.classPath(using ctx).asURLs
+        // TODO remove
+        println("XXX1 compilerClasspath:")
+        compilerClasspath.foreach(println)
+        println("XXX1 compilerClasspath END")
         // We can't use the system classloader as a parent because it would
         // pollute the user classpath with everything passed to the JVM
         // `-classpath`. We can't use `null` as a parent either because on Java

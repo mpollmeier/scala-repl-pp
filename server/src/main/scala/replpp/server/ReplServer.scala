@@ -1,8 +1,9 @@
 package replpp.server
 
 import cask.model.{Request, Response}
+import dotty.tools.repl.AbstractFileClassLoader
 import org.slf4j.{Logger, LoggerFactory}
-import replpp.precompilePredefFiles
+import replpp.precompilePredefFilesMaybe
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
@@ -21,9 +22,11 @@ object ReplServer {
       password <- serverConfig.serverAuthPassword
     } yield UsernamePasswordAuth(username, password)
 
-    val baseConfig = precompilePredefFiles(serverConfig.baseConfig)
-    val compilerArgs = replpp.compilerArgs(baseConfig)
-    val embeddedRepl = new EmbeddedRepl(compilerArgs)
+    val predefClassLoaderMaybe = precompilePredefFilesMaybe(serverConfig.baseConfig).map { virtualDir =>
+      AbstractFileClassLoader(virtualDir, parent = null)
+    }
+    val compilerArgs = replpp.compilerArgs(serverConfig.baseConfig)
+    val embeddedRepl = new EmbeddedRepl(compilerArgs, predefClassLoaderMaybe)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down server...")
       embeddedRepl.shutdown()

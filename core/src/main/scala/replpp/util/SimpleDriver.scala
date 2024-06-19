@@ -5,19 +5,14 @@ import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
 import dotty.tools.dotc.util.SourcePosition
-import dotty.tools.io.{Directory, PlainDirectory}
+import dotty.tools.io.{AbstractFile, Directory, PlainDirectory, VirtualDirectory}
 import replpp.scripting.CompilerError
 
 import java.nio.file.{Files, Path}
 import scala.language.unsafeNulls
 import scala.util.Try
 
-/** Compiles input files to a temporary directory
- *
- * TODO: use a VirtualDirectory for the output - I didn't manage to find a good way to pass those to the
- * Context of the DottyReplDriver yet...
- * val virtualDirectory = new VirtualDirectory("(virtual)")
- * val cp = ClassPathFactory.newClassPath(virtualDirectory)
+/** Compiles input files to a virtual directory
  *
  * TODO: cache results
  * i.e. store hash of all inputs?
@@ -25,11 +20,11 @@ import scala.util.Try
  */
 class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
   
-  def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Try[Path] =
+  def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Try[VirtualDirectory] =
     compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) => outDir }
     
   /** compiles given inputFiles and returns root directory that contains the class and tasty files */
-  def compile[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean)(fun: (Context, Path) => A): Try[A] = {
+  def compile[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean)(fun: (Context, VirtualDirectory) => A): Try[A] = {
     if (verbose) {
       println(s"compiler arguments: ${compilerArgs.mkString(",")}")
       println(s"inputFiles: ${inputFiles.mkString(";")}")
@@ -40,11 +35,9 @@ class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
     Try {
       val (toCompile, rootCtx) = setup(allArgs, initCtx.fresh)
         .getOrElse(throw CompilerError(s"error during setup with args=`${allArgs.mkString(" ")}`, details should have been reported already on stderr/stdout"))
-
-      val outDir = Files.createTempDirectory("scala-repl-pp")
-
+      val outDir = new VirtualDirectory("(virtual)")
       given ctx0: Context = {
-        val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
+        val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, outDir)
         if (lineNumberReportingAdjustment != 0) ctx.setReporter(createAdjustedReporter(rootCtx.reporter))
 
         if (verbose) {

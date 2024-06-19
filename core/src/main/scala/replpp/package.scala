@@ -1,3 +1,4 @@
+import dotty.tools.io.VirtualDirectory
 import replpp.util.{ClasspathHelper, SimpleDriver, linesFromFile}
 
 import java.lang.System.lineSeparator
@@ -71,7 +72,7 @@ package object replpp {
     allSourceFiles(config).flatMap(linesFromFile)
 
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
-  def precompilePredefFiles(config: Config): Config = {
+  def precompilePredefFilesMaybe(config: Config): Option[VirtualDirectory] = {
     val allPredefFiles = (config.predefFiles :+ globalPredefFile).filter(Files.exists(_))
     if (allPredefFiles.nonEmpty) {
       val predefClassfilesDir = new SimpleDriver().compileAndGetOutputDir(
@@ -79,8 +80,8 @@ package object replpp {
         inputFiles = allPredefFiles,
         verbose = config.verbose
       ).get
-      config.withAdditionalClasspathEntry(predefClassfilesDir)
-    } else config
+      Option(predefClassfilesDir)
+    } else None
   }
 
   /**

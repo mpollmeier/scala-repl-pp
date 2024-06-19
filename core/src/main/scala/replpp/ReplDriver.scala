@@ -19,6 +19,23 @@ class ReplDriver(compilerArgs: Array[String],
                  maxHeight: Option[Int] = None,
                  classLoader: Option[ClassLoader] = None)(using Colors)
   extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader) {
+  /*
+                  compilerArgs: Array[String],
+                 out: PrintStream = scala.Console.out,
+                 onExitCode: Option[String] = None,
+                 greeting: Option[String],
+                 prompt: String,
+                 maxHeight: Option[Int] = None,
+                 classLoader: Option[ClassLoader] = None)(using Colors)
+  
+      compilerArgs,
+      onExitCode = config.onExitCode,
+      greeting = config.greeting,
+      prompt = config.prompt.getOrElse("scala"),
+      maxHeight = config.maxHeight,
+      classLoader = predefClassLoaderMaybe,
+   */
+
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
