@@ -45,7 +45,8 @@ import scala.util.control.NonFatal
 import scala.util.Using
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
- * Main REPL instance, orchestrating input, compilation and presentation
+ * Main differences to the original: we wire in our custom implementations of Rendering (with an
+ * optional maxHeight parameter and JLineTerminal.
  * */
 class DottyReplDriver(settings: Array[String],
                       out: PrintStream,
@@ -128,6 +129,7 @@ class DottyReplDriver(settings: Array[String],
 
     /** Blockingly read a line, getting back a parse result */
     def readLine()(using state: State): ParseResult = {
+
       given Context = state.context
       val completer: Completer = { (lineReader, line, candidates) =>
         def makeCandidate(label: String) = {

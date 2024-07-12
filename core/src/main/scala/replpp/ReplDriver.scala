@@ -75,20 +75,64 @@ class ReplDriver(compilerArgs: Array[String],
         )
       }
       val comps = completionsWithSignatures(line.cursor, line.line, state)
+      /**
+       * for Int.<tab>: lineWord="", filteredCompletions: Nil, all completions:
+       * Completion(##,=> Int,List(method ##))
+       * Completion(MinValue,(-2147483648 : Int),List(val MinValue))
+       * Completion(#|^,(using x$2: replpp.Colors)(commandAndArguments: String*): Unit,List(method #|^))
+       * Completion(==,(x$0: Any): Boolean,List(method ==))
+       * Completion(hashCode,(): Int,List(method hashCode))
+       * Completion(ne,(x$0: Object): Boolean,List(method ne))
+       * Completion(#>>,(using x$2: replpp.Colors)(outFileName: String): Unit,List(method #>>))
+       * Completion(#>>,(using x$2: replpp.Colors)(outFile: java.nio.file.Path): Unit,List(method #>>))
+       * Completion(formatted,(fmtstr: String): String,List(method formatted))
+       * Completion(box,(x: Int): Integer,List(method box))
+       * Completion(int2long,(x: Int): Long,List(method int2long))
+       * Completion(nn,=> Int.type & Int.type,List(method nn))
+       * Completion(notifyAll,(): Unit,List(method notifyAll))
+       * Completion(unbox,(x: Object): Int,List(method unbox))
+       * Completion(synchronized,[X0](x$0: X0): X0,List(method synchronized))
+       * Completion(#|,(using x$2: replpp.Colors)(commandAndArguments: String*): String,List(method #|))
+       * Completion(toString,(): String,List(method toString))
+       * Completion(!=,(x$0: Any): Boolean,List(method !=))
+       * Completion(equals,(x$0: Any): Boolean,List(method equals))
+       * Completion(eq,(x$0: Object): Boolean,List(method eq))
+       * Completion(isInstanceOf,[X0]: Boolean,List(method isInstanceOf))
+       * Completion(int2double,(x: Int): Double,List(method int2double))
+       * Completion(ensuring,(cond: Boolean): A,List(method ensuring))
+       * Completion(ensuring,(cond: A => Boolean): A,List(method ensuring))
+       * Completion(ensuring,(cond: A => Boolean, msg: => Any): A,List(method ensuring))
+       * Completion(ensuring,(cond: Boolean, msg: => Any): A,List(method ensuring))
+       * Completion(wait,(x$0: Long, x$1: Int): Unit,List(method wait))
+       * Completion(wait,(x$0: Long): Unit,List(method wait))
+       * Completion(wait,(): Unit,List(method wait))
+       * Completion(MaxValue,(2147483647 : Int),List(val MaxValue))
+       * Completion(notify,(): Unit,List(method notify))
+       * Completion(asInstanceOf,[X0]: X0,List(method asInstanceOf))
+       * Completion(->,[B](y: B): (A, B),List(method ->))
+       * Completion(#>,(using x$2: replpp.Colors)(outFileName: String): Unit,List(method #>))
+       * Completion(#>,(using x$2: replpp.Colors)(outFile: java.nio.file.Path): Unit,List(method #>))
+       * Completion(→,[B](y: B): (A, B),List(method →))
+       * Completion(int2float,(x: Int): Float,List(method int2float))
+       * Completion(getClass,[X0 >: Int.type](): Class[? <: X0],List(method getClass))
+       */
       candidates.addAll(comps.map(_.label).distinct.map(makeCandidate).asJava)
       val lineWord = line.word()
-      comps.filter(c => c.label == lineWord && c.symbols.nonEmpty) match
+      // this is only if there's an exact match
+      comps.filter(c => c.label == lineWord && c.symbols.nonEmpty) match {
         case Nil =>
-        case exachMatches =>
+        case exactMatches =>
           val terminal = lineReader.nn.getTerminal
           lineReader.callWidget(LineReader.CLEAR)
           terminal.writer.println()
-          exachMatches.foreach: exact =>
-            exact.symbols.foreach: sym =>
-              terminal.writer.println(SyntaxHighlighting.highlight(sym.showUser))
+          for {
+            exactMatch <- exactMatches
+            sym <- exactMatch.symbols
+          } terminal.writer.println(SyntaxHighlighting.highlight(sym.showUser))
           lineReader.callWidget(LineReader.REDRAW_LINE)
           lineReader.callWidget(LineReader.REDISPLAY)
           terminal.flush()
+      }
     }
 
     terminal.readLine(completer).linesIterator
