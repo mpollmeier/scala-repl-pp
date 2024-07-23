@@ -149,6 +149,8 @@ object Operators {
                 stopped = true
             }
           }
+          // flush stdin, but ignore errors
+          try {stdin.flush()} catch { case t: Throwable => /*ignore*/ }
         }
       }
     }
