@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Path, Paths}
 import scala.jdk.CollectionConverters.*
 import scala.util.{Try, Using}
+import scala.util.control.NonFatal
 
 /**
  * Operators to redirect output to files or pipe them into external commands / processes,
@@ -21,6 +22,13 @@ import scala.util.{Try, Using}
  * List types (IterableOnce, java.lang.Iterable, Array, ...) are being unwrapped (only at the root level).
  * */
 object Operators {
+
+  def main(args: Array[String]): Unit = {
+    given Colors = Colors.BlackWhite
+    val value = "foo"
+    val result = value #| "cat"
+    println(result)
+  }
 
   /** output from an external command, e.g. when using `#|` */
   case class ProcessResults(stdout: String, stderr: String)
@@ -150,7 +158,7 @@ object Operators {
             }
           }
           // flush stdin, but ignore errors
-          try {stdin.flush()} catch { case t: Throwable => /*ignore*/ }
+          try {stdin.flush()} catch { case NonFatal(_) => /*ignore*/ }
         }
       }
     }
