@@ -135,15 +135,21 @@ object Operators {
         val chunkSize = 8192
         var remaining = bytes.length
         var pos = 0
-        while (remaining > 0) {
-          val currentWindow = math.min(remaining, chunkSize)
-          stdin.buffered.write(value, pos, currentWindow)
-          pos += currentWindow
-          remaining -= currentWindow
+        var stopped = false
+        Using.resource(stdin) { stdin =>
+          while (remaining > 0 && !stopped) {
+            val currentWindow = math.min(remaining, chunkSize)
+            try {
+              stdin.buffered.write(value, pos, currentWindow)
+              pos += currentWindow
+              remaining -= currentWindow
+            } catch {
+              case t: Throwable =>
+                // most likely the user exited the subprocess
+                stopped = true
+            }
+          }
         }
-
-        stdin.flush()
-        stdin.close()
       }
     }
   }
