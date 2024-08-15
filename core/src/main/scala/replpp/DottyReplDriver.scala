@@ -233,7 +233,7 @@ class DottyReplDriver(settings: Array[String],
     else
       label
 
-  @deprecated("Use completionsWithSignatures instead", "3.4.2")
+  @deprecated("Use completionsWithSignatures instead", "3.4.3")
   protected final def completions(cursor: Int, expr: String, state0: State): List[Candidate] =
     completionsWithSignatures(cursor, expr, state0).map: c =>
       new Candidate(
