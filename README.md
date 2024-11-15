@@ -25,7 +25,11 @@ Prerequisite: jdk11+
   * [Regular Scala REPL](#regular-scala-repl)
   * [Ammonite](#ammonite)
   * [scala-cli](#scala-cli)
+- [Prerequisite for all of the below: run `sbt stage` or download the latest release](#prerequisite-for-all-of-the-below-run-sbt-stage-or-download-the-latest-release)
 - [REPL](#repl)
+  * [run with defaults](#run-with-defaults)
+  * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
+  * [execute some predef code](#execute-some-predef-code)
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
@@ -59,7 +63,7 @@ Prerequisite: jdk11+
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)  
-  
+
 ## Benefits over / comparison with
 
 ### Regular Scala REPL
@@ -87,19 +91,23 @@ Stock Scala REPL:<br/>
 * srp has a 66.6% shorter name :slightly_smiling_face:
 scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Ammonite). It doesn't modify/fix the REPL itself, i.e. the above mentioned differences between srp and the stock scala repl (or alternatively Ammonite) apply, with the exception of dependencies: scala-cli does let you add them on startup as well.
 
+## Prerequisite for all of the below: run `sbt stage` or download the latest release
+
 ## REPL
 
+### run with defaults
 ```bash
-# run with defaults
-srp
+./srp
+```
 
-# customize prompt, greeting and exit code
-srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
+### customize prompt, greeting and exit code
+./srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
 
-# pass some predef code in file(s)
+### execute some predef code
+```
 echo 'def foo = 42' > foo.sc
 
-srp --predef foo.sc
+./srp --predef foo.sc
 scala> foo
 val res0: Int = 42
 ```
@@ -107,7 +115,7 @@ val res0: Int = 42
 ### Operators: Redirect to file, pipe to external command
 Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
 ```scala
-srp
+./srp
 
 scala> "hey there" #>  "out.txt"
 scala> "hey again" #>> "out.txt"
@@ -162,7 +170,7 @@ All operators are prefixed with `#` in order to avoid naming clashes with more b
 ### Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
-srp --dep com.michaelpollmeier:versionsort:1.0.7
+./srp --dep com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
@@ -172,7 +180,7 @@ Alternatively, use the `//> using dep` directive in predef code or predef files:
 ```
 echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-srp --predef predef.sc
+./srp --predef predef.sc
 
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
@@ -180,7 +188,7 @@ val res0: Int = 1
 
 For Scala dependencies use `::`:
 ```
-srp --dep com.michaelpollmeier::colordiff:0.36
+./srp --dep com.michaelpollmeier::colordiff:0.36
 
 colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 // color coded diff
@@ -194,7 +202,7 @@ Implementation note: srp uses [coursier](https://get-coursier.io/) to fetch the 
 ```
 echo 'val bar = "foo"' > myScript.sc
 
-srp
+./srp
 
 //> using file myScript.sc
 println(bar) //foo
@@ -219,7 +227,7 @@ cd ..
 
 Now let's start the repl with those in the classpath:
 ```bash
-srp --classpathEntry foo
+./srp --classpathEntry foo
 
 scala> new Foo().foo
 val res0: Int = 42
@@ -230,14 +238,14 @@ For scripts you can use the `//> using classpath` directive:
 echo '//> using classpath foo
 println(new Foo().foo)' > myScript.sc
 
-srp --script myScript.sc
+./srp --script myScript.sc
 ```
 
 ### Rendering of output
 
 Unlike the stock Scala REPL, srp does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
 ```
-srp --maxHeight 5
+./srp --maxHeight 5
 scala> (1 to 100000).toSeq
 val res0: scala.collection.immutable.Range.Inclusive = Range(
   1,
@@ -282,18 +290,18 @@ See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.sca
 ```bash
 echo 'println("Hello!")' > test-simple.sc
 
-srp --script test-simple.sc
+./srp --script test-simple.sc
 cat out.txt # prints 'i was here'
 ```
 
 ### Predef file(s) used in script
 ```bash
-echo 'println(foo)' > test-predef.sc
 echo 'val foo = "Hello, predef file"' > test-predef-file.sc
+echo 'println(foo)' > test-predef.sc
 ```
 
 ```bash
-srp --script test-predef.sc --predef test-predef-file.sc
+./srp --script test-predef.sc --predef test-predef-file.sc
 ```
 To import multiple scripts, you can specify this parameter multiple times.
 
@@ -304,7 +312,7 @@ echo 'val foo = 42' > foo.sc
 echo '//> using file foo.sc
 println(foo)' > test.sc
 
-srp --script test.sc
+./srp --script test.sc
 ```
 
 ### Dependencies
@@ -318,7 +326,7 @@ assert(compareResult == 1,
        s"result of comparison should be `1`, but was `$compareResult`")
 ' > test-dependencies.sc
 
-srp --script test-dependencies.sc
+./srp --script test-dependencies.sc
 ```
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
@@ -327,7 +335,7 @@ Note: this also works with `using` directives in your predef code - for script a
 ```bash
 echo '@main def main() = println("Hello, world!")' > test-main.sc
 
-srp --script test-main.sc
+./srp --script test-main.sc
 ```
 
 ### multiple @main entrypoints
@@ -337,7 +345,7 @@ echo '
 @main def bar() = println("bar!")
 ' > test-main-multiple.sc
 
-srp --script test-main-multiple.sc --command foo
+./srp --script test-main-multiple.sc --command foo
 ```
 
 ### named parameters
@@ -347,7 +355,7 @@ echo '
   println(s"Hello, $first $last!")
 } ' > test-main-withargs.sc
 
-srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
+./srp --script test-main-withargs.sc --param first=Michael --param last=Pollmeier
 ```
 If your parameter value contains whitespace, just wrap it quotes so that your shell doesn't split it up, e.g. `--param "text=value with whitespace"`
 
@@ -357,7 +365,7 @@ On windows the parameters need to be triple-quoted in any case:
 ## Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
 ```bash
-srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
+./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
 scala> org.gradle.tooling.GradleConnector.newConnector()
 ```
 To add multiple dependency resolvers, you can specify this parameter multiple times.
@@ -371,7 +379,7 @@ echo '
 println(org.gradle.tooling.GradleConnector.newConnector())
 ' > script-with-resolver.sc
 
-srp --script script-with-resolver.sc
+./srp --script script-with-resolver.sc
 ```
 
 If one or multiple of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file):
@@ -391,14 +399,14 @@ The prefix is arbitrary and is only used to specify several credentials in a sin
 For the REPL itself:
 ```
 export JAVA_OPTS='-Xdebug -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y'
-srp
+./srp
 unset JAVA_OPTS
 ```
 Then attach your favorite IDE / debugger on port 5005. 
 
 If you want to debug a script, it's slightly different. Scripts are executed in a separate subprocess - just specify the following parameter (and make sure `JAVA_OPTS` isn't also set).
 ```
-srp --script myScript.sc --remoteJvmDebug
+./srp --script myScript.sc --remoteJvmDebug
 ```
 
 ## Server mode
@@ -418,7 +426,7 @@ curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote
 
 The same for windows and powershell:
 ```
-srp-server.bat
+./srp-server.bat
 
 Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentType "application/json" -Body '{"query": "val foo = 42"}'
 # Content           : {"success":true,"stdout":"val foo: Int = 42\r\n","uuid":"02f843ba-671d-4fb5-b345-91c1dcf5786d"}
@@ -552,10 +560,10 @@ While maven central jar releases are created for each commit on master (a new ve
 cd /path/to/dotty
 git fetch
 
-OLD=3.3.0 # set to version that was used before you bumped it
-NEW=3.3.1 # set to version that you bumped it to
+OLD=3.4.2     # set to version that was used before you bumped it
+NEW=3.5.2-RC2 # set to version that you bumped it to
 git checkout $NEW
-git diff $OLD compiler/src/dotty/tools/repl
+git diff $OLD..$NEW compiler/src/dotty/tools/repl
 ```
 * check if any of those changes need to be reapplied to this repo
 
