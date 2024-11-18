@@ -7,24 +7,19 @@ class PredefTests extends AnyWordSpec with Matchers {
   given Colors = Colors.BlackWhite
 
   "recursively resolve `//> using file` directive" in {
-    val script = os.temp("val mainScript = 5")
-    val additionalScript1 = os.temp("val additionalScript1 = 10")
-    val additionalScript2 = os.temp("val additionalScript2 = 20")
+    val additionalFile2 = os.temp(
+      """val predef2 = 10"""
+    )
+    val additionalFile1 = os.temp(
+      s"""//> using file $additionalFile2
+        |val predef1 = 20""".stripMargin)
     val predefFile = os.temp(
-      s"""//> using file $additionalScript1
+      s"""//> using file $additionalFile1
          |val predefCode = 1
-         |//> using file $additionalScript2
          |""".stripMargin)
 
-    allSourceLines(Config(predefFiles = Seq(predefFile.toNIO), scriptFile = Some(script.toNIO))).sorted shouldBe
-      Seq(
-        s"//> using file $additionalScript1",
-        s"//> using file $additionalScript2",
-        "val additionalScript1 = 10",
-        "val additionalScript2 = 20",
-        "val mainScript = 5",
-        "val predefCode = 1",
-      ).sorted
+    UsingDirectives.findImportedFilesRecursively(predefFile.toNIO).sorted shouldBe
+      Seq(additionalFile1, additionalFile2).map(_.toNIO).sorted
   }
 
   "recursively resolve `//> using file` directive - with recursive loops" in {
