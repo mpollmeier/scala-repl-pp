@@ -12,7 +12,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
   } else {
     "execute simple single-statement script" in {
       execTest { testOutputPath =>
-        TestSetup(s"""java.nio.file.Files.writeString(java.nio.file.Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-simple")""")
+        TestSetup(s"""java.nio.file.Files.writeString(java.nio.file.Path.of("$testOutputPath"), "iwashere-simple")""")
       }.get shouldBe "iwashere-simple"
     }
 
@@ -21,7 +21,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |@main def foo() = {
-             |  Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-@main")
+             |  Files.writeString(Path.of("$testOutputPath"), "iwashere-@main")
              |}""".stripMargin
         )
       }.get shouldBe "iwashere-@main"
@@ -32,11 +32,11 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |@main def foo() = {
-             |  Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-@main-foo")
+             |  Files.writeString(Path.of("$testOutputPath"), "iwashere-@main-foo")
              |}
              |
              |@main def bar() = {
-             |  Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-@main-bar")
+             |  Files.writeString(Path.of("$testOutputPath"), "iwashere-@main-bar")
              |}""".stripMargin,
           adaptConfig = _.copy(command = Some("bar"))
         )
@@ -48,7 +48,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |@main def foo(value: String) = {
-             |  Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), value)
+             |  Files.writeString(Path.of("$testOutputPath"), value)
              |}""".stripMargin,
           adaptConfig = _.copy(params = Map("value" -> "iwashere-parameter"))
         )
@@ -57,10 +57,10 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
 
     "predefFiles" in {
       execTest { testOutputPath =>
-        val predefFile = os.temp("val bar = \"iwashere-predefFile\"").toNIO
+        val predefFile = os.temp("""val bar = "iwashere-predefFile"""").toNIO
         TestSetup(
           s"""import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), bar)""".stripMargin,
+             |Files.writeString(Path.of("$testOutputPath"), bar)""".stripMargin,
           adaptConfig = _.copy(predefFiles = List(predefFile))
         )
       }.get shouldBe "iwashere-predefFile"
@@ -71,7 +71,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-param:" + compareResult)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-dependency-param:" + compareResult)
              |""".stripMargin,
           adaptConfig = _.copy(classpathConfig = Config.ForClasspath(dependencies = Seq("com.michaelpollmeier:versionsort:1.0.7")))
         )
@@ -84,7 +84,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           s"""import java.nio.file.*
              |//> using dep com.michaelpollmeier:versionsort:1.0.7
              |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-using-script:" + compareResult)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-dependency-using-script:" + compareResult)
              |""".stripMargin
         )
       }.get shouldBe "iwashere-dependency-using-script:1"
@@ -96,7 +96,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-dependency-using-predefFiles:" + compareResult)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-dependency-using-predefFiles:" + compareResult)
              |""".stripMargin,
           adaptConfig = _.copy(predefFiles = List(predefFile))
         )
@@ -110,7 +110,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""import java.nio.file.*
              |//> using file $additionalScript
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test1:" + foo)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-using-file-test1:" + foo)
              |""".stripMargin
         )
       }.get shouldBe "iwashere-using-file-test1:99"
@@ -122,7 +122,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         val predefFile = os.temp(s"//> using file $additionalScript").toNIO
         TestSetup(
           s"""import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test3:" + foo)
+             |Files.writeString(Path.of(\"$testOutputPath"), "iwashere-using-file-test3:" + foo)
              |""".stripMargin,
           adaptConfig = _.copy(predefFiles = List(predefFile))
         )
@@ -143,7 +143,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""//> using file $additionalScript1
              |import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test4:" + bar)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-using-file-test4:" + bar)
              |""".stripMargin
         )
       }.get shouldBe "iwashere-using-file-test4:99"
@@ -165,7 +165,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         TestSetup(
           s"""//> using file $additionalScript0
              |import java.nio.file.*
-             |Files.writeString(Path.of(\"\"\"$testOutputPath\"\"\"), "iwashere-using-file-test5:" + bar)
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-using-file-test5:" + bar)
              |""".stripMargin,
           adaptConfig = _.copy(verbose = true)
         )
