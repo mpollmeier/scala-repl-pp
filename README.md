@@ -487,24 +487,16 @@ stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
 ```
 
-## Global predef file: `~/.scala-repl-pp.sc`
-Code that should be available across all srp sessions can be written into your local `~/.scala-repl-pp.sc`. 
+## Global runBefore file: `~/.scala-repl-pp.sc`
+Code in this file will get executed at the start of each srp session, including scripts.
 
 ```
-echo 'def bar = 90' > ~/.scala-repl-pp.sc
-echo 'def baz = 91' > script1.sc
-echo 'def bam = 92' > script2.sc
+echo 'import Short.MaxValue' > ~/.scala-repl-pp.sc
 
-./srp --predef script1.sc --predef script2.sc
+./srp
 
-scala> bar
-val res0: Int = 90
-
-scala> baz
-val res1: Int = 91
-
-scala> bam
-val res2: Int = 92
+scala> MaxValue
+val res0: Int = 32767
 ```
 
 ## Verbose mode
