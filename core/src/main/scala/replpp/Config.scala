@@ -153,7 +153,7 @@ object Config {
 
     def runBefore[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
       builder.opt[String]("runBefore")
-        .valueName("val foo = 42")
+        .valueName("'val foo = 42'")
         .unbounded()
         .optional()
         .action(action)

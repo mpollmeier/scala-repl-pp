@@ -9,21 +9,20 @@ package object replpp {
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
   lazy val pwd: Path = Paths.get(".").toAbsolutePath
   lazy val home: Path = Paths.get(System.getProperty("user.home"))
-  lazy val globalPredefFile = home.resolve(".scala-repl-pp.sc")
-  lazy val globalPredefFileMaybe = Option(globalPredefFile).filter(Files.exists(_))
+  lazy val globalRunBeforeFile = home.resolve(".scala-repl-pp.sc")
+  lazy val globalRunBeforeFileMaybe = Option(globalRunBeforeFile).filter(Files.exists(_))
 
-  private[replpp] def DefaultPredefLines(using colors: Colors) = {
+  private[replpp] def DefaultRunBeforeLines(using colors: Colors) = {
     val colorsImport = colors match {
       case Colors.BlackWhite => "replpp.Colors.BlackWhite"
       case Colors.Default => "replpp.Colors.Default"
     }
     Seq(
       "import replpp.Operators.*",
-      s"given replpp.Colors = $colorsImport"
+      s"given replpp.Colors = $colorsImport",
     )
   }
 
-  private[replpp] def DefaultPredef(using Colors) = DefaultPredefLines.mkString(lineSeparator)
 
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
@@ -49,9 +48,8 @@ package object replpp {
   def allPredefFiles(config: Config): Seq[Path] = {
     val allPredefFiles  = mutable.Set.empty[Path]
     allPredefFiles ++= config.predefFiles
-    globalPredefFileMaybe.foreach(allPredefFiles.addOne)
 
-    // the directly resolved predef files might reference additional files via `using` directive
+    // the directly referenced predef files might reference additional files via `using` directive
     val predefFilesDirect = allPredefFiles.toSet
     predefFilesDirect.foreach { predefFile =>
       val importedFiles = UsingDirectives.findImportedFilesRecursively(predefFile, visited = allPredefFiles.toSet)
@@ -68,11 +66,11 @@ package object replpp {
   }
 
   def allSourceLines(config: Config): Seq[String] =
-    allSourceFiles(config).flatMap(linesFromFile)
+    allSourceFiles(config).flatMap(linesFromFile) ++ config.runBefore
 
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
   def precompilePredefFiles(config: Config): Config = {
-    val allPredefFiles = (config.predefFiles :+ globalPredefFile).filter(Files.exists(_))
+    val allPredefFiles = (config.predefFiles :+ globalRunBeforeFile).filter(Files.exists(_))
     if (allPredefFiles.nonEmpty) {
       val predefClassfilesDir = new SimpleDriver().compileAndGetOutputDir(
         replpp.compilerArgs(config),

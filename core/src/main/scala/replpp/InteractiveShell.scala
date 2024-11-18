@@ -2,6 +2,7 @@ package replpp
 
 import dotty.tools.repl.State
 
+import java.lang.System.lineSeparator
 import scala.util.control.NoStackTrace
 
 object InteractiveShell {
@@ -21,18 +22,18 @@ object InteractiveShell {
     )
 
     val initialState: State = replDriver.initialState
-    val predefCode = DefaultPredef
+    val runBeforeLines = (DefaultRunBeforeLines ++ config.runBefore).mkString(lineSeparator)
     val state: State = {
       if (verboseEnabled(config)) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
-        println(predefCode)
-        replDriver.run(predefCode)(using initialState)
+        println(runBeforeLines)
+        replDriver.run(runBeforeLines)(using initialState)
       } else {
-        replDriver.runQuietly(predefCode)(using initialState)
+        replDriver.runQuietly(runBeforeLines)(using initialState)
       }
     }
 
-    if (predefCode.nonEmpty && state.objectIndex != 1) {
+    if (runBeforeLines.nonEmpty && state.objectIndex != 1) {
       throw new AssertionError(s"compilation error for predef code - error should have been reported above ^") with NoStackTrace
     }
 
