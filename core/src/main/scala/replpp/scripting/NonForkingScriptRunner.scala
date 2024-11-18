@@ -1,6 +1,5 @@
 package replpp.scripting
 
-import org.slf4j.LoggerFactory
 import replpp.{Config, allPredefFiles, allSourceFiles}
 
 import java.nio.file.Files
@@ -15,7 +14,6 @@ import scala.util.{Failure, Success}
   * the NonForkingScriptRunner :)
   */
 object NonForkingScriptRunner {
-  private val logger = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     val config = Config.parse(args)
@@ -39,7 +37,7 @@ object NonForkingScriptRunner {
     }
 
     if (config.runBefore.nonEmpty)
-      logger.warn(s"ScriptingDriver does not support `runBefore` code, the given ${config.runBefore.size} statements will be ignored")
+      println(s"[WARNING] ScriptingDriver does not support `runBefore` code, the given ${config.runBefore.size} statements will be ignored")
 
     val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(
