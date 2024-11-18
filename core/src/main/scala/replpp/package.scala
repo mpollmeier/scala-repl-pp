@@ -8,8 +8,9 @@ package object replpp {
   val VerboseEnvVar    = "SCALA_REPL_PP_VERBOSE"
   lazy val pwd: Path = Paths.get(".").toAbsolutePath
   lazy val home: Path = Paths.get(System.getProperty("user.home"))
-  lazy val globalRunBeforeFile = home.resolve(".scala-repl-pp.sc")
-  lazy val globalRunBeforeFileMaybe = Option(globalRunBeforeFile).filter(Files.exists(_))
+  lazy val globalRunBeforeFile: Path = home.resolve(".scala-repl-pp.sc")
+  lazy val globalRunBeforeFileMaybe: Option[Path] = Option(globalRunBeforeFile).filter(Files.exists(_))
+  lazy val globalRunBeforeLines: Seq[String] = globalRunBeforeFileMaybe.map(linesFromFile).getOrElse(Seq.empty)
 
   private[replpp] def DefaultRunBeforeLines(using colors: Colors) = {
     val colorsImport = colors match {
