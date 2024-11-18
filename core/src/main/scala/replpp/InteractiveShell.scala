@@ -22,7 +22,7 @@ object InteractiveShell {
     )
 
     val initialState: State = replDriver.initialState
-    val runBeforeLines = (DefaultRunBeforeLines ++ config.runBefore).mkString(lineSeparator)
+    val runBeforeLines = (DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore).mkString(lineSeparator)
     val state: State = {
       if (verboseEnabled(config)) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
