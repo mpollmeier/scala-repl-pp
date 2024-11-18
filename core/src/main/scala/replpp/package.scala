@@ -1,6 +1,5 @@
 import replpp.util.{ClasspathHelper, SimpleDriver, linesFromFile}
 
-import java.lang.System.lineSeparator
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable
 
@@ -23,7 +22,6 @@ package object replpp {
     )
   }
 
-
   /** verbose mode can either be enabled via the config, or the environment variable `SCALA_REPL_PP_VERBOSE=true` */
   def verboseEnabled(config: Config): Boolean = {
     config.verbose ||
@@ -43,7 +41,7 @@ package object replpp {
   /** recursively find all relevant source files from main script, global predef file, 
     * provided predef files, other scripts that were imported with `using file` directive */
   def allSourceFiles(config: Config): Seq[Path] =
-    (allPredefFiles(config) ++ config.scriptFile).distinct.sorted
+    (allPredefFiles(config) ++ config.scriptFile ++ globalRunBeforeFileMaybe).distinct.sorted
 
   def allPredefFiles(config: Config): Seq[Path] = {
     val allPredefFiles  = mutable.Set.empty[Path]
@@ -62,7 +60,7 @@ package object replpp {
       allPredefFiles ++= importedFiles
     }
 
-    allPredefFiles.toSeq.sorted
+    allPredefFiles.toSeq.filter(Files.exists(_)).sorted
   }
 
   def allSourceLines(config: Config): Seq[String] =
@@ -70,11 +68,10 @@ package object replpp {
 
   /** precompile given predef files (if any) and update Config to include the results in the classpath */
   def precompilePredefFiles(config: Config): Config = {
-    val allPredefFiles = (config.predefFiles :+ globalRunBeforeFile).filter(Files.exists(_))
-    if (allPredefFiles.nonEmpty) {
+    if (config.predefFiles.nonEmpty) {
       val predefClassfilesDir = new SimpleDriver().compileAndGetOutputDir(
         replpp.compilerArgs(config),
-        inputFiles = allPredefFiles,
+        inputFiles = allPredefFiles(config),
         verbose = config.verbose
       ).get
       config.withAdditionalClasspathEntry(predefClassfilesDir)
