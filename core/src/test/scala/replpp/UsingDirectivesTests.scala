@@ -25,30 +25,41 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
     results should not contain Paths.get("./commented_out.sc")
   }
 
-  "find imported files recursively from given source" in {
-    val script1 = os.temp("val foo = 42")
-    val script2 = os.temp(
-      s"""//> using file $script1
-         |val bar = 42""".stripMargin)
+  "recursively resolve `//> using file` directive" in {
+    val additionalFile2 = os.temp(
+      contents = """val predef2 = 10""",
+      suffix = "additionalFile2"
+    )
+    val additionalFile1 = os.temp(
+      contents = s"""//> using file $additionalFile2
+                    |val predef1 = 20""".stripMargin,
+      suffix = "additionalFile1"
+    )
+    val predefFile = os.temp(
+      contents = s"""//> using file $additionalFile1
+                    |val predef0 = 0""".stripMargin)
 
-    val rootPath = Paths.get(".")
-    val source = s"//> using file $script2"
-
-    val results = UsingDirectives.findImportedFilesRecursively(Seq(source), rootPath)
-    results should contain(script1.toNIO)
-    results should contain(script2.toNIO)
+    UsingDirectives.findImportedFilesRecursively(predefFile.toNIO).sorted shouldBe
+      Seq(additionalFile1, additionalFile2).map(_.toNIO).sorted
   }
 
-  "find imported files recursively from given script" in {
-    val script1 = os.temp("val foo = 42")
-    val script2 = os.temp(
-      s"""//> using file $script1
-         |val bar = 42""".stripMargin)
-    val script3 = os.temp(s"//> using file $script2")
+  "recursively resolve `//> using file` directive - and handle recursive loops" in {
+    val additionalFile2 = os.temp(suffix = "additionalFile2")
+    val additionalFile1 = os.temp(suffix = "additionalFile1")
+    val predefFile = os.temp(
+      contents = s"""//> using file $additionalFile1
+                    |val predef0 = 0""".stripMargin)
 
-    val results = UsingDirectives.findImportedFilesRecursively(script3.toNIO)
-    results should contain(script1.toNIO)
-    results should contain(script2.toNIO)
+    os.write.over(additionalFile1,
+      s"""//> using file $additionalFile2
+         |val predef1 = 10""".stripMargin)
+    os.write.over(additionalFile2,
+      s"""//> using file $additionalFile1
+         |val predef2 = 20""".stripMargin)
+
+    UsingDirectives.findImportedFilesRecursively(predefFile.toNIO).sorted shouldBe
+      Seq(additionalFile1, additionalFile2).map(_.toNIO).sorted
+      // most importantly, this should not loop endlessly due to the recursive imports
   }
 
   "find declared dependencies" in {
