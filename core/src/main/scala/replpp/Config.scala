@@ -8,7 +8,8 @@ import replpp.shaded.scopt.OParserBuilder
 import java.nio.file.Path
 
 case class Config(
-  predefFiles: Seq[Path] = Nil,
+  predefFiles: Seq[Path] = Nil, // these files will be precompiled and added to the classpath
+  runBefore: Seq[String] = Nil, // these statements will be interpreted on startup
   nocolors: Boolean = false,
   verbose: Boolean = false,
   classpathConfig: Config.ForClasspath = Config.ForClasspath(),
@@ -39,6 +40,10 @@ case class Config(
 
     predefFiles.foreach { predefFile =>
       add("--predef", predefFile.toString)
+    }
+
+    runBefore.foreach { runBefore =>
+      add("--runBefore", runBefore)
     }
 
     if (nocolors) add("--nocolors")
@@ -103,6 +108,7 @@ object Config {
     OParser.sequence(
       programName("scala-repl-pp"),
       opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
+      opts.runBefore((x, c) => c.copy(runBefore = c.runBefore :+ x)),
       opts.nocolors((_, c) => c.copy(nocolors = true)),
       opts.verbose((_, c) => c.copy(verbose = true)),
       opts.classpathEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(additionalClasspathEntries = c.classpathConfig.additionalClasspathEntries :+ x))),
@@ -142,7 +148,16 @@ object Config {
         .unbounded()
         .optional()
         .action(action)
-        .text("import additional script files on startup - may be passed multiple times")
+        .text("given source files will be compiled and added to classpath - this may be passed multiple times")
+    }
+
+    def runBefore[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("runBefore")
+        .valueName("'val foo = 42'")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("given code will be executed on startup - this may be passed multiple times")
     }
 
     def nocolors[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {

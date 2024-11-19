@@ -17,6 +17,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--server-auth-password", "test-pass",
       "--verbose",
       "--predef", "test-predef.sc",
+      "--runBefore", "val foo = 42",
     ))
     parsed.serverHost shouldBe "testHost"
     parsed.serverPort shouldBe 42
@@ -24,6 +25,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
     parsed.serverAuthPassword shouldBe Some("test-pass")
     parsed.baseConfig.verbose shouldBe true
     parsed.baseConfig.predefFiles shouldBe Seq(Paths.get("test-predef.sc"))
+    parsed.baseConfig.runBefore shouldBe Seq("val foo = 42")
   }
 
 }

@@ -19,6 +19,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
   "asJavaArgs (inverse of Config.parse)" in {
     val config = Config(
       predefFiles = List(Paths.get("/some/path/predefFile1"), Paths.get("/some/path/predefFile2")),
+      runBefore = List("val foo = 42", "println(foo)"),
       nocolors = true,
       verbose = true,
       classpathConfig = Config.ForClasspath(
@@ -39,6 +40,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
     javaArgs shouldBe Seq(
       "--predef", Paths.get("/some/path/predefFile1").toString,
       "--predef", Paths.get("/some/path/predefFile2").toString,
+      "--runBefore", "val foo = 42",
+      "--runBefore", "println(foo)",
       "--nocolors",
       "--verbose",
       "--classpathEntry", "cp1",

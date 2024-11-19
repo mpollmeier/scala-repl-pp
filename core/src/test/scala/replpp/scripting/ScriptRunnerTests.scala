@@ -129,7 +129,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "iwashere-using-file-test3:99"
     }
 
-    "import additional files via `//> using file` recursively" in {
+    "import additional files via `//> using file` recursively from script file" in {
       execTest { testOutputPath =>
         val additionalScript0 = os.temp()
         val additionalScript1 = os.temp()
@@ -145,6 +145,28 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
              |import java.nio.file.*
              |Files.writeString(Path.of("$testOutputPath"), "iwashere-using-file-test4:" + bar)
              |""".stripMargin
+        )
+      }.get shouldBe "iwashere-using-file-test4:99"
+    }
+
+    "import additional files via `//> using file` recursively from predef file" in {
+      execTest { testOutputPath =>
+        val additionalPredefFile2 = os.temp()
+        val additionalPredefFile1 = os.temp()
+        // should handle recursive loop as well
+        os.write.over(additionalPredefFile2,
+          s"""//> using file $additionalPredefFile1
+             |def foo = 99""".stripMargin)
+        os.write.over(additionalPredefFile1,
+          s"""//> using file $additionalPredefFile2
+             |def bar = foo""".stripMargin)
+        val predefFile = os.temp(s"//> using file $additionalPredefFile1")
+        TestSetup(
+          s"""
+             |import java.nio.file.*
+             |Files.writeString(Path.of("$testOutputPath"), "iwashere-using-file-test4:" + bar)
+             |""".stripMargin,
+          _.copy(predefFiles = Seq(predefFile.toNIO))
         )
       }.get shouldBe "iwashere-using-file-test4:99"
     }

@@ -1,6 +1,6 @@
 package replpp.scripting
 
-import replpp.{Config, allPredefFiles, allSourceFiles}
+import replpp.{Config, allPredefFiles}
 
 import java.nio.file.Files
 import scala.util.{Failure, Success}
@@ -35,6 +35,9 @@ object NonForkingScriptRunner {
       val parameterArgs = config.params.flatMap { case (key, value) => Seq(s"--$key", value) }
       commandArgs ++ parameterArgs
     }
+
+    if (config.runBefore.nonEmpty)
+      println(s"[WARNING] ScriptingDriver does not support `runBefore` code, the given ${config.runBefore.size} statements will be ignored")
 
     val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(

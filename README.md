@@ -20,7 +20,6 @@ srp
 Prerequisite: jdk11+
 
 ## TOC
-<!-- markdown-toc --maxdepth 3 README.md|tail -n +4 -->
 - [Benefits over / comparison with](#benefits-over--comparison-with)
   * [Regular Scala REPL](#regular-scala-repl)
   * [Ammonite](#ammonite)
@@ -28,14 +27,15 @@ Prerequisite: jdk11+
 - [Prerequisite for all of the below: run `sbt stage` or download the latest release](#prerequisite-for-all-of-the-below-run-sbt-stage-or-download-the-latest-release)
 - [REPL](#repl)
   * [run with defaults](#run-with-defaults)
-  * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
-  * [execute some predef code](#execute-some-predef-code)
+  * [execute code at the start with `--runBefore`](#execute-code-at-the-start-with---runbefore)
+  * [`--predef`: code that is compiled but not executed](#--predef-code-that-is-compiled-but-not-executed)
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Adding classpath entries](#adding-classpath-entries)
   * [Rendering of output](#rendering-of-output)
   * [Exiting the REPL](#exiting-the-repl)
+  * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
   * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
@@ -49,7 +49,6 @@ Prerequisite: jdk11+
   * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
 - [Server mode](#server-mode)
 - [Embed into your own project](#embed-into-your-own-project)
-- [Global predef file: `~/.scala-repl-pp.sc`](#global-predef-file-scala-repl-ppsc)
 - [Verbose mode](#verbose-mode)
 - [Inherited classpath](#inherited-classpath)
 - [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
@@ -62,7 +61,8 @@ Prerequisite: jdk11+
   * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
-- [Fineprint](#fineprint)  
+- [Fineprint](#fineprint)
+
 
 ## Benefits over / comparison with
 
@@ -100,10 +100,28 @@ scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Am
 ./srp
 ```
 
-### customize prompt, greeting and exit code
-./srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
+### execute code at the start with `--runBefore`
+```
+./srp --runBefore 'import Byte.MaxValue'
 
-### execute some predef code
+scala> MaxValue
+val res0: Int = 127
+```
+
+You can specify this parameter multiple times, the given statements will be executed in the given order.
+
+If you want to execute some code _every single time_ you start a session, just write it to `~/.scala-repl-pp.sc`
+```
+echo 'import Short.MaxValue' > ~/.scala-repl-pp.sc
+
+./srp
+
+scala> MaxValue
+val res0: Int = 32767
+```
+
+### `--predef`: add source files to the classpath
+Additional source files that are compiled added to the classpath, but unlike `runBefore` not executed straight away can be provided via `--predef`. 
 ```
 echo 'def foo = 42' > foo.sc
 
@@ -111,6 +129,12 @@ echo 'def foo = 42' > foo.sc
 scala> foo
 val res0: Int = 42
 ```
+
+You can specify this parameter multiple times (`--predef one.sc --predef two.sc`).
+
+Why not use `runBefore` instead? For simple examples like the one above, you can do so. If it gets more complicated and you have multiple files referencing each others, `predef` allows you to treat it as one compilation unit, which isn't possible with `runBefore`. And as you add more code it's get's easier to manage in files rather than command line arguments. 
+
+Note that predef files may not contain toplevel statements like `println("foo")` - instead, these either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
 
 ### Operators: Redirect to file, pipe to external command
 Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
@@ -273,6 +297,15 @@ Captured interrupt signal `INT` - if you want to kill the REPL, press Ctrl-c aga
 $
 ```
 Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
+
+### customize prompt, greeting and exit code
+```
+./srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
+
+hey there!
+myprompt> :exit
+see ya!
+```
 
 ### Looking up the current terminal width
 In case you want to adjust your output rendering to the available terminal size, you can look it up:
@@ -485,26 +518,6 @@ Type `help` for help
 
 stringcalc> add(One, Two)
 val res0: stringcalc.Number = Number(3)
-```
-
-## Global predef file: `~/.scala-repl-pp.sc`
-Code that should be available across all srp sessions can be written into your local `~/.scala-repl-pp.sc`. 
-
-```
-echo 'def bar = 90' > ~/.scala-repl-pp.sc
-echo 'def baz = 91' > script1.sc
-echo 'def bam = 92' > script2.sc
-
-./srp --predef script1.sc --predef script2.sc
-
-scala> bar
-val res0: Int = 90
-
-scala> baz
-val res1: Int = 91
-
-scala> bam
-val res2: Int = 92
 ```
 
 ## Verbose mode

@@ -16,6 +16,7 @@ object Config {
     val parser = OParser.sequence(
       programName("scala-repl-pp-server"),
       replpp.Config.opts.predef((x, c) => c.copy(baseConfig = c.baseConfig.copy(predefFiles = c.baseConfig.predefFiles :+ x))),
+      replpp.Config.opts.runBefore((x, c) => c.copy(baseConfig = c.baseConfig.copy(runBefore = c.baseConfig.runBefore :+ x))),
       replpp.Config.opts.verbose((_, c) => c.copy(baseConfig = c.baseConfig.copy(verbose = true))),
       replpp.Config.opts.inheritClasspath((_, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(inheritClasspath = true)))),
       replpp.Config.opts.classpathIncludesEntry((x, c) => {
