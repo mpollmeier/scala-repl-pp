@@ -36,13 +36,11 @@ object NonForkingScriptRunner {
       commandArgs ++ parameterArgs
     }
 
-    if (config.runBefore.nonEmpty)
-      println(s"[WARNING] ScriptingDriver does not support `runBefore` code, the given ${config.runBefore.size} statements will be ignored")
-
     val verboseEnabled = replpp.verboseEnabled(config)
     new ScriptingDriver(
       compilerArgs = replpp.compilerArgs(config) :+ "-nowarn",
       predefFiles = allPredefFiles(config),
+      runBeforeSourceLines = config.runBefore,
       scriptFile = scriptFile,
       scriptArgs = scriptArgs.toArray,
       verbose = verboseEnabled
