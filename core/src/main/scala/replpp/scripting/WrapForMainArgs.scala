@@ -8,17 +8,20 @@ object WrapForMainArgs {
   case class WrappingResult(fullScript: String, linesBeforeWrappedCode: Int)
 
   def apply(scriptCode: String, runBeforeAsSourceLines: Seq[String]): WrappingResult = {
-    var linesBeforeWrappedCode = 0 // to adjust line number reporting
-
     val runBeforeCode = runBeforeAsSourceLines.mkString("\n")
+
     val wrapperCodeStart =
       s"""import replpp.shaded.mainargs
          |import mainargs.main // intentionally shadow any potentially given @main
          |
          |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
          |object ${ScriptingDriver.MainClassName} {
+         |// runBeforeCode START
          |$runBeforeCode
+         |// runBeforeCode END
          |""".stripMargin
+
+    var linesBeforeWrappedCode = 0 // to adjust line number reporting
 
     val mainImpl =
       if (scriptCode.contains("@main"))
@@ -31,6 +34,7 @@ object WrapForMainArgs {
       }
 
     linesBeforeWrappedCode += wrapperCodeStart.lines().count().toInt
+    linesBeforeWrappedCode += 1 // for the line break after $wrapperCodeStart
     val fullScript =
       s"""$wrapperCodeStart
          |$mainImpl
@@ -41,6 +45,11 @@ object WrapForMainArgs {
          |}
          |""".stripMargin
 
+    println(s"XXX0 wrapperCodeStart lines: " + wrapperCodeStart.lines().count().toInt)
+    println(s"XXX1 linesBeforeWrappedCode=$linesBeforeWrappedCode")
+    println(s"XXX2 fullScript start:")
+    println(fullScript)
+    println(s"XXX2 fullScript end")
     WrappingResult(fullScript, linesBeforeWrappedCode)
   }
 
