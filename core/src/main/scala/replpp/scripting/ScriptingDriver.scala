@@ -20,8 +20,13 @@ import scala.util.{Failure, Try}
   * Main difference: we don't (need to) recursively look for main method entry points in the entire classpath,
   * because we have a fixed class and method name that ScriptRunner uses when it embeds the script and predef code.
   * */
-class ScriptingDriver(compilerArgs: Array[String], predefFiles: Seq[Path], scriptFile: Path, scriptArgs: Array[String], verbose: Boolean) {
-  private val wrappingResult = WrapForMainArgs(Files.readString(scriptFile))
+class ScriptingDriver(compilerArgs: Array[String], 
+                      predefFiles: Seq[Path], 
+                      runBeforeSourceLines: Seq[String], 
+                      scriptFile: Path, 
+                      scriptArgs: Array[String], 
+                      verbose: Boolean) {
+  private val wrappingResult = WrapForMainArgs(Files.readString(scriptFile), runBeforeSourceLines)
   private val wrappedScript = Files.createTempFile("wrapped-script", ".sc")
   private val tempFiles = Seq.newBuilder[Path]
   private var executed = false

@@ -20,28 +20,31 @@ srp
 Prerequisite: jdk11+
 
 ## TOC
+<!-- generated with:
+markdown-toc --maxdepth 3 README.md|tail -n +4 
+-->
 - [Benefits over / comparison with](#benefits-over--comparison-with)
   * [Regular Scala REPL](#regular-scala-repl)
   * [Ammonite](#ammonite)
   * [scala-cli](#scala-cli)
 - [Prerequisite for all of the below: run `sbt stage` or download the latest release](#prerequisite-for-all-of-the-below-run-sbt-stage-or-download-the-latest-release)
-- [REPL](#repl)
+- [Usage](#usage)
   * [run with defaults](#run-with-defaults)
   * [execute code at the start with `--runBefore`](#execute-code-at-the-start-with---runbefore)
-  * [`--predef`: code that is compiled but not executed](#--predef-code-that-is-compiled-but-not-executed)
+  * [`--predef`: add source files to the classpath](#--predef-add-source-files-to-the-classpath)
   * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
   * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
   * [Importing additional script files interactively](#importing-additional-script-files-interactively)
   * [Adding classpath entries](#adding-classpath-entries)
+- [REPL](#repl)
   * [Rendering of output](#rendering-of-output)
   * [Exiting the REPL](#exiting-the-repl)
   * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
   * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
 - [Scripting](#scripting)
   * [Simple "Hello world" script](#simple-hello-world-script)
-  * [Predef file(s) used in script](#predef-files-used-in-script)
-  * [Importing files / scripts](#importing-files--scripts)
-  * [Dependencies](#dependencies)
+  * [Importing other files / scripts with `using file` directive](#importing-other-files--scripts-with-using-file-directive)
+  * [Dependencies with `using dep` directive](#dependencies-with-using-dep-directive)
   * [@main entrypoints](#main-entrypoints)
   * [multiple @main entrypoints](#multiple-main-entrypoints)
   * [named parameters](#named-parameters)
@@ -62,6 +65,7 @@ Prerequisite: jdk11+
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)
+
 
 
 ## Benefits over / comparison with
@@ -93,7 +97,8 @@ scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Am
 
 ## Prerequisite for all of the below: run `sbt stage` or download the latest release
 
-## REPL
+## Usage
+The below features are all demonstrated using the REPL but also work when running scripts. 
 
 ### run with defaults
 ```bash
@@ -265,6 +270,8 @@ println(new Foo().foo)' > myScript.sc
 ./srp --script myScript.sc
 ```
 
+## REPL
+
 ### Rendering of output
 
 Unlike the stock Scala REPL, srp does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
@@ -327,18 +334,7 @@ echo 'println("Hello!")' > test-simple.sc
 cat out.txt # prints 'i was here'
 ```
 
-### Predef file(s) used in script
-```bash
-echo 'val foo = "Hello, predef file"' > test-predef-file.sc
-echo 'println(foo)' > test-predef.sc
-```
-
-```bash
-./srp --script test-predef.sc --predef test-predef-file.sc
-```
-To import multiple scripts, you can specify this parameter multiple times.
-
-### Importing files / scripts
+### Importing other files / scripts with `using file` directive
 ```bash
 echo 'val foo = 42' > foo.sc
 
@@ -348,7 +344,7 @@ println(foo)' > test.sc
 ./srp --script test.sc
 ```
 
-### Dependencies
+### Dependencies with `using dep` directive
 Dependencies can be added via `//> using dep` syntax (like in scala-cli).
 
 ```bash

@@ -7,21 +7,36 @@ object WrapForMainArgs {
   /** linesBeforeWrappedCode: allows us to adjust line numbers in error reporting... */
   case class WrappingResult(fullScript: String, linesBeforeWrappedCode: Int)
 
-  def apply(scriptCode: String): WrappingResult = {
-    var linesBeforeWrappedCode = 0
+  def apply(scriptCode: String, runBeforeAsSourceLines: Seq[String]): WrappingResult = {
+    val runBeforeCode = runBeforeAsSourceLines.mkString("\n")
+
+    val wrapperCodeStart =
+      s"""import replpp.shaded.mainargs
+         |import mainargs.main // intentionally shadow any potentially given @main
+         |
+         |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
+         |object ${ScriptingDriver.MainClassName} {
+         |// runBeforeCode START
+         |$runBeforeCode
+         |// runBeforeCode END
+         |""".stripMargin
+
+    var linesBeforeWrappedCode = 0 // to adjust line number reporting
+
     val mainImpl =
-      if (scriptCode.contains("@main")) {
+      if (scriptCode.contains("@main"))
         scriptCode
-      } else {
-        linesBeforeWrappedCode += 1
+      else {
+        linesBeforeWrappedCode += 1 // because we added the following line _before_ the wrapped script code
         s"""@main def _execMain(): Unit = {
            |$scriptCode
            |}""".stripMargin
       }
 
-    linesBeforeWrappedCode += codeBefore.lines().count().toInt
+    linesBeforeWrappedCode += wrapperCodeStart.lines().count().toInt
+    linesBeforeWrappedCode += 1 // for the line break after $wrapperCodeStart
     val fullScript =
-      s"""$codeBefore
+      s"""$wrapperCodeStart
          |$mainImpl
          |
          |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
@@ -32,12 +47,5 @@ object WrapForMainArgs {
 
     WrappingResult(fullScript, linesBeforeWrappedCode)
   }
-
-  private val codeBefore =
-    s"""import replpp.shaded.mainargs
-       |import mainargs.main // intentionally shadow any potentially given @main
-       |
-       |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
-       |object ${ScriptingDriver.MainClassName} {""".stripMargin
 
 }
