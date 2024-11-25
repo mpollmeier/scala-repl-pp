@@ -66,6 +66,34 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "iwashere-predefFile"
     }
 
+    "runBeforeCode" in {
+      execTest { testOutputPath =>
+        TestSetup(
+          s"""import java.nio.file.*
+             |val string = MaxValue + ";" + fromRunBeforeCode
+             |Files.writeString(Path.of("$testOutputPath"), string)""".stripMargin,
+          adaptConfig = _.copy(runBefore = List(
+            "import Byte.MaxValue",
+            "val fromRunBeforeCode = \"iwashere-runBeforeCode\""
+          ))
+        )
+      }.get shouldBe "127;iwashere-runBeforeCode"
+    }
+
+    "predefFiles and runBeforeCode" in {
+      execTest { testOutputPath =>
+        val predefFile = os.temp("""val bar = "iwashere-predefFile"""").toNIO
+        TestSetup(
+          s"""import java.nio.file.*
+             |val string = MinValue + ";" + bar
+             |Files.writeString(Path.of("$testOutputPath"), string)""".stripMargin,
+          adaptConfig = _.copy(
+            predefFiles = List(predefFile),
+            runBefore = List("import Byte.MinValue"))
+        )
+      }.get shouldBe "-128;iwashere-predefFile"
+    }
+
     "additional dependencies" in {
       execTest { testOutputPath =>
         TestSetup(
@@ -204,7 +232,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         // TODO: this isn't the case yet: note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 1
       }
 
-      "error is in imported file" in {
+      "error in imported file" in {
         ensureErrors { () =>
           val additionalScript = os.temp()
           os.write.over(additionalScript,
@@ -220,12 +248,12 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         // note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 2
       }
 
-      "error is in predef file" in {
+      "error in predef file" in {
         ensureErrors { () =>
           val predefFile = os.temp()
           os.write.over(predefFile,
             s"""val foo = 42
-               |val thisWillNotCompile: Int = "because we need an Int"
+               |val thisWillNotCompile: Int = "because this a String and not an Int"
                |""".stripMargin)
           TestSetup(
             "val bar = 34".stripMargin,
@@ -233,6 +261,27 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           )
         }
         // note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 2
+      }
+
+      "error in runBeforeCode" in {
+        ensureErrors { () =>
+          TestSetup(
+            "val bar = 34".stripMargin,
+            adaptConfig = _.copy(runBefore = Seq("val thisWillNotCompile: Int = \"because this a String and not an Int\""))
+          )
+        }
+      }
+
+      "error in script with given runBeforeCode" in {
+        ensureErrors { () =>
+          TestSetup(
+            s"""val foo = 42
+               |val thisWillNotCompile: Int = "because this a String and not an Int"
+               |""".stripMargin,
+            adaptConfig = _.copy(runBefore = Seq("val bar = 34"))
+          )
+          // note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 2
+        }
       }
 
     }

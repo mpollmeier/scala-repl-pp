@@ -8,34 +8,31 @@ object WrapForMainArgs {
   case class WrappingResult(fullScript: String, linesBeforeWrappedCode: Int)
 
   def apply(scriptCode: String, runBeforeAsSourceLines: Seq[String]): WrappingResult = {
-    var linesBeforeWrappedCode = runBeforeAsSourceLines.size // to adjust line number reporting
-    val runBeforeCode = runBeforeAsSourceLines.mkString("\n")
-    val mainImpl =
-      if (scriptCode.contains("@main")) {
-        // 
-        // TODO integrate `runBeforeCode` into scriptCode` - understand how mainargs does it..
-//        ???
-//        scriptCode
-        s"""$runBeforeCode
-           |$scriptCode""".stripMargin
-      } else {
-        linesBeforeWrappedCode += 1 // because we added the following line _before_ the wrapped script code
-        s"""@main def _execMain(): Unit = {
-           |$runBeforeCode
-           |$scriptCode
-           |}""".stripMargin
-      }
+    var linesBeforeWrappedCode = 0 // to adjust line number reporting
 
-    val codeBefore =
+    val runBeforeCode = runBeforeAsSourceLines.mkString("\n")
+    val wrapperCodeStart =
       s"""import replpp.shaded.mainargs
          |import mainargs.main // intentionally shadow any potentially given @main
          |
          |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
-         |object ${ScriptingDriver.MainClassName} {""".stripMargin
+         |object ${ScriptingDriver.MainClassName} {
+         |$runBeforeCode
+         |""".stripMargin
 
-    linesBeforeWrappedCode += codeBefore.lines().count().toInt
+    val mainImpl =
+      if (scriptCode.contains("@main"))
+        scriptCode
+      else {
+        linesBeforeWrappedCode += 1 // because we added the following line _before_ the wrapped script code
+        s"""@main def _execMain(): Unit = {
+           |$scriptCode
+           |}""".stripMargin
+      }
+
+    linesBeforeWrappedCode += wrapperCodeStart.lines().count().toInt
     val fullScript =
-      s"""$codeBefore
+      s"""$wrapperCodeStart
          |$mainImpl
          |
          |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
