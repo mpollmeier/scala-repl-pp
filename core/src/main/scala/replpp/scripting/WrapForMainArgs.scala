@@ -45,11 +45,6 @@ object WrapForMainArgs {
          |}
          |""".stripMargin
 
-    println(s"XXX0 wrapperCodeStart lines: " + wrapperCodeStart.lines().count().toInt)
-    println(s"XXX1 linesBeforeWrappedCode=$linesBeforeWrappedCode")
-    println(s"XXX2 fullScript start:")
-    println(fullScript)
-    println(s"XXX2 fullScript end")
     WrappingResult(fullScript, linesBeforeWrappedCode)
   }
 
