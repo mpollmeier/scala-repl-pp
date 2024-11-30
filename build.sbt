@@ -50,7 +50,7 @@ lazy val server = project.in(file("server"))
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-  "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.9.3" % Test,
 )
 
 ThisBuild / javacOptions ++= Seq(
