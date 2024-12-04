@@ -451,6 +451,9 @@ curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}
 
 curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote code execution!!1!\")"}'
 # {"success":true,"stdout":"",...}%
+
+# combine with `jq` to directly get the output, as if you had a local console:
+curl --silent http://localhost:8080/query-sync -X POST -d '{"query": "val baz = 43"}' | jq --raw-output .stdout
 ```
 
 The same for windows and powershell:
