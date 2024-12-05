@@ -451,7 +451,6 @@ curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}
 
 curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote code execution!!1!\")"}'
 # {"success":true,"stdout":"",...}%
-
 ```
 
 For a nice user experience enable colors and create small wrapper function to interact with the server:
@@ -466,6 +465,7 @@ function srp-remote() {
 srp-remote 'val foo = 42'
 > val foo: Int = 42
 ```
+<img src="https://github.com/user-attachments/assets/f97a3701-cac5-4f56-9b3f-a00405a3fb1f" width="500" />
 
 The same for windows and powershell:
 ```
