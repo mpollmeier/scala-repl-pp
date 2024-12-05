@@ -452,8 +452,19 @@ curl http://localhost:8080/query-sync -X POST -d '{"query": "val bar = foo + 1"}
 curl http://localhost:8080/query-sync -X POST -d '{"query":"println(\"OMG remote code execution!!1!\")"}'
 # {"success":true,"stdout":"",...}%
 
-# combine with `jq` to directly get the output, as if you had a local console:
-curl --silent http://localhost:8080/query-sync -X POST -d '{"query": "val baz = 43"}' | jq --raw-output .stdout
+```
+
+For a nice user experience enable colors and create small wrapper function to interact with the server:
+```bash
+./srp-server --colors
+
+function srp-remote() {
+  QUERY="{\"query\": \"$@\"}"
+  curl --silent http://localhost:8080/query-sync -X POST -d $QUERY | jq --raw-output .stdout
+}
+
+srp-remote 'val foo = 42'
+> val foo: Int = 42
 ```
 
 The same for windows and powershell:
@@ -466,13 +477,13 @@ Invoke-WebRequest -Method 'Post' -Uri http://localhost:8080/query-sync -ContentT
 # Content           : {"success":true,"stdout":"val res0: Int = 43\r\n","uuid":"dc49df42-a390-4177-98d0-ac87a277c7d5"}
 ```
 
-Predef code works with server as well:
+Predef code and runBefore work as well:
 ```
 echo val foo = 99 > foo.sc
-./srp-server --predef foo.sc
+./srp-server --predef foo.sc --runBefore 'import Short.MaxValue'
 
-curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + 1"}'
-# {"success":true,"stdout":"val baz: Int = 100\n",...}
+curl -XPOST http://localhost:8080/query-sync -d '{"query":"val baz = foo + MaxValue"}'
+# {"success":true,"stdout":"val baz: Int = 32866\n",...}
 ```
 
 Adding dependencies:
@@ -495,7 +506,7 @@ curl http://localhost:8080/result/e2640fcb-3193-4386-8e05-914b639c3184
 {"success":true,"uuid":"e2640fcb-3193-4386-8e05-914b639c3184","stdout":"val baz: Int = 93\n"}%
 ```
 
-And there's even a websocket channel that allows you to get notified when the query has finished. For more details and other use cases check out [ReplServerTests.scala](server/src/test/scala/replpp/server/ReplServerTests.scala)
+There's even a websocket channel that allows you to get notified when the query has finished. For more details and other use cases check out [ReplServerTests.scala](server/src/test/scala/replpp/server/ReplServerTests.scala)
 
 Server-specific configuration options as per `srp --help`:
 ```

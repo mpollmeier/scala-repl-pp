@@ -34,6 +34,10 @@ object Config {
       replpp.Config.opts.remoteJvmDebug((_, c) => c.copy(baseConfig = c.baseConfig.copy(remoteJvmDebugEnabled = true))),
 
       note("Server mode"),
+      opt[Unit]("colors")
+        .action((_, c) => c.copy(baseConfig = c.baseConfig.copy(nocolors = false)))
+        .text("use colored output (disabled by default for server mode)"),
+
       opt[String]("server-host")
         .action((x, c) => c.copy(serverHost = x))
         .text("Hostname on which to expose the REPL server"),

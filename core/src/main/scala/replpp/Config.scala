@@ -153,7 +153,7 @@ object Config {
 
     def runBefore[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
       builder.opt[String]("runBefore")
-        .valueName("\"import Int.MaxValue\"")
+        .valueName("'import Int.MaxValue'")
         .unbounded()
         .optional()
         .action(action)
