@@ -45,7 +45,7 @@ lazy val server = project.in(file("server"))
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
-      "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
+      "com.lihaoyi"   %% "requests"     % "0.8.3" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
   )
