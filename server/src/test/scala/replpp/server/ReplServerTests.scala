@@ -123,6 +123,29 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           getResultResponse("stdout").str shouldBe "val bar: Int = 42\n"
         }
 
+        "use runBefore code" in Fixture(runBeforeCode = Seq("import Int.MaxValue")) { url =>
+          val wsMsgPromise = scala.concurrent.Promise[String]()
+          val connectedPromise = scala.concurrent.Promise[String]()
+          cask.util.WsClient.connect(s"$url/connect") {
+            case cask.Ws.Text(msg) if msg == "connected" =>
+              connectedPromise.success(msg)
+            case cask.Ws.Text(msg) =>
+              wsMsgPromise.success(msg)
+          }
+          Await.result(connectedPromise.future, DefaultPromiseAwaitTimeout)
+          val postQueryResponse = postQueryAsync(url, "val bar = MaxValue")
+          val queryUUID = postQueryResponse("uuid").str
+          queryUUID.length should not be 0
+
+          val queryResultWSMessage = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
+          queryResultWSMessage.length should not be 0
+
+          val getResultResponse = getResponse(url, queryUUID)
+          getResultResponse.obj.keySet should contain("success")
+          getResultResponse("uuid").str shouldBe queryResultWSMessage
+          getResultResponse("stdout").str shouldBe "val bar: Int = 2147483647\n"
+        }
+
         "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
@@ -384,7 +407,7 @@ object Fixture {
     )
   }
 
-  def apply[T](predefCode: String = "")(urlToResult: String => T): T = {
+  def apply[T](predefCode: String = "", runBeforeCode: Seq[String] = Seq.empty)(urlToResult: String => T): T = {
     val additionalClasspathEntryMaybe: Option[Path] =
       if (predefCode.trim.isEmpty) None
       else {
@@ -395,7 +418,7 @@ object Fixture {
         Files.delete(predefFile)
         predefClassfiles.toOption
       }
-    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe))
+    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe), runBeforeCode)
 
     val host = "localhost"
     val port = 8081

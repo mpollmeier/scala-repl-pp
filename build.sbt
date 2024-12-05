@@ -5,6 +5,7 @@ ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.4.3"
 
 lazy val ScalaTestVersion = "3.2.18"
+lazy val Slf4jVersion = "2.0.16"
 
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
@@ -26,7 +27,7 @@ lazy val core = project.in(file("core"))
     executableScriptName := "srp",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-      "org.slf4j"       % "slf4j-simple"    % "2.0.16" % Optional,
+      "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
     assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
   )
@@ -43,6 +44,7 @@ lazy val server = project.in(file("server"))
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.8.3",
+      "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
     )
