@@ -8,6 +8,8 @@ import scala.io.Source
 import scala.util.{Try, Using}
 
 package object util {
+  def currentWorkingDirectory = Path.of(".")
+
   def sequenceTry[A](tries: Seq[Try[A]]): Try[Seq[A]] = {
     tries.foldRight(Try(Seq.empty[A])) {
       case (next, accumulator) => 

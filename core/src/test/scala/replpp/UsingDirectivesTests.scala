@@ -105,7 +105,7 @@ class UsingDirectivesTests extends AnyWordSpec with Matchers {
 
       val scriptParentDir = scriptFile.getParent
 
-      val results = UsingDirectives.findClasspathEntries(Seq(scriptFile))
+      val results = UsingDirectives.findClasspathEntriesInFiles(Seq(scriptFile))
       results should contain(Path.of("/path/to/cp1"))
       results should contain(scriptParentDir.resolve("path/to/cp2"))
       results should contain(scriptParentDir.resolve("../path/to/cp3"))

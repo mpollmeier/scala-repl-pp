@@ -31,12 +31,18 @@ object UsingDirectives {
   def findResolvers(lines: IterableOnce[String]): Seq[String] =
     scanFor(ResolverDirective, lines)
 
-  def findClasspathEntries(files: IterableOnce[Path]): Seq[Path] = {
+  def findClasspathEntriesInLines(sourceLines: IterableOnce[String], relativeTo: Path): Seq[Path] = {
     for {
-      file <- files.iterator.toSeq
-      classpathEntry <- scanFor(ClasspathDirective, util.linesFromFile(file))
-      pathRelativeToDeclaringFile = file.getParent.resolve(classpathEntry)
+      classpathEntry <- scanFor(ClasspathDirective, sourceLines)
+      pathRelativeToDeclaringFile = relativeTo.resolve(classpathEntry)
     } yield pathRelativeToDeclaringFile
+  }
+
+  def findClasspathEntriesInFiles(files: IterableOnce[Path]): Seq[Path] = {
+    files.iterator.flatMap { file =>
+      val dir = file.getParent
+      findClasspathEntriesInLines(util.linesFromFile(file), dir)
+    }.toSeq
   }
 
   private def scanFor(directive: String, lines: IterableOnce[String]): Seq[String] = {

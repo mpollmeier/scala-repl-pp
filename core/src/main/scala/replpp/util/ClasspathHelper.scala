@@ -32,13 +32,13 @@ object ClasspathHelper {
 
   protected[util] def fromConfig(config: Config, quiet: Boolean = false): Seq[Path] = {
     val entries = Seq.newBuilder[Path]
+    val debugPrint = verboseEnabled(config) && !quiet
 
     // add select entries from out inherited classpath to the resulting classpath
     def addToEntriesMaybe(path: Path): Unit = {
       val classpathConfig = config.classpathConfig
       val filename = path.getFileName.toString
       val included = classpathConfig.inheritClasspath || classpathConfig.inheritClasspathIncludes.exists(filename.matches(_))
-      val debugPrint = verboseEnabled(config) && !quiet
       lazy val excluded = classpathConfig.inheritClasspathExcludes.exists(filename.matches(_))
       if (included && !excluded) {
         if (debugPrint) println(s"using jar from inherited classpath: $path")
@@ -50,10 +50,6 @@ object ClasspathHelper {
     System.getProperty("java.class.path").split(pathSeparator).filter(_.nonEmpty).map(Paths.get(_)).foreach(addToEntriesMaybe)
     jarsFromClassLoaderRecursively(classOf[replpp.ReplDriver].getClassLoader).map(url => Paths.get(url.toURI)).foreach(addToEntriesMaybe)
 
-    val scriptLines = config.scriptFile.map { path =>
-      Using.resource(Source.fromFile(path.toFile))(_.getLines.toSeq)
-    }.getOrElse(Seq.empty)
-
     val fromDependencies = dependencyArtifacts(config)
     fromDependencies.foreach(entries.addOne)
     if (fromDependencies.nonEmpty && !quiet) {
@@ -61,10 +57,20 @@ object ClasspathHelper {
       if (verboseEnabled(config)) fromDependencies.foreach(println)
     }
 
-    config.classpathConfig.additionalClasspathEntries.map(Paths.get(_)).foreach(entries.addOne)
-    UsingDirectives.findClasspathEntries(allSourceFiles(config)).iterator.foreach(entries.addOne)
+    entries.addAll(config.classpathConfig.additionalClasspathEntries.map(Paths.get(_)))
+    entries.addAll(UsingDirectives.findClasspathEntriesInFiles(allSourceFiles(config)))
 
-    entries.result().distinct.sorted
+    val runBeforeCodeAsLines = config.runBefore.flatMap(_.linesIterator)
+    entries.addAll(UsingDirectives.findClasspathEntriesInLines(runBeforeCodeAsLines, currentWorkingDirectory))
+
+    val result = entries.result().distinct.sorted
+    if (debugPrint) {
+      println("classpath entries from config >")
+      println(result.mkString("\n"))
+      println("< classpath entries from config")
+    }
+
+    result
   }
 
   private[util] def dependencyArtifacts(config: Config): Seq[Path] = {
