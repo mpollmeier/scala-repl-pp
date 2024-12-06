@@ -107,7 +107,7 @@ The below features are all demonstrated using the REPL but also work when runnin
 
 ### execute code at the start with `--runBefore`
 ```
-./srp --runBefore 'import Byte.MaxValue'
+./srp --runBefore "import Byte.MaxValue"
 
 scala> MaxValue
 val res0: Int = 127
@@ -116,13 +116,22 @@ val res0: Int = 127
 You can specify this parameter multiple times, the given statements will be executed in the given order.
 
 If you want to execute some code _every single time_ you start a session, just write it to `~/.scala-repl-pp.sc`
-```
+```bash
 echo 'import Short.MaxValue' > ~/.scala-repl-pp.sc
 
 ./srp
 
 scala> MaxValue
 val res0: Int = 32767
+```
+
+If the code you want to execute on startup is in a file, you can use your shell tooling:
+```bash
+echo 'import Int.MaxValue' > /tmp/runBeforeFile.sc
+./srp --runBefore "$(cat /tmp/runBeforeFile.sc)"
+
+scala> MaxValue
+val res0: Int = 2147483647
 ```
 
 ### `--predef`: add source files to the classpath
