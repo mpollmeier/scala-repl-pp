@@ -60,8 +60,8 @@ class DottyReplDriver(settings: Array[String],
   /** Create a fresh and initialized context with IDE mode enabled */
   private def initialCtx(settings: List[String]): Context = {
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
-    rootCtx.setSetting(rootCtx.settings.YcookComments, true)
-    rootCtx.setSetting(rootCtx.settings.YreadComments, true)
+    rootCtx.setSetting(rootCtx.settings.XcookComments, true)
+    rootCtx.setSetting(rootCtx.settings.XreadComments, true)
     setupRootCtx(this.settings ++ settings, rootCtx)
   }
 
@@ -233,22 +233,8 @@ class DottyReplDriver(settings: Array[String],
     else
       label
 
-  @deprecated("Use completionsWithSignatures instead", "3.4.2")
-  protected final def completions(cursor: Int, expr: String, state0: State): List[Candidate] =
-    completionsWithSignatures(cursor, expr, state0).map: c =>
-      new Candidate(
-        /* value    = */ c.label,
-        /* displ    = */ stripBackTicks(c.label), // displayed value
-        /* group    = */ null,  // can be used to group completions together
-        /* descr    = */ null,  // TODO use for documentation?
-        /* suffix   = */ null,
-        /* key      = */ null,
-        /* complete = */ false  // if true adds space when completing
-      )
-  end completions
-
   /** Extract possible completions at the index of `cursor` in `expr` */
-  protected final def completionsWithSignatures(cursor: Int, expr: String, state0: State): List[Completion] =
+  protected final def completions(cursor: Int, expr: String, state0: State): List[Completion] =
     if expr.startsWith(":") then
       DottyRandomStuff.ParseResult.commands.collect {
         case command if command._1.startsWith(expr) => Completion(command._1, "", List())
@@ -266,7 +252,7 @@ class DottyReplDriver(settings: Array[String],
           val srcPos = SourcePosition(file, Span(cursor))
           try Completion.completions(srcPos)._2 catch case NonFatal(_) => Nil        }
         .getOrElse(Nil)
-  end completionsWithSignatures
+  end completions
 
   protected def interpret(res: ParseResult, quiet: Boolean = false)(using state: State): State = {
     res match {
@@ -536,6 +522,7 @@ class DottyReplDriver(settings: Array[String],
   private object ReplConsoleReporter extends ConsoleReporter.AbstractConsoleReporter {
     override def posFileStr(pos: SourcePosition) = "" // omit file paths
     override def printMessage(msg: String): Unit = out.println(msg)
+    override def echoMessage(msg: String): Unit  = printMessage(msg)
     override def flush()(using Context): Unit    = out.flush()
   }
 

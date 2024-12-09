@@ -30,15 +30,15 @@ class JLineTerminal extends java.io.Closeable {
   // if env var TERM=dumb is defined, instantiate as 'dumb' straight away, otherwise try to instantiate as a
   // regular terminal and fallback to a dumb terminal if that's not possible
   private val terminal: Terminal = {
-    val dumbTerminal = Option(System.getenv("TERM")) == Some("dumb")
-    def build(dumb: Boolean) = TerminalBuilder.builder().dumb(dumb).build()
-    if (dumbTerminal) build(dumb = true)
-    else {
-      Try(build(dumb = false)).recover { case _ =>
-        logger.warn("Unable to instantiate terminal, trying a `dumb` terminal as a fallback. Define the env var TERM=dumb to avoid the extra step (and this warning)")
-        build(dumb = true)
-      }.get
-    }
+    var builder = TerminalBuilder.builder()
+    if System.getenv("TERM") == "dumb" then
+      // Force dumb terminal if `TERM` is `"dumb"`.
+      // Note: the default value for the `dumb` option is `null`, which allows
+      // JLine to fall back to a dumb terminal. This is different than `true` or
+      // `false` and can't be set using the `dumb` setter.
+      // This option is used at https://github.com/jline/jline3/blob/894b5e72cde28a551079402add4caea7f5527806/terminal/src/main/java/org/jline/terminal/TerminalBuilder.java#L528.
+      builder.dumb(true)
+    builder.build()
   }
 
   // MP: adapted here
