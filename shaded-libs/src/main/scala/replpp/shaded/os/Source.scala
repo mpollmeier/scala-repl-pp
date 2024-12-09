@@ -67,6 +67,8 @@ object Source extends WritableLowPri {
 
   implicit class WritableSource[T](s: T)(implicit f: T => geny.Writable) extends Source {
     val writable = f(s)
+
+    override def contentLength: Option[Long] = writable.contentLength
     def getHandle() = Left(writable)
   }
 }
@@ -115,5 +117,10 @@ trait SeekableSource extends Source {
 object SeekableSource {
   implicit class ChannelSource(cn: SeekableByteChannel) extends SeekableSource {
     def getHandle() = Right(cn)
+  }
+  class ChannelLengthSource(cn: SeekableByteChannel, length: Long) extends SeekableSource {
+    def getHandle() = Right(cn)
+
+    override def contentLength: Option[Long] = Some(length)
   }
 }

@@ -1,15 +1,52 @@
 # Import instructions and context information for shaded libraries
 
 ## Why do we ship a shaded copy of other libraries and not use dependencies?
-Scala-REPL-PP includes some small libraries that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors!
+Scala-REPL-PP includes some small libraries that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their licenses are very permissive - a big thanks to the original authors!
 
-## os-lib: TODO
+## os-lib:
+```
+REPLPP_REPO_ROOT=$(pwd)
+TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/os
+
+cd /tmp
+rm -rf os-lib
+git clone https://github.com/com-lihaoyi/os-lib.git
+cd os-lib
+git checkout 0.11.3
+
+rm -rf $TARGET
+cp -rp LICENSE $TARGET
+pushd os
+cp -rp\
+  src/GlobInterpolator.scala\
+  src/Internals.scala\
+  src/Model.scala\
+  src/Path.scala\
+  src/ProcessOps.scala\
+  src/Source.scala\
+  src/SubProcess.scala\
+  src-jvm/package.scala\
+  src-jvm/ResourcePath.scala\
+  src-3/Macros.scala\
+  $TARGET
+popd
+
+# compile to get build-generated TupleConversions
+./mill 'os.jvm[3.3.1].generatedSources'
+cp out/os/jvm/3.3.1/generatedSources.dest/os/GeneratedTupleConversions.scala $TARGET
+
+# prepend root package defition with shaded path
+sed -i '/^package os$/i package replpp.shaded' $TARGET/*
+sed -i '1ipackage replpp.shaded' $TARGET/package.scala
+
+cd $REPLPP_REPO_ROOT
+sbt clean test
+```
 
 ## geny: TODO
 
 ## scopt
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/scopt
 
@@ -32,7 +69,6 @@ sbt clean test
 
 ## mainargs
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/mainargs
 
@@ -61,7 +97,6 @@ echo 'println("Hello!")' > target/simple.sc
 
 ## sourcecode
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/sourcecode
 
@@ -86,7 +121,6 @@ sbt clean test
 
 ## fansi
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/fansi
 
@@ -110,7 +144,6 @@ sbt clean test
 
 ## pprint
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/pprint
 
@@ -139,7 +172,6 @@ sbt clean test
 
 ## coursier (only core.Version)
 ```
-# start location must be replpp repo root!
 REPLPP_REPO_ROOT=$(pwd)
 TARGET_ROOT=${REPLPP_REPO_ROOT}/shaded-libs/src/main/scala/replpp/shaded/coursier/core
 TARGET=${TARGET_ROOT}/Version.scala
