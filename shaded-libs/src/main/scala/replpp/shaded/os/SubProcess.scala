@@ -5,17 +5,125 @@ import java.io._
 import java.util.concurrent.TimeUnit
 
 import scala.language.implicitConversions
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.LinkedTransferQueue
+import java.util.concurrent.LinkedBlockingQueue
+import scala.annotation.tailrec
+
+/**
+ * Parent type for single processes and process pipelines.
+ */
+sealed trait ProcessLike extends java.lang.AutoCloseable {
+
+  /**
+   * The exit code of this [[ProcessLike]]. Conventionally, 0 exit code represents a
+   * successful termination, and non-zero exit code indicates a failure.
+   *
+   * Throws an exception if the subprocess has not terminated
+   */
+  def exitCode(): Int
+
+  /**
+   * Returns `true` if the [[ProcessLike]] is still running and has not terminated
+   */
+  def isAlive(): Boolean
+
+  /**
+   * Attempt to destroy the [[ProcessLike]] (gently), via the underlying JVM APIs
+   */
+  def destroy(): Unit
+
+  /**
+   * Force-destroys the [[ProcessLike]], via the underlying JVM APIs
+   */
+  def destroyForcibly(): Unit
+
+  /**
+   * Alias for [[destroy]], implemented for [[java.lang.AutoCloseable]]
+   */
+  override def close(): Unit
+
+  /**
+   * Wait up to `millis` for the [[ProcessLike]] to terminate, by default waits
+   * indefinitely. Returns `true` if the [[ProcessLike]] has terminated by the time
+   * this method returns.
+   */
+  def waitFor(timeout: Long = -1): Boolean
+
+  /**
+   * Wait up to `millis` for the [[ProcessLike]] to terminate and all stdout and stderr
+   * from the subprocess to be handled. By default waits indefinitely; if a time
+   * limit is given, explicitly destroys the [[ProcessLike]] if it has not completed by
+   * the time the timeout has occurred.
+   *
+   * By default, a process is destroyed by sending a `SIGTERM` signal, which allows an opportunity
+   * for it to clean up any resources it was using. If the process is unresponsive to this, a
+   * `SIGKILL` signal is sent `timeoutGracePeriod` milliseconds later. If `timeoutGracePeriod` is
+   * `0`, then there is no `SIGTERM`; if it is `-1`, there is no `SIGKILL` sent.
+   *
+   * @returns `true` when the process did not require explicit termination by either `SIGTERM` or `SIGKILL` and `false` otherwise.
+   * @note the issuing of `SIGTERM` instead of `SIGKILL` is implementation dependent on your JVM version. Pre-Java 9, no `SIGTERM` may be
+   *       issued. Check the documentation for your JDK's `Process.destroy`.
+   */
+  def join(timeout: Long = -1, timeoutGracePeriod: Long = 100): Boolean = {
+    val exitedCleanly = waitFor(timeout)
+    if (!exitedCleanly) {
+      assume(
+        timeout != -1,
+        "if the waitFor does not complete cleanly, this implies there is a timeout imposed, so the grace period is applicable"
+      )
+      if (timeoutGracePeriod == -1) destroy()
+      else if (timeoutGracePeriod == 0) destroyForcibly()
+      else {
+        destroy()
+        if (!waitFor(timeoutGracePeriod)) {
+          destroyForcibly()
+        }
+      }
+      waitFor(-1)
+    }
+    joinPumperThreadsHook()
+    exitedCleanly
+  }
+
+  @deprecatedOverriding("this method is now a forwarder, and should not be overriden", "0.10.4")
+  private[os] def join(timeout: Long): Boolean = join(timeout, timeoutGracePeriod = 100)
+
+  /**
+   * A hook method used by `join` to close the input and output streams associated with the process, not for public consumption.
+   */
+  private[os] def joinPumperThreadsHook(): Unit
+}
 
 /**
  * Represents a spawn subprocess that has started and may or may not have
  * completed.
  */
+@deprecatedInheritance(
+  "this class will be made final: if you are using it be aware that `join` has a new overloading",
+  "0.10.4"
+)
 class SubProcess(
     val wrapped: java.lang.Process,
     val inputPumperThread: Option[Thread],
     val outputPumperThread: Option[Thread],
-    val errorPumperThread: Option[Thread]
-) extends java.lang.AutoCloseable {
+    val errorPumperThread: Option[Thread],
+    val shutdownGracePeriod: Long,
+    val shutdownHookMonitorThread: Option[Thread]
+) extends ProcessLike {
+  def this(
+      wrapped: java.lang.Process,
+      inputPumperThread: Option[Thread],
+      outputPumperThread: Option[Thread],
+      errorPumperThread: Option[Thread]
+  ) = this(
+    wrapped,
+    inputPumperThread,
+    outputPumperThread,
+    errorPumperThread,
+    100,
+    None
+  )
   val stdin: SubProcess.InputStream = new SubProcess.InputStream(wrapped.getOutputStream)
   val stdout: SubProcess.OutputStream = new SubProcess.OutputStream(wrapped.getInputStream)
   val stderr: SubProcess.OutputStream = new SubProcess.OutputStream(wrapped.getErrorStream)
@@ -36,12 +144,42 @@ class SubProcess(
   /**
    * Attempt to destroy the subprocess (gently), via the underlying JVM APIs
    */
-  def destroy(): Unit = wrapped.destroy()
+  def destroy(): Unit = destroy(shutdownGracePeriod = this.shutdownGracePeriod, async = false)
 
   /**
-   * Force-destroys the subprocess, via the underlying JVM APIs
+   * Destroys the subprocess, via the underlying JVM APIs, with configurable levels of
+   * aggressiveness:
+   *
+   * @param async set this to `true` if you do not want to wait on the subprocess exiting
+   * @param shutdownGracePeriod use this to override the default wait time for the subprocess
+   *                            to gracefully exit before destroying it forcibly. Defaults to the `shutdownGracePeriod`
+   *                            that was used to spawned the process, but can be set to 0
+   *                            (i.e. force exit immediately) or -1 (i.e. never force exit)
+   *                            or anything in between. Typically defaults to 100 milliseconds.
    */
-  def destroyForcibly(): Unit = wrapped.destroyForcibly()
+  def destroy(
+      shutdownGracePeriod: Long = this.shutdownGracePeriod,
+      async: Boolean = false
+  ): Unit = {
+    wrapped.destroy()
+    if (!async) {
+      val now = System.currentTimeMillis()
+
+      while (
+        wrapped.isAlive && (shutdownGracePeriod == -1 || System.currentTimeMillis() - now < shutdownGracePeriod)
+      ) {
+        Thread.sleep(1)
+      }
+
+      if (wrapped.isAlive) {
+        println("wrapped.destroyForcibly()")
+        wrapped.destroyForcibly()
+      }
+    }
+  }
+
+  @deprecated("Use destroy(shutdownGracePeriod = 0)")
+  def destroyForcibly(): Unit = destroy(shutdownGracePeriod = 0)
 
   /**
    * Alias for [[destroy]]
@@ -62,26 +200,19 @@ class SubProcess(
     }
   }
 
-  /**
-   * Wait up to `millis` for the subprocess to terminate and all stdout and stderr
-   * from the subprocess to be handled. By default waits indefinitely; if a time
-   * limit is given, explicitly destroys the subprocess if it has not completed by
-   * the time the timeout has occurred
-   */
-  def join(timeout: Long = -1): Boolean = {
-    val exitedCleanly = waitFor(timeout)
-    if (!exitedCleanly) {
-      destroy()
-      destroyForcibly()
-      waitFor(-1)
-    }
+  private[os] def joinPumperThreadsHook(): Unit = {
     outputPumperThread.foreach(_.join())
     errorPumperThread.foreach(_.join())
-    exitedCleanly
   }
 }
 
 object SubProcess {
+
+  /**
+   * The env passed by default to child processes.
+   * When `null`, the system environment is used.
+   */
+  val env = new scala.util.DynamicVariable[Map[String, String]](null)
 
   /**
    * A [[BufferedWriter]] with the underlying [[java.io.OutputStream]] exposed
@@ -170,6 +301,153 @@ object SubProcess {
   }
 }
 
+@deprecatedInheritance(
+  "this class will be made final: if you are using it be aware that `join` has a new overloading",
+  "0.10.4"
+)
+class ProcessPipeline(
+    val processes: Seq[SubProcess],
+    pipefail: Boolean,
+    brokenPipeQueue: Option[LinkedBlockingQueue[Int]] // to emulate pipeline behavior in jvm < 9
+) extends ProcessLike {
+  pipeline =>
+
+  /**
+   * String representation of the pipeline.
+   */
+  def commandString = processes.map(_.wrapped.toString).mkString(" | ")
+
+  private[os] val brokenPipeHandler: Option[Thread] = brokenPipeQueue.map { queue =>
+    new Thread(
+      new Runnable {
+        override def run(): Unit = {
+          var pipelineRunning = true
+          while (pipelineRunning) {
+            val brokenPipeIndex = queue.take()
+            if (brokenPipeIndex == processes.length) { // Special case signaling finished pipeline
+              pipelineRunning = false
+            } else {
+              processes(brokenPipeIndex).destroyForcibly()
+            }
+          }
+          new Thread(
+            new Runnable {
+              override def run(): Unit = {
+                while (!pipeline.waitFor()) {} // handle spurious wakes
+                queue.put(processes.length) // Signal finished pipeline
+              }
+            },
+            commandString + " pipeline termination handler"
+          ).start()
+        }
+      },
+      commandString + " broken pipe handler"
+    )
+  }
+
+  /**
+   * The exit code of this [[ProcessPipeline]]. Conventionally, 0 exit code represents a
+   * successful termination, and non-zero exit code indicates a failure. Throws an exception
+   * if the subprocess has not terminated.
+   *
+   * If pipefail is set, the exit code is the first non-zero exit code of the pipeline. If no
+   * process in the pipeline has a non-zero exit code, the exit code is 0.
+   */
+  override def exitCode(): Int = {
+    if (pipefail)
+      processes.map(_.exitCode())
+        .filter(_ != 0)
+        .headOption
+        .getOrElse(0)
+    else
+      processes.last.exitCode()
+  }
+
+  /**
+   * Returns `true` if the [[ProcessPipeline]] is still running and has not terminated.
+   * Any process in the pipeline can be alive for the pipeline to be alive.
+   */
+  override def isAlive(): Boolean = {
+    processes.exists(_.isAlive())
+  }
+
+  /**
+   * Attempt to destroy the [[ProcessPipeline]] (gently), via the underlying JVM APIs.
+   * All processes in the pipeline are destroyed.
+   */
+  override def destroy(): Unit = {
+    processes.foreach(_.destroy())
+  }
+
+  /**
+   * Force-destroys the [[ProcessPipeline]], via the underlying JVM APIs.
+   * All processes in the pipeline are force-destroyed.
+   */
+  override def destroyForcibly(): Unit = {
+    processes.foreach(_.destroyForcibly())
+  }
+
+  /**
+   * Alias for [[destroy]], implemented for [[java.lang.AutoCloseable]].
+   */
+  override def close(): Unit = {
+    processes.foreach(_.close())
+  }
+
+  /**
+   * Wait up to `timeout` for the [[ProcessPipeline]] to terminate, by default waits
+   * indefinitely. Returns `true` if the [[ProcessPipeline]] has terminated by the time
+   * this method returns.
+   *
+   * Waits for each process one by one, while aggregating the total time waited. If
+   * `timeout` has passed before all processes have terminated, returns `false`.
+   */
+  override def waitFor(timeout: Long = -1): Boolean = {
+    @tailrec
+    def waitForRec(startedAt: Long, processesLeft: Seq[SubProcess]): Boolean = processesLeft match {
+      case Nil => true
+      case head :: tail =>
+        val elapsed = System.currentTimeMillis() - startedAt
+        val timeoutLeft = timeout - elapsed
+        if (timeoutLeft < 0) false
+        else if (head.waitFor(timeoutLeft)) waitForRec(startedAt, tail)
+        else false
+    }
+
+    if (timeout == -1) {
+      processes.forall(_.waitFor())
+    } else {
+      val timeNow = System.currentTimeMillis()
+      waitForRec(timeNow, processes)
+    }
+  }
+
+  /**
+   * Wait up to `timeout` for the [[ProcessPipeline]] to terminate all the processes
+   * in pipeline. By default waits indefinitely; if a time limit is given, explicitly
+   * destroys each process if it has not completed by the time the timeout has occurred.
+   *
+   * By default, the processes are destroyed by sending `SIGTERM` signals, which allows an opportunity
+   * for them to clean up any resources it. If any process is unresponsive to this, a
+   * `SIGKILL` signal is sent `timeoutGracePeriod` milliseconds later. If `timeoutGracePeriod` is
+   * `0`, then there is no `SIGTERM`; if it is `-1`, there is no `SIGKILL` sent.
+   *
+   * @returns `true` when the processes did not require explicit termination by either `SIGTERM` or `SIGKILL` and `false` otherwise.
+   * @note the issuing of `SIGTERM` instead of `SIGKILL` is implementation dependent on your JVM version. Pre-Java 9, no `SIGTERM` may be
+   *       issued. Check the documentation for your JDK's `Process.destroy`.
+   */
+  override def join(timeout: Long = -1, timeoutGracePeriod: Long = 100): Boolean = {
+    // in this case, the grace period does not apply, so fine
+    if (timeout == -1) {
+      processes.forall(_.join())
+    } else super.join(timeout, timeoutGracePeriod)
+  }
+
+  private[os] def joinPumperThreadsHook(): Unit = {
+    processes.foreach(_.joinPumperThreadsHook())
+  }
+}
+
 /**
  * Represents the configuration of a SubProcess's input stream. Can either be
  * [[os.Inherit]], [[os.Pipe]], [[os.Path]] or a [[os.Source]]
@@ -245,9 +523,27 @@ object ProcessOutput {
 }
 
 /**
- * Inherit the input/output stream from the current process
+ * Inherit the input/output stream from the current process.
+ *
+ * Can be overriden on a thread local basis for the various
+ * kinds of streams (stdin, stdout, stderr) via [[in]], [[out]], and [[err]]
  */
 object Inherit extends ProcessInput with ProcessOutput {
+  def redirectTo = ProcessBuilder.Redirect.INHERIT
+  def redirectFrom = ProcessBuilder.Redirect.INHERIT
+  def processInput(stdin: => SubProcess.InputStream) = None
+  def processOutput(stdin: => SubProcess.OutputStream) = None
+
+  val in = new scala.util.DynamicVariable[ProcessInput](Inherit)
+  val out = new scala.util.DynamicVariable[ProcessOutput](Inherit)
+  val err = new scala.util.DynamicVariable[ProcessOutput](Inherit)
+}
+
+/**
+ * Inherit the input/output stream from the current process.
+ * Identical of [[os.Inherit]], except it cannot be redirected globally
+ */
+object InheritRaw extends ProcessInput with ProcessOutput {
   def redirectTo = ProcessBuilder.Redirect.INHERIT
   def redirectFrom = ProcessBuilder.Redirect.INHERIT
   def processInput(stdin: => SubProcess.InputStream) = None

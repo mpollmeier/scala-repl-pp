@@ -74,7 +74,7 @@ class ReplDriver(compilerArgs: Array[String],
           /* complete = */ false  // if true adds space when completing
         )
       }
-      val comps = completionsWithSignatures(line.cursor, line.line, state)
+      val comps = completions(line.cursor, line.line, state)
       candidates.addAll(comps.map(_.label).distinct.map(makeCandidate).asJava)
       val lineWord = line.word()
       comps.filter(c => c.label == lineWord && c.symbols.nonEmpty) match
