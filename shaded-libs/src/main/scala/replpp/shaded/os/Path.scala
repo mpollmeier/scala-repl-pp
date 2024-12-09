@@ -446,8 +446,8 @@ object Path {
     val f = implicitly[PathConvertible[T]].apply(f0)
     if (f.subpath(0, 1).toString != "~") if (base == null) Path(f0) else Path(f0, base)
     else {
-      Path(System.getProperty("user.home"))(PathConvertible.StringConvertible) /
-        RelPath(f.subpath(0, 1).relativize(f))(PathConvertible.NioPathConvertible)
+      Path(System.getProperty("user.home"))(using PathConvertible.StringConvertible) /
+        RelPath(f.subpath(0, 1).relativize(f))(using PathConvertible.NioPathConvertible)
     }
   }
 
