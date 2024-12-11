@@ -2,7 +2,7 @@ name := "scala-repl-pp-root"
 publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
-ThisBuild / scalaVersion := "3.5.2"
+ThisBuild / scalaVersion := "3.6.2"
 
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
