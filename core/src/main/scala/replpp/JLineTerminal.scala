@@ -92,6 +92,7 @@ class JLineTerminal extends java.io.Closeable {
       .highlighter(new Highlighter)
       .parser(new Parser)
       .variable(HISTORY_FILE, s"$userHome/.dotty_history") // Save history to file
+      .variable(HISTORY_SIZE, 10000) // MP: adapted here; keep entire history file in memory - default is only 500... see DefaultHistory.DEFAULT_HISTORY_SIZE
       .variable(SECONDARY_PROMPT_PATTERN, "%M") // A short word explaining what is "missing",
                                                 // this is supplied from the EOFError.getMissing() method
       .variable(LIST_MAX, 400)                  // Ask user when number of completions exceed this limit (default is 100).
