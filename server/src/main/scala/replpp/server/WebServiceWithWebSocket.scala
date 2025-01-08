@@ -33,7 +33,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
             case Some(providedAuth) => areEqual(providedAuth, requiredAuth)
           }
       }
-      delegate(Map("isAuthorized" -> isAuthorized))
+      delegate(request, Map("isAuthorized" -> isAuthorized))
     }
 
     private def parseAuthentication(request: Request): Option[UsernamePasswordAuth] =

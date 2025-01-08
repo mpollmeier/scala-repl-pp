@@ -41,7 +41,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     "asynchronous api" should {
       "allow websocket connections to the `/connect` endpoint" in Fixture() { url =>
         val wsMsgPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$url/connect") { case cask.Ws.Text(msg) =>
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") { case cask.Ws.Text(msg) =>
           wsMsgPromise.success(msg)
         }
         val wsMsg = Await.result(wsMsgPromise.future, DefaultPromiseAwaitTimeout)
@@ -80,7 +80,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         "allow fetching the result of a completed query using its UUID" in Fixture() { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$url/connect") {
+          cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
             case cask.Ws.Text(msg) if msg == "connected" =>
               connectedPromise.success(msg)
             case cask.Ws.Text(msg) =>
@@ -103,7 +103,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         "use predefined code" in Fixture("val foo = 40") { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$url/connect") {
+          cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
             case cask.Ws.Text(msg) if msg == "connected" =>
               connectedPromise.success(msg)
             case cask.Ws.Text(msg) =>
@@ -126,7 +126,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         "use runBefore code" in Fixture(runBeforeCode = Seq("import Int.MaxValue")) { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$url/connect") {
+          cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
             case cask.Ws.Text(msg) if msg == "connected" =>
               connectedPromise.success(msg)
             case cask.Ws.Text(msg) =>
@@ -149,7 +149,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$url/connect") {
+          cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
             case cask.Ws.Text(msg) if msg == "connected" =>
               connectedPromise.success(msg)
             case cask.Ws.Text(msg) =>
@@ -172,7 +172,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           url =>
             val wsMsgPromise = scala.concurrent.Promise[String]()
             val connectedPromise = scala.concurrent.Promise[String]()
-            cask.util.WsClient.connect(s"$url/connect") {
+            cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
               case cask.Ws.Text(msg) if msg == "connected" =>
                 connectedPromise.success(msg)
               case cask.Ws.Text(msg) =>
@@ -199,7 +199,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
       "write a well-formatted message to a websocket connection when a query failed evaluation" in Fixture() { url =>
         val wsMsgPromise = scala.concurrent.Promise[String]()
         val connectedPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$url/connect") {
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
           case cask.Ws.Text(msg) if msg == "connected" =>
             connectedPromise.success(msg)
           case cask.Ws.Text(msg) =>
@@ -228,7 +228,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
-          cask.util.WsClient.connect(s"$url/connect") {
+          cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") {
             case cask.Ws.Text(msg) if msg == "connected" =>
               connectedPromise.success(msg)
             case cask.Ws.Text(msg) =>
@@ -254,7 +254,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
       "receive error when attempting to retrieve result with invalid uuid" in Fixture() { url =>
         val connectedPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$url/connect") { case cask.Ws.Text(msg) =>
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") { case cask.Ws.Text(msg) =>
           connectedPromise.success(msg)
         }
         Await.result(connectedPromise.future, Duration(1, SECONDS))
@@ -266,7 +266,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
       "return a valid JSON response when calling /result with incorrectly-formatted UUID parameter" in Fixture() { url =>
         val connectedPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$url/connect") { case cask.Ws.Text(msg) =>
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") { case cask.Ws.Text(msg) =>
           connectedPromise.success(msg)
         }
         Await.result(connectedPromise.future, Duration(1, SECONDS))
@@ -284,7 +284,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
 
         val rtl: Lock = new ReentrantLock()
         val connectedPromise = scala.concurrent.Promise[String]()
-        cask.util.WsClient.connect(s"$url/connect") { case cask.Ws.Text(msg) =>
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") { case cask.Ws.Text(msg) =>
           if (msg == "connected") {
             connectedPromise.success(msg)
           } else {
@@ -318,7 +318,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         val connectedPromise = scala.concurrent.Promise[String]()
 
         val rtl: Lock = new ReentrantLock()
-        cask.util.WsClient.connect(s"$url/connect") { case cask.Ws.Text(msg) =>
+        cask.util.WsClient.connect(s"${websocketUrl(url)}/connect") { case cask.Ws.Text(msg) =>
           if (msg == "connected") {
             connectedPromise.success(msg)
           } else {
@@ -392,6 +392,12 @@ class ReplServerTests extends AnyWordSpec with Matchers {
     ujson.read(getResponse.bytes)
   }
 
+  /**
+   * org.java_websocket.client.WebSocketClient expects the url scheme to be either `ws` or `wss`,
+   * and this tests mixes the two cases widely, so I found this to be the simplest way around it...
+   */
+  def websocketUrl(httpUrl: String): String =
+    httpUrl.replaceFirst("^http://", "ws://")
 }
 
 object Fixture {
