@@ -44,7 +44,7 @@ object ClasspathHelper {
         if (debugPrint) println(s"using jar from inherited classpath: $path")
         entries.addOne(path)
       } else {
-        if (debugPrint) println(s"exluding jar from inherited classpath (included=$included; excluded=$excluded: $path)")
+        if (debugPrint) println(s"excluding jar from inherited classpath (included=$included; excluded=$excluded: $path)")
       }
     }
     System.getProperty("java.class.path").split(pathSeparator).filter(_.nonEmpty).map(Paths.get(_)).foreach(addToEntriesMaybe)
