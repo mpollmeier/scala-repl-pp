@@ -29,7 +29,7 @@ jobs:
             ~/.sbt
             ~/.coursier
           key: ${{ runner.os }}-sbt-${{ hashfiles('**/build.sbt') }}
-      - run: sbt clean core/assembly test IntegrationTest/test ciReleaseTagNextVersion ciReleaseSonatype
+      - run: sbt clean core/assembly test integrationTests/test ciReleaseTagNextVersion ciReleaseSonatype
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

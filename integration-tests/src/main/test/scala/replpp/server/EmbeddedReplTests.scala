@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-/** Moved to IntegrationTests, because of some strange interaction with ReplServerTests:
+/** Moved to integrationTests, because of some strange interaction with ReplServerTests:
   * if EmbeddedReplTests would run *before* ReplServerTests, the latter would stall (forever)
   * after a few sucessful tests.
   * Run with `sbt IntegrationTest/test`

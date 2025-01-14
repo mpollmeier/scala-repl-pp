@@ -34,19 +34,29 @@ lazy val core = project.in(file("core"))
 
 lazy val server = project.in(file("server"))
   .dependsOn(core)
-  .configs(IntegrationTest)
   .enablePlugins(JavaAppPackaging)
   .settings(
     name := "scala-repl-pp-server",
     executableScriptName := "srp-server",
     Compile/mainClass := Some("replpp.server.Main"),
-    Defaults.itSettings,
     fork := true, // important: otherwise we run into classloader issues
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.9.5",
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
-      "org.scalatest" %% "scalatest"    % ScalaTestVersion % "it",
+    )
+  )
+
+lazy val integrationTests = project.in(file("integration-tests"))
+  .dependsOn(server)
+  .settings(
+    name := "integration-tests",
+    fork := true, // important: otherwise we run into classloader issues
+    libraryDependencies ++= Seq(
+      "com.lihaoyi"   %% "cask"         % "0.9.5",
+      "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
+      "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
+      "org.scalatest" %% "scalatest"    % ScalaTestVersion % Test,
     )
   )
 
