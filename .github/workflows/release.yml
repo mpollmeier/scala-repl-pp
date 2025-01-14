@@ -8,28 +8,21 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
         with:
-          fetch-depth: 0
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: 19
-      - name: Install sbt
-        if: matrix.os == 'macos-latest'
-        run: brew install sbt
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
       - run: sudo apt update && sudo apt install -y gnupg
       - run: echo $PGP_SECRET | base64 --decode | gpg --batch --import
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.sbt
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ hashfiles('**/build.sbt') }}
-      - run: sbt clean core/assembly test integrationTests/test ciReleaseTagNextVersion ciReleaseSonatype
+      - name: Build and test
+        shell: bash
+        run: sbt -v clean core/assembly test ciReleaseTagNextVersion ciReleaseSonatype
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
