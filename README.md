@@ -59,13 +59,13 @@ markdown-toc --maxdepth 3 README.md|tail -n +4
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
   * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
+  * [Why am I getting an AssertionError re `class module-info$` on first tab completion?](#why-am-i-getting-an-assertionerror-re-class-module-info-on-first-tab-completion)
 - [Contribution guidelines](#contribution-guidelines)
   * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
   * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
   * [Updating the Scala version](#updating-the-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)
-
 
 
 ## Benefits over / comparison with
@@ -572,6 +572,39 @@ srp includes some small libraries (e.g. most of the com-haoyili universe) that h
 ### Where's the cache located on disk?
 The cache? The caches you mean! :)
 There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via a subprocess) there's also `~/.cache/coursier`. 
+
+### Why am I getting an AssertionError re `class module-info$` on first tab completion?
+```
+exception caught when loading module class module-info$: java.lang.AssertionError: assertion failed: attempt to parse java.lang.Object from classfile
+```
+There's a [Scala 3 compiler bug](https://github.com/scala/scala3/issues/20421) that triggers and prints this exception if one of your dependencies ships a `module-info.class`. Until that's fixed you can use this hacky workaround in your sbt build:
+```
+lazy val removeModuleInfoFromJars = taskKey[Unit]("remove module-info.class from dependency jars - a hacky workaround for a scala3 compiler bug https://github.com/scala/scala3/issues/20421")
+removeModuleInfoFromJars := {
+  import java.nio.file.{Files, FileSystems}
+  val logger = streams.value.log
+  val libDir = (Universal/stagingDirectory).value / "lib"
+
+  // remove all `/module-info.class` from all jars
+  Files.walk(libDir.toPath)
+    .filter(_.toString.endsWith(".jar"))
+    .forEach { jar =>
+      val zipFs = FileSystems.newFileSystem(jar)
+      zipFs.getRootDirectories.forEach { zipRootDir =>
+        Files.list(zipRootDir).filter(_.toString == "/module-info.class").forEach { moduleInfoClass =>
+          logger.info(s"workaround for scala completion bug: deleting $moduleInfoClass from $jar")
+          Files.delete(moduleInfoClass)
+        }
+      }
+      zipFs.close()
+    }
+}
+```
+
+If you use [sbt-native-packager](https://sbt-native-packager.readthedocs.io/en/latest/) to package your application, you can automatically invoke the task, e.g. like so:
+```
+removeModuleInfoFromJars := removeModuleInfoFromJars.triggeredBy(Universal/stage).value
+```
 
 
 ## Contribution guidelines
