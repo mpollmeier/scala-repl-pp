@@ -7,8 +7,9 @@ object WrapForMainArgs {
   /** linesBeforeWrappedCode: allows us to adjust line numbers in error reporting... */
   case class WrappingResult(fullScript: String, linesBeforeWrappedCode: Int)
 
-  def apply(scriptCode: String, runBeforeAsSourceLines: Seq[String]): WrappingResult = {
-    val runBeforeCode = runBeforeAsSourceLines.mkString("\n")
+  def apply(scriptCode: String, runBefore: Seq[String], runAfter: Seq[String]): WrappingResult = {
+    val runBeforeCode = runBefore.mkString("\n")
+    val runAfterCode = runAfter.mkString("\n")
 
     val wrapperCodeStart =
       s"""import replpp.shaded.mainargs
@@ -41,6 +42,8 @@ object WrapForMainArgs {
          |
          |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
          |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
+         |
+         |    $runAfterCode
          |  }
          |}
          |""".stripMargin

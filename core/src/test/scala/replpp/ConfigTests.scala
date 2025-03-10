@@ -20,6 +20,7 @@ class ConfigTests extends AnyWordSpec with Matchers {
     val config = Config(
       predefFiles = List(Paths.get("/some/path/predefFile1"), Paths.get("/some/path/predefFile2")),
       runBefore = List("val foo = 42", "println(foo)"),
+      runAfter = List("""val msg = "goodbye!"""", "println(msg)"),
       nocolors = true,
       verbose = true,
       classpathConfig = Config.ForClasspath(
@@ -42,6 +43,8 @@ class ConfigTests extends AnyWordSpec with Matchers {
       "--predef", Paths.get("/some/path/predefFile2").toString,
       "--runBefore", "val foo = 42",
       "--runBefore", "println(foo)",
+      "--runAfter", """val msg = "goodbye!"""",
+      "--runAfter", "println(msg)",
       "--nocolors",
       "--verbose",
       "--classpathEntry", "cp1",
