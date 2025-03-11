@@ -12,7 +12,11 @@ import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
-class EmbeddedRepl(compilerArgs: Array[String], runBeforeCode: Seq[String]) {
+class EmbeddedRepl(
+  compilerArgs: Array[String],
+  runBeforeCode: Seq[String],
+  runAfterCode: Seq[String],
+  verbose: Boolean = false) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
@@ -66,6 +70,10 @@ class EmbeddedRepl(compilerArgs: Array[String], runBeforeCode: Seq[String]) {
     */
   def shutdown(): Unit = {
     logger.info("shutting down")
+    if (runAfterCode.nonEmpty) {
+      if (verbose) logger.info(s"executing: $runAfterCode")
+      replDriver.execute(runAfterCode)
+    }
     singleThreadedJobExecutor.shutdown()
   }
 }

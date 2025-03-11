@@ -94,7 +94,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "-128;iwashere-predefFile"
     }
 
-    "onExitCode" in {
+    "runAfter code" in {
       val expectedFileContent = "this should be written to the test output file"
       execTest { testOutputPath =>
         TestSetup(

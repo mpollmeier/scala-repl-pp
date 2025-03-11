@@ -146,6 +146,19 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           getResultResponse("stdout").str shouldBe "val bar: Int = 2147483647\n"
         }
 
+        "use runAfter code" in {
+          val expectedFileContent = "this should be written to the test output file"
+          val testOutputFile = os.temp(deleteOnExit = false)
+          val testOutputPath = replpp.util.pathAsString(testOutputFile.toNIO)
+          Fixture(runAfterCode = Seq(
+            "import java.nio.file.*",
+            s"""Files.writeString(Path.of("$testOutputPath"), "$expectedFileContent")""",
+          )) { _ =>
+            // no need to execute anything, we only want to verify the `runAfter` code
+          }
+          os.read(testOutputFile) shouldBe expectedFileContent
+        }
+
         "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { url =>
           val wsMsgPromise = scala.concurrent.Promise[String]()
           val connectedPromise = scala.concurrent.Promise[String]()
@@ -413,7 +426,10 @@ object Fixture {
     )
   }
 
-  def apply[T](predefCode: String = "", runBeforeCode: Seq[String] = Seq.empty)(urlToResult: String => T): T = {
+  def apply[T](
+    predefCode: String = "",
+    runBeforeCode: Seq[String] = Seq.empty,
+    runAfterCode: Seq[String] = Seq.empty)(urlToResult: String => T): T = {
     val additionalClasspathEntryMaybe: Option[Path] =
       if (predefCode.trim.isEmpty) None
       else {
@@ -424,7 +440,7 @@ object Fixture {
         Files.delete(predefFile)
         predefClassfiles.toOption
       }
-    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe), runBeforeCode)
+    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe), runBeforeCode, runAfterCode)
 
     val host = "localhost"
     val port = 8081

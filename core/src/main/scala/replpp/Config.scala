@@ -166,7 +166,7 @@ object Config {
 
     def runAfter[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
       builder.opt[String]("runAfter")
-        .valueName("""println("bye!")""")
+        .valueName("""'println("goodbye!")'""")
         .unbounded()
         .optional()
         .action(action)
