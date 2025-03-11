@@ -13,11 +13,12 @@ import scala.util.{Failure, Success, Try}
 
 class ReplDriver(compilerArgs: Array[String],
                  out: PrintStream = scala.Console.out,
-                 onExitCode: Option[String] = None,
                  greeting: Option[String],
                  prompt: String,
                  maxHeight: Option[Int] = None,
-                 classLoader: Option[ClassLoader] = None)(using Colors)
+                 classLoader: Option[ClassLoader] = None,
+                 runAfter: Seq[String] = Nil,
+                 verbose: Boolean = false)(using Colors)
   extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
@@ -39,7 +40,10 @@ class ReplDriver(compilerArgs: Array[String],
           loop(using newState)()
         case Failure(_: EndOfFileException) =>
           // Ctrl+D -> user wants to quit
-          onExitCode.foreach(code => run(code)(using state))
+          runAfter.foreach { code =>
+            if (verbose) println(code)
+            run(code)(using state)
+          }
           state
         case Failure(_: UserInterruptException) =>
           // Ctrl+C -> swallow, do nothing

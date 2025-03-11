@@ -23,9 +23,9 @@ object ReplServer {
 
     val baseConfig = precompilePredefFiles(serverConfig.baseConfig)
     val compilerArgs = replpp.compilerArgs(baseConfig)
-    val embeddedRepl = new EmbeddedRepl(compilerArgs, baseConfig.runBefore)
+    val embeddedRepl = new EmbeddedRepl(compilerArgs, baseConfig.runBefore, baseConfig.runAfter, baseConfig.verbose)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
-      logger.info("Shutting down server...")
+      logger.info("Shutting down embedded repl...")
       embeddedRepl.shutdown()
     }))
 

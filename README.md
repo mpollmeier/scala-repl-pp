@@ -316,7 +316,7 @@ Context: we'd prefer to cancel the long-running operation, but that's not so eas
 
 ### customize prompt, greeting and exit code
 ```
-./srp --prompt myprompt --greeting 'hey there!' --onExitCode 'println("see ya!")'
+./srp --prompt myprompt --greeting 'hey there!' --runAfter 'println("see ya!")'
 
 hey there!
 myprompt> :exit

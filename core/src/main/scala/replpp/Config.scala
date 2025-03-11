@@ -10,6 +10,7 @@ import java.nio.file.Path
 case class Config(
   predefFiles: Seq[Path] = Nil, // these files will be precompiled and added to the classpath
   runBefore: Seq[String] = Nil, // these statements will be interpreted on startup
+  runAfter: Seq[String] = Nil,  // these statements will be interpreted on shutdown
   nocolors: Boolean = false,
   verbose: Boolean = false,
   classpathConfig: Config.ForClasspath = Config.ForClasspath(),
@@ -18,7 +19,6 @@ case class Config(
   // repl only
   prompt: Option[String] = None,
   greeting: Option[String] = Some(defaultGreeting),
-  onExitCode: Option[String] = None,
   maxHeight: Option[Int] = None,
 
   // script only
@@ -44,6 +44,10 @@ case class Config(
 
     runBefore.foreach { runBefore =>
       add("--runBefore", runBefore)
+    }
+
+    runAfter.foreach { runAfter =>
+      add("--runAfter", runAfter)
     }
 
     if (nocolors) add("--nocolors")
@@ -109,6 +113,7 @@ object Config {
       programName("scala-repl-pp"),
       opts.predef((x, c) => c.copy(predefFiles = c.predefFiles :+ x)),
       opts.runBefore((x, c) => c.copy(runBefore = c.runBefore :+ x)),
+      opts.runAfter((x, c) => c.copy(runAfter = c.runAfter :+ x)),
       opts.nocolors((_, c) => c.copy(nocolors = true)),
       opts.verbose((_, c) => c.copy(verbose = true)),
       opts.classpathEntry((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(additionalClasspathEntries = c.classpathConfig.additionalClasspathEntries :+ x))),
@@ -122,7 +127,6 @@ object Config {
       note("REPL options"),
       opts.prompt((x, c) => c.copy(prompt = Option(x))),
       opts.greeting((x, c) => c.copy(greeting = Option(x))),
-      opts.onExitCode((x, c) => c.copy(onExitCode = Option(x))),
       opts.maxHeight((x, c) => c.copy(maxHeight = Some(x))),
 
       note("Script execution"),
@@ -158,6 +162,15 @@ object Config {
         .optional()
         .action(action)
         .text("given code will be executed on startup - this may be passed multiple times")
+    }
+
+    def runAfter[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("runAfter")
+        .valueName("""'println("goodbye!")'""")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("given code will be executed on shutdown - this may be passed multiple times")
     }
 
     def nocolors[C](using builder: OParserBuilder[C])(action: Action[Unit, C]) = {
@@ -237,13 +250,6 @@ object Config {
         .valueName("Welcome to scala-repl-pp!")
         .action(action)
         .text("specify a custom greeting")
-    }
-
-    def onExitCode[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
-      builder.opt[String]("onExitCode")
-        .valueName("""println("bye!")""")
-        .action(action)
-        .text("code to execute when exiting")
     }
 
     def maxHeight[C](using builder: OParserBuilder[C])(action: Action[Int, C]) = {

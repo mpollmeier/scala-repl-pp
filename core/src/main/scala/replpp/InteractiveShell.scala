@@ -10,21 +10,22 @@ object InteractiveShell {
   def run(config: Config): Unit = {
     import config.colors
     val config0 = precompilePredefFiles(config)
-
     val compilerArgs = replpp.compilerArgs(config0)
+    val verbose = verboseEnabled(config)
 
     val replDriver = new ReplDriver(
       compilerArgs,
-      onExitCode = config0.onExitCode,
       greeting = config0.greeting,
       prompt = config0.prompt.getOrElse("scala"),
-      maxHeight = config0.maxHeight
+      maxHeight = config0.maxHeight,
+      runAfter = config0.runAfter,
+      verbose = verbose,
     )
 
     val initialState: State = replDriver.initialState
     val runBeforeLines = (DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore).mkString(lineSeparator)
     val state: State = {
-      if (verboseEnabled(config)) {
+      if (verbose) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
         println(runBeforeLines)
         replDriver.run(runBeforeLines)(using initialState)

@@ -40,7 +40,8 @@ object NonForkingScriptRunner {
     new ScriptingDriver(
       compilerArgs = replpp.compilerArgs(config) :+ "-nowarn",
       predefFiles = allPredefFiles(config),
-      runBeforeSourceLines = config.runBefore,
+      runBefore = config.runBefore,
+      runAfter = config.runAfter,
       scriptFile = scriptFile,
       scriptArgs = scriptArgs.toArray,
       verbose = verboseEnabled

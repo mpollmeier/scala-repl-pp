@@ -94,6 +94,21 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
       }.get shouldBe "-128;iwashere-predefFile"
     }
 
+    "runAfter code" in {
+      val expectedFileContent = "this should be written to the test output file"
+      execTest { testOutputPath =>
+        TestSetup(
+          """println("script is executing, nothing to see here")""",
+          adaptConfig = _.copy(
+            runAfter = Seq(
+              "import java.nio.file.*",
+              s"""Files.writeString(Path.of("$testOutputPath"), "$expectedFileContent")""",
+            )
+          )
+        )
+      }.get shouldBe expectedFileContent
+    }
+
     "additional dependencies" in {
       execTest { testOutputPath =>
         TestSetup(
