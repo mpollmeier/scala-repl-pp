@@ -60,7 +60,7 @@ lazy val integrationTests = project.in(file("integration-tests"))
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
-  "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.9.3" % Test,
 )
 
 ThisBuild / javacOptions ++= Seq(
