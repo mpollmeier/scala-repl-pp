@@ -1,8 +1,10 @@
 package replpp
 
-import replpp.shaded.fansi
-
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
+import dotty.tools.dotc.util.SourcePosition
 import java.nio.file.{FileSystems, Files, Path}
+import replpp.shaded.fansi
 import scala.collection.immutable.Seq
 import scala.io.Source
 import scala.util.{Try, Using}
@@ -51,4 +53,16 @@ package object util {
 
   def pathAsString(path: Path): String =
     path.toAbsolutePath.toString
+
+  // creates a new reporter based on the original reporter that copies Diagnostic and changes line numbers
+  private[util] def createAdjustedReporter(originalReporter: Reporter, lineNumberReportingAdjustment: Int): Reporter = {
+    new Reporter {
+      override def doReport(dia: Diagnostic)(using Context): Unit = {
+        val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
+          override def line: Int = super.line + lineNumberReportingAdjustment
+        }
+        originalReporter.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
+      }
+    }
+  }
 }

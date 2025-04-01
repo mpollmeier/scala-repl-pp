@@ -3,8 +3,6 @@ package replpp.util
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
-import dotty.tools.dotc.util.SourcePosition
 import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
 
@@ -45,7 +43,9 @@ class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
 
       given ctx0: Context = {
         val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
-        if (lineNumberReportingAdjustment != 0) ctx.setReporter(createAdjustedReporter(rootCtx.reporter))
+        if (lineNumberReportingAdjustment != 0) {
+          ctx.setReporter(createAdjustedReporter(rootCtx.reporter, lineNumberReportingAdjustment))
+        }
 
         if (verbose) {
           ctx.setSetting(rootCtx.settings.help, true)
@@ -61,18 +61,6 @@ class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
         throw CompilerError(s"Errors encountered during compilation$msgAddonMaybe")
       } else {
         fun(ctx0, outDir)
-      }
-    }
-  }
-
-  // creates a new reporter based on the original reporter that copies Diagnostic and changes line numbers
-  private def createAdjustedReporter(originalReporter: Reporter): Reporter = {
-    new Reporter {
-      override def doReport(dia: Diagnostic)(using Context): Unit = {
-        val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
-          override def line: Int = super.line + lineNumberReportingAdjustment
-        }
-        originalReporter.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
       }
     }
   }
