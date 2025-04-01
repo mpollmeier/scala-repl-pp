@@ -1,6 +1,5 @@
 package replpp
 
-import dotty.tools.dotc.core.Contexts.Context
 import java.nio.file.{FileSystems, Files, Path}
 import replpp.shaded.fansi
 import scala.collection.immutable.Seq

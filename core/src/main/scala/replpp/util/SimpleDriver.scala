@@ -3,7 +3,7 @@ package replpp.util
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, HideNonSensicalMessages, Reporter, StoreReporter, UniqueMessagePositions}
+import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
 import dotty.tools.dotc.util.SourcePosition
 import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
