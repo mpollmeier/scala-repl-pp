@@ -11,6 +11,7 @@ import replpp.scripting.CompilerError
 import java.nio.file.{Files, Path}
 import scala.language.unsafeNulls
 import scala.util.Try
+import scala.util.control.NoStackTrace
 
 /** Compiles input files to a temporary directory
  *
@@ -60,7 +61,7 @@ class SimpleDriver(linesBeforeRunBeforeCode: Int = 0, linesBeforeScript: Int = 0
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
-        throw CompilerError(s"Errors encountered during compilation$msgAddonMaybe")
+        throw new CompilerError(s"Errors encountered during compilation$msgAddonMaybe") with NoStackTrace
       } else {
         fun(ctx0, outDir)
       }
