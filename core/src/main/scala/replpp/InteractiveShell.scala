@@ -2,7 +2,6 @@ package replpp
 
 import dotty.tools.repl.State
 
-import java.lang.System.lineSeparator
 import scala.util.control.NoStackTrace
 
 object InteractiveShell {
@@ -12,7 +11,6 @@ object InteractiveShell {
     val config0 = precompilePredefFiles(config)
     val compilerArgs = replpp.compilerArgs(config0)
     val verbose = verboseEnabled(config)
-    val runBeforeLines = DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore
 
     val replDriver = new ReplDriver(
       compilerArgs,
@@ -20,23 +18,22 @@ object InteractiveShell {
       prompt = config0.prompt.getOrElse("scala"),
       maxHeight = config0.maxHeight,
       runAfter = config0.runAfter,
-      verbose = verbose,
-      lineNumberReportingAdjustment = -runBeforeLines.size
+      verbose = verbose
     )
 
     val initialState: State = replDriver.initialState
+    val runBeforeCode = (DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore).mkString("\n")
     val state: State = {
-      val runBeforeLinesString = runBeforeLines.mkString(lineSeparator)
       if (verbose) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
-        println(runBeforeLines)
-        replDriver.run(runBeforeLinesString)(using initialState)
+        println(runBeforeCode)
+        replDriver.run(runBeforeCode)(using initialState)
       } else {
-        replDriver.runQuietly(runBeforeLinesString)(using initialState)
+        replDriver.runQuietly(runBeforeCode)(using initialState)
       }
     }
 
-    if (runBeforeLines.nonEmpty && state.objectIndex != 1) {
+    if (runBeforeCode.nonEmpty && state.objectIndex != 1) {
       throw new RuntimeException(s"compilation error for predef code - error should have been reported above ^^^")
     }
 

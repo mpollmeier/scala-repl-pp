@@ -18,9 +18,8 @@ class ReplDriver(compilerArgs: Array[String],
                  maxHeight: Option[Int] = None,
                  classLoader: Option[ClassLoader] = None,
                  runAfter: Seq[String] = Nil,
-                 verbose: Boolean = false,
-                 lineNumberReportingAdjustment: Int = 0)(using Colors)
-  extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader, lineNumberReportingAdjustment) {
+                 verbose: Boolean = false)(using Colors)
+  extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
