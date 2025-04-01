@@ -35,7 +35,7 @@ object InteractiveShell {
     }
 
     if (runBeforeLines.nonEmpty && state.objectIndex != 1) {
-      throw new AssertionError(s"compilation error for predef code - error should have been reported above ^") with NoStackTrace
+      throw new RuntimeException(s"compilation error for predef code - error should have been reported above ^^^")
     }
 
     replDriver.runUntilQuit(using state)()
