@@ -12,6 +12,7 @@ object InteractiveShell {
     val config0 = precompilePredefFiles(config)
     val compilerArgs = replpp.compilerArgs(config0)
     val verbose = verboseEnabled(config)
+    val runBeforeLines = DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore
 
     val replDriver = new ReplDriver(
       compilerArgs,
@@ -20,17 +21,18 @@ object InteractiveShell {
       maxHeight = config0.maxHeight,
       runAfter = config0.runAfter,
       verbose = verbose,
+      lineNumberReportingAdjustment = -runBeforeLines.size
     )
 
     val initialState: State = replDriver.initialState
-    val runBeforeLines = (DefaultRunBeforeLines ++ globalRunBeforeLines ++ config.runBefore).mkString(lineSeparator)
     val state: State = {
+      val runBeforeLinesString = runBeforeLines.mkString(lineSeparator)
       if (verbose) {
         println(s"compiler arguments: ${compilerArgs.mkString(",")}")
         println(runBeforeLines)
-        replDriver.run(runBeforeLines)(using initialState)
+        replDriver.run(runBeforeLinesString)(using initialState)
       } else {
-        replDriver.runQuietly(runBeforeLines)(using initialState)
+        replDriver.runQuietly(runBeforeLinesString)(using initialState)
       }
     }
 

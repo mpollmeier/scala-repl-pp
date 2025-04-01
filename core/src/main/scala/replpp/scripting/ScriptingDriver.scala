@@ -48,8 +48,10 @@ class ScriptingDriver(compilerArgs: Array[String],
     executed = true
     val inputFiles = (wrappedScript +: predefFiles).filter(Files.exists(_))
     try {
-      new SimpleDriver(lineNumberReportingAdjustment = -wrappingResult.linesBeforeWrappedCode)
-        .compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+      new SimpleDriver(
+        linesBeforeRunBeforeCode = wrappingResult.linesBeforeRunBeforeCode,
+        linesBeforeScript = wrappingResult.linesBeforeScript
+      ).compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
           given Context = ctx
           tempFiles += outDir
 

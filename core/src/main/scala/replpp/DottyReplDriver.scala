@@ -24,7 +24,7 @@ import dotty.tools.dotc.core.Symbols.{Symbol, defn}
 import dotty.tools.dotc.interfaces
 import dotty.tools.dotc.interactive.Completion
 import dotty.tools.dotc.printing.SyntaxHighlighting
-import dotty.tools.dotc.reporting.{ConsoleReporter, StoreReporter}
+import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, HideNonSensicalMessages, Reporter, StoreReporter, UniqueMessagePositions}
 import dotty.tools.dotc.reporting.Diagnostic
 import dotty.tools.dotc.util.Spans.Span
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
@@ -50,7 +50,8 @@ import scala.util.Using
 class DottyReplDriver(settings: Array[String],
                       out: PrintStream,
                       maxHeight: Option[Int],
-                      classLoader: Option[ClassLoader])(using Colors) extends Driver:
+                      classLoader: Option[ClassLoader],
+                      lineNumberReportingAdjustment: Int = 0)(using Colors) extends Driver:
 
   /** Overridden to `false` in order to not have to give sources on the
    *  commandline
@@ -223,7 +224,21 @@ class DottyReplDriver(settings: Array[String],
   }
 
   private def newRun(state: State, reporter: StoreReporter = DottyRandomStuff.newStoreReporter) = {
-    val run = compiler.newRun(rootCtx.fresh.setReporter(reporter), state)
+    val reporter0 =
+      if (lineNumberReportingAdjustment == 0)
+        reporter
+      else {
+        // MP: variation from original DottyReplDriver for line number adjustment, in case there's any 'runBeforeCode'
+        new StoreReporter(outer = Reporter.NoReporter) with UniqueMessagePositions with HideNonSensicalMessages {
+          override def doReport(dia: Diagnostic)(using Context): Unit = {
+            val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
+              override def line: Int = super.line + lineNumberReportingAdjustment + 1
+            }
+            super.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
+          }
+        }
+      }
+    val run = compiler.newRun(rootCtx.fresh.setReporter(reporter0), state)
     state.copy(context = run.runContext)
   }
 

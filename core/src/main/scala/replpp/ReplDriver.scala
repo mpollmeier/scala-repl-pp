@@ -18,13 +18,14 @@ class ReplDriver(compilerArgs: Array[String],
                  maxHeight: Option[Int] = None,
                  classLoader: Option[ClassLoader] = None,
                  runAfter: Seq[String] = Nil,
-                 verbose: Boolean = false)(using Colors)
-  extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader) {
+                 verbose: Boolean = false,
+                 lineNumberReportingAdjustment: Int = 0)(using Colors)
+  extends ReplDriverBase(compilerArgs, out, maxHeight, classLoader, lineNumberReportingAdjustment) {
 
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
    */
-  override def runUntilQuit(using initialState: State = initialState)(): State = {
+  override def runUntilQuit(using initialState: State)(): State = {
     val terminal = new replpp.JLineTerminal {
       override protected def promptStr = prompt
     }

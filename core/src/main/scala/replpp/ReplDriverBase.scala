@@ -10,8 +10,9 @@ import java.nio.file.{Files, Path}
 abstract class ReplDriverBase(compilerArgs: Array[String],
                               out: PrintStream,
                               maxHeight: Option[Int],
-                              classLoader: Option[ClassLoader])(using Colors)
-  extends DottyReplDriver(compilerArgs, out, maxHeight, classLoader) {
+                              classLoader: Option[ClassLoader],
+                              lineNumberReportingAdjustment: Int = 0)(using Colors)
+  extends DottyReplDriver(compilerArgs, out, maxHeight, classLoader, lineNumberReportingAdjustment) {
 
   protected def interpretInput(lines: IterableOnce[String], state: State, currentFile: Path): State = {
     val parsedLines = Seq.newBuilder[String]
