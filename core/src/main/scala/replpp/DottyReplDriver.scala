@@ -225,24 +225,7 @@ class DottyReplDriver(settings: Array[String],
   }
 
   private def newRun(state: State, reporter: StoreReporter = DottyRandomStuff.newStoreReporter) = {
-    // MP: variation from original DottyReplDriver for line number adjustment, in case there's any 'runBeforeCode' - i.e. only for the first run
-    val lineNumberReportingAdjustment = DefaultRunBeforeLines.size
-    val reporter0 = {
-      if (lineNumberReportingAdjustment == 0 || invocationCount > 0) {
-        reporter
-      } else {
-        new StoreReporter(outer = Reporter.NoReporter) with UniqueMessagePositions with HideNonSensicalMessages {
-          override def doReport(dia: Diagnostic)(using Context): Unit = {
-            val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
-              override def line: Int = super.line - lineNumberReportingAdjustment - 1
-            }
-            super.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
-          }
-        }
-      }
-    }
-    invocationCount += 1
-    val run = compiler.newRun(rootCtx.fresh.setReporter(reporter0), state)
+    val run = compiler.newRun(rootCtx.fresh.setReporter(reporter), state)
     state.copy(context = run.runContext)
   }
 
