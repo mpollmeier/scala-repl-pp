@@ -1,8 +1,7 @@
 package replpp
 
-import replpp.shaded.fansi
-
 import java.nio.file.{FileSystems, Files, Path}
+import replpp.shaded.fansi
 import scala.collection.immutable.Seq
 import scala.io.Source
 import scala.util.{Try, Using}
@@ -51,4 +50,5 @@ package object util {
 
   def pathAsString(path: Path): String =
     path.toAbsolutePath.toString
+
 }

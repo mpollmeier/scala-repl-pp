@@ -4,51 +4,55 @@ package replpp.scripting
  * https://github.com/com-lihaoyi/mainargs  */
 object WrapForMainArgs {
 
-  /** linesBeforeWrappedCode: allows us to adjust line numbers in error reporting... */
-  case class WrappingResult(fullScript: String, linesBeforeWrappedCode: Int)
+  /** linesBeforeScript: allows us to adjust line numbers in error reporting... */
+  case class WrappingResult(fullScript: String, linesBeforeRunBeforeCode: Int, linesBeforeScript: Int)
 
   def apply(scriptCode: String, runBefore: Seq[String], runAfter: Seq[String]): WrappingResult = {
-    val runBeforeCode = runBefore.mkString("\n")
-    val runAfterCode = runAfter.mkString("\n")
-
-    val wrapperCodeStart =
+    val wrapperCodeStart0 =
       s"""import replpp.shaded.mainargs
          |import mainargs.main // intentionally shadow any potentially given @main
          |
          |// ScriptingDriver expects an object with a predefined name and a main entrypoint method
          |object ${ScriptingDriver.MainClassName} {
          |// runBeforeCode START
-         |$runBeforeCode
+         |""".stripMargin
+    val linesBeforeRunBeforeCode =
+      wrapperCodeStart0.lines().count().toInt
+      + 1 // for the line break after `wrapperCodeStart0`
+
+    val wrapperCodeStart1 =
+      s"""$wrapperCodeStart0
+         |${runBefore.mkString("\n")}
          |// runBeforeCode END
          |""".stripMargin
 
-    var linesBeforeWrappedCode = 0 // to adjust line number reporting
+    var linesBeforeScript = 0 // to adjust line number reporting
 
     val mainImpl =
       if (scriptCode.contains("@main"))
         scriptCode
       else {
-        linesBeforeWrappedCode += 1 // because we added the following line _before_ the wrapped script code
+        linesBeforeScript += 1 // because we added the following line _before_ the wrapped script code
         s"""@main def _execMain(): Unit = {
            |$scriptCode
            |}""".stripMargin
       }
 
-    linesBeforeWrappedCode += wrapperCodeStart.lines().count().toInt
-    linesBeforeWrappedCode += 1 // for the line break after $wrapperCodeStart
+    linesBeforeScript += wrapperCodeStart1.lines().count().toInt
+    linesBeforeScript += 1 // for the line break after `wrapperCodeStart1`
     val fullScript =
-      s"""$wrapperCodeStart
+      s"""$wrapperCodeStart1
          |$mainImpl
          |
          |  def ${ScriptingDriver.MainMethodName}(args: Array[String]): Unit = {
          |    mainargs.ParserForMethods(this).runOrExit(args.toSeq)
          |
-         |    $runAfterCode
+         |    ${runAfter.mkString("\n")}
          |  }
          |}
          |""".stripMargin
 
-    WrappingResult(fullScript, linesBeforeWrappedCode)
+    WrappingResult(fullScript, linesBeforeRunBeforeCode, linesBeforeScript)
   }
 
 }

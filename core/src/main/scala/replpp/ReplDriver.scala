@@ -24,7 +24,7 @@ class ReplDriver(compilerArgs: Array[String],
   /** Run REPL with `state` until `:quit` command found
     * Main difference to the 'original': different greeting, trap Ctrl-c
    */
-  override def runUntilQuit(using initialState: State = initialState)(): State = {
+  override def runUntilQuit(using initialState: State)(): State = {
     val terminal = new replpp.JLineTerminal {
       override protected def promptStr = prompt
     }

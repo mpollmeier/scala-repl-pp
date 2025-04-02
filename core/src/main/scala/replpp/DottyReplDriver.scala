@@ -24,7 +24,7 @@ import dotty.tools.dotc.core.Symbols.{Symbol, defn}
 import dotty.tools.dotc.interfaces
 import dotty.tools.dotc.interactive.Completion
 import dotty.tools.dotc.printing.SyntaxHighlighting
-import dotty.tools.dotc.reporting.{ConsoleReporter, StoreReporter}
+import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, HideNonSensicalMessages, Reporter, StoreReporter, UniqueMessagePositions}
 import dotty.tools.dotc.reporting.Diagnostic
 import dotty.tools.dotc.util.Spans.Span
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
@@ -51,6 +51,7 @@ class DottyReplDriver(settings: Array[String],
                       out: PrintStream,
                       maxHeight: Option[Int],
                       classLoader: Option[ClassLoader])(using Colors) extends Driver:
+  private var invocationCount = 0
 
   /** Overridden to `false` in order to not have to give sources on the
    *  commandline
@@ -79,7 +80,8 @@ class DottyReplDriver(settings: Array[String],
   }
 
   /** the initial, empty state of the REPL session */
-  final def initialState: State = State(0, 0, Map.empty, Set.empty, rootCtx)
+  final def initialState: State =
+    State(0, 0, Map.empty, Set.empty, rootCtx)
 
   /** Reset state of repl to the initial state
    *

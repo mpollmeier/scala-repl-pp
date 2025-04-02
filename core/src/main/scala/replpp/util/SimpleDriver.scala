@@ -11,6 +11,7 @@ import replpp.scripting.CompilerError
 import java.nio.file.{Files, Path}
 import scala.language.unsafeNulls
 import scala.util.Try
+import scala.util.control.NoStackTrace
 
 /** Compiles input files to a temporary directory
  *
@@ -23,7 +24,7 @@ import scala.util.Try
  * i.e. store hash of all inputs?
  * that functionality must exist somewhere already, e.g. zinc incremental compiler, or even in dotty itself?
  */
-class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
+class SimpleDriver(linesBeforeRunBeforeCode: Int = 0, linesBeforeScript: Int = 0) extends Driver {
   
   def compileAndGetOutputDir[A](compilerArgs: Array[String], inputFiles: Seq[Path], verbose: Boolean): Try[Path] =
     compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) => outDir }
@@ -45,7 +46,9 @@ class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
 
       given ctx0: Context = {
         val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
-        if (lineNumberReportingAdjustment != 0) ctx.setReporter(createAdjustedReporter(rootCtx.reporter))
+        if (linesBeforeRunBeforeCode != 0 || linesBeforeScript != 0) {
+          ctx.setReporter(createReporter(linesBeforeRunBeforeCode, linesBeforeScript, rootCtx.reporter))
+        }
 
         if (verbose) {
           ctx.setSetting(rootCtx.settings.help, true)
@@ -58,19 +61,27 @@ class SimpleDriver(lineNumberReportingAdjustment: Int = 0) extends Driver {
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
         val msgAddonMaybe = if (verbose) "" else " - try `--verbose` for more output"
-        throw CompilerError(s"Errors encountered during compilation$msgAddonMaybe")
+        throw new CompilerError(s"Errors encountered during compilation$msgAddonMaybe") with NoStackTrace
       } else {
         fun(ctx0, outDir)
       }
     }
   }
 
-  // creates a new reporter based on the original reporter that copies Diagnostic and changes line numbers
-  private def createAdjustedReporter(originalReporter: Reporter): Reporter = {
+  private def createReporter(linesBeforeRunBeforeCode: Int, linesBeforeScript: Int, originalReporter: Reporter): Reporter = {
     new Reporter {
       override def doReport(dia: Diagnostic)(using Context): Unit = {
         val adjustedPos = new SourcePosition(source = dia.pos.source, span = dia.pos.span, outer = dia.pos.outer) {
-          override def line: Int = super.line + lineNumberReportingAdjustment
+          override def line: Int = {
+            val original = super.line
+            val adjusted = original - linesBeforeScript
+            if (adjusted >= 0) {
+              adjusted
+            } else {
+              // adjusted line number is negative, i.e. the error must be in the `runBefore` code
+              original - linesBeforeRunBeforeCode
+            }
+          }
         }
         originalReporter.doReport(new Diagnostic(dia.msg, adjustedPos, dia.level))
       }
