@@ -22,9 +22,9 @@ jobs:
       - run: echo $PGP_SECRET | base64 --decode | gpg --batch --import
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-      - name: Build and test
+      - name: Build, test and release
         shell: bash
-        run: sbt -v clean core/assembly test ciReleaseTagNextVersion ciReleaseSonatype
+        run: sbt -v clean test core/Universal/packageBin ciReleaseTagNextVersion ciReleaseSonatype
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

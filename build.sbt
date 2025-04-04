@@ -6,18 +6,6 @@ ThisBuild / scalaVersion := "3.5.2"
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
 
-lazy val shadedLibs = project.in(file("shaded-libs"))
-  .settings(
-    name := "scala-repl-pp-shaded-libs",
-    Compile/compile/scalacOptions ++= Seq(
-      "-language:implicitConversions",
-      "-Wconf:any:silent", // silence warnings from shaded libraries
-      "-explain"
-    ),
-    Compile/doc/scalacOptions += "-nowarn",
-    crossVersion := CrossVersion.full,
-  )
-
 lazy val core = project.in(file("core"))
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
@@ -29,8 +17,19 @@ lazy val core = project.in(file("core"))
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
-    crossVersion := CrossVersion.full,
-    assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
+    commonSettings,
+  )
+
+lazy val shadedLibs = project.in(file("shaded-libs"))
+  .settings(
+    name := "scala-repl-pp-shaded-libs",
+    Compile/compile/scalacOptions ++= Seq(
+      "-language:implicitConversions",
+      "-Wconf:any:silent", // silence warnings from shaded libraries
+      "-explain"
+    ),
+    Compile/doc/scalacOptions += "-nowarn",
+    commonSettings,
   )
 
 lazy val server = project.in(file("server"))
@@ -46,7 +45,7 @@ lazy val server = project.in(file("server"))
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
     ),
-    crossVersion := CrossVersion.full,
+    commonSettings,
   )
 
 lazy val integrationTests = project.in(file("integration-tests"))
@@ -60,6 +59,11 @@ lazy val integrationTests = project.in(file("integration-tests"))
     ),
     publish/skip := true
   )
+
+val commonSettings = Seq(
+  crossVersion := CrossVersion.full,
+  maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com",
+)
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
@@ -81,17 +85,6 @@ ThisBuild / scalacOptions ++= Seq(
 
 ThisBuild/Test/fork := false
 
-ThisBuild/resolvers += Resolver.mavenLocal
-Global/onChangedBuildSource := ReloadOnSourceChanges
-
-ThisBuild/assemblyMergeStrategy := {
-  case "META-INF/versions/9/module-info.class" => MergeStrategy.first
-  case x =>
-    val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
-    oldStrategy(x)
-}
-ThisBuild/assemblyPrependShellScript := Some(sbtassembly.AssemblyPlugin.defaultShellScript)
-
 ThisBuild/publishTo := sonatypePublishToBundle.value
 ThisBuild/scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
                             "scm:git@github.com:mpollmeier/scala-repl-pp.git"))
@@ -100,3 +93,5 @@ ThisBuild/licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/L
 ThisBuild/developers := List(
   Developer("mpollmeier", "Michael Pollmeier", "michael@michaelpollmeier.com", url("http://www.michaelpollmeier.com/"))
 )
+
+Global/onChangedBuildSource := ReloadOnSourceChanges
