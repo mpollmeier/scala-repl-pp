@@ -30,16 +30,6 @@ jobs:
       - name: Package core (will be uploaded to github release)
         shell: bash
         run: sbt -v "show core/Universal/packageBin"
-      - name: Deploy to sonatype and release to maven central
-        shell: bash
-        run: sbt -v ciReleaseTagNextVersion ciReleaseSonatype
-        env:
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      - name: Export ENV vars
-        run: |
-          echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo $GITHUB_ENV
       - name: debug stuff
         run: |
           pwd
@@ -56,8 +46,18 @@ jobs:
           echo XXX5
           ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/target/universal/
           echo XXX5
-      - name: Create Release
+      - name: Create github release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.LATEST_TAG }}
           artifacts: "core/target/universal/*.zip"
+      - name: Deploy to sonatype and release to maven central
+        shell: bash
+        run: sbt -v ciReleaseTagNextVersion ciReleaseSonatype
+        env:
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      - name: Export ENV vars
+        run: |
+          echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo $GITHUB_ENV
