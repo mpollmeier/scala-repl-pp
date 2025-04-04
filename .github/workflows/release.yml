@@ -2,7 +2,7 @@ name: release
 concurrency: release
 on:
   push:
-    branches: [master, main]
+    branches: [main]
     tags: ["*"]
 jobs:
   release:
@@ -24,40 +24,24 @@ jobs:
       - run: echo $PGP_SECRET | base64 --decode | gpg --batch --import
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-      - name: Build and test
+      - name: Build, test and tag
         shell: bash
-        run: sbt -v clean test
+        run: sbt -v clean test ciReleaseTagNextVersion
+      - name: Export ENV vars
+        run: |
+          echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo $GITHUB_ENV
       - name: Package core (will be uploaded to github release)
         shell: bash
         run: sbt -v "show core/Universal/packageBin"
-      - name: debug stuff
-        run: |
-          pwd
-          echo XXX1
-          ls -la
-          echo XXX2
-          find . -name '*.zip'
-          echo XXX3
-          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/
-          echo XXX4
-          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/
-          echo XXX5
-          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/target/
-          echo XXX5
-          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/target/universal/
-          echo XXX5
-      - name: Create github release
+      - name: Create github release and upload package
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.LATEST_TAG }}
           artifacts: "core/target/universal/*.zip"
       - name: Deploy to sonatype and release to maven central
         shell: bash
-        run: sbt -v ciReleaseTagNextVersion ciReleaseSonatype
+        run: sbt -v ciReleaseSonatype
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      - name: Export ENV vars
-        run: |
-          echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-          echo $GITHUB_ENV
