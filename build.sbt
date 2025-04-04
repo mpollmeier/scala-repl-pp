@@ -66,6 +66,8 @@ ThisBuild / libraryDependencies ++= Seq(
   "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
 )
 
+ThisBuild / versionScheme := Some("strict")
+
 ThisBuild / javacOptions ++= Seq(
   "-g", //debug symbols
   "--release", "11"
