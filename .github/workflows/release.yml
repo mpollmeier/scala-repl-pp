@@ -33,4 +33,5 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ env.LATEST_TAG }}
           artifacts: "core/target/universal/*.zip"
