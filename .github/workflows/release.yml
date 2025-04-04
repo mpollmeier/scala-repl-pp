@@ -29,7 +29,7 @@ jobs:
         run: sbt -v clean test
       - name: Package core (will be uploaded to github release)
         shell: bash
-        run: sbt -v core/Universal/packageBin
+        run: sbt -v "show core/Universal/packageBin"
       - name: Deploy to sonatype and release to maven central
         shell: bash
         run: sbt -v ciReleaseTagNextVersion ciReleaseSonatype
@@ -37,8 +37,14 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       - name: Export ENV vars
-        run:
+        run: |
           echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo $GITHUB_ENV
+      - name: debug stuff
+        run: |
+          pwd
+          ls
+          find . -name '*.zip'
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
