@@ -24,13 +24,18 @@ jobs:
       - run: echo $PGP_SECRET | base64 --decode | gpg --batch --import
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-      - name: Build, test and release
+      - name: Build and test
         shell: bash
-        run: sbt -v clean test core/Universal/packageBin ciReleaseTagNextVersion ciReleaseSonatype
+        run: sbt -v clean test
+      - name: Package core (will be uploaded to github release)
+        shell: bash
+        run: sbt -v core/Universal/packageBin
+      - name: Deploy to sonatype and release to maven central
+        shell: bash
+        run: sbt -v ciReleaseTagNextVersion ciReleaseSonatype
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-
       - name: Export ENV vars
         run:
           echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
