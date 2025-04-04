@@ -3,7 +3,6 @@ publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.5.2"
-
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
 
@@ -16,6 +15,7 @@ lazy val shadedLibs = project.in(file("shaded-libs"))
       "-explain"
     ),
     Compile/doc/scalacOptions += "-nowarn",
+    crossVersion := CrossVersion.full,
   )
 
 lazy val core = project.in(file("core"))
@@ -29,6 +29,7 @@ lazy val core = project.in(file("core"))
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
+    crossVersion := CrossVersion.full,
     assemblyJarName := "srp.jar", // TODO remove the '.jar' suffix - when doing so, it doesn't work any longer
   )
 
@@ -44,7 +45,8 @@ lazy val server = project.in(file("server"))
       "com.lihaoyi"   %% "cask"         % "0.9.5",
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
-    )
+    ),
+    crossVersion := CrossVersion.full,
   )
 
 lazy val integrationTests = project.in(file("integration-tests"))
@@ -55,7 +57,8 @@ lazy val integrationTests = project.in(file("integration-tests"))
     libraryDependencies ++= Seq(
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "org.scalatest" %% "scalatest"    % ScalaTestVersion % Test,
-    )
+    ),
+    publish/skip := true
   )
 
 ThisBuild / libraryDependencies ++= Seq(
