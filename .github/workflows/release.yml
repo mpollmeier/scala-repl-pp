@@ -43,8 +43,19 @@ jobs:
       - name: debug stuff
         run: |
           pwd
-          ls
+          echo XXX1
+          ls -la
+          echo XXX2
           find . -name '*.zip'
+          echo XXX3
+          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/
+          echo XXX4
+          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/
+          echo XXX5
+          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/target/
+          echo XXX5
+          ls -la /home/runner/work/scala-repl-pp/scala-repl-pp/core/target/universal/
+          echo XXX5
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
