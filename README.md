@@ -1,5 +1,5 @@
 [![Release](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml/badge.svg)](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/release.yml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3.5.2/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.michaelpollmeier/scala-repl-pp_3.5.2)
 
 ## srp: scala-repl-pp (or even longer: Scala REPL PlusPlus)
 srp wraps the stock Scala 3 REPL and adds many features inspired by ammonite and scala-cli. srp has only one (direct) dependency: the scala3-compiler[(*)](#fineprint). 
