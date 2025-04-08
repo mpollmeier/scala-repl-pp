@@ -1,6 +1,6 @@
 package replpp.scripting
 
-import replpp.Config
+import replpp.{Config, verboseEnabled}
 import replpp.util.ClasspathHelper
 
 import scala.util.{Failure, Success, Try}
@@ -27,19 +27,21 @@ object ScriptRunner {
 
       builder.result()
     }
-    if (replpp.verboseEnabled(config)) println(s"executing `java ${args.mkString(" ")}`")
+    if (replpp.verboseEnabled(config))
+      println(s"executing `java ${args.mkString(" ")}`")
+
     Process("java", args).run().exitValue() match {
       case 0 => Success(())
-      case nonZeroExitValue => 
+      case nonZeroExitValue =>
         Failure(new AssertionError(
-          s"${getClass.getName}: error while invoking `java ${args.mkString(" ")}`: exit code was $nonZeroExitValue"
+          s"${getClass.getName}: error while invoking $mainClass: exit code was $nonZeroExitValue"
         ))
     }
   }
 
   def main(args: Array[String]): Unit = {
     val config = Config.parse(args)
-    exec(config)
+    exec(config).get
   }
 
 }
