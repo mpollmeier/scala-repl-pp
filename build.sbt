@@ -3,7 +3,7 @@ publish/skip := true
 
 ThisBuild / organization := "com.michaelpollmeier"
 ThisBuild / scalaVersion := "3.5.2"
-lazy val ScalaTestVersion = "3.2.18"
+lazy val ScalaTestVersion = "3.2.19"
 lazy val Slf4jVersion = "2.0.16"
 
 lazy val core = project.in(file("core"))
