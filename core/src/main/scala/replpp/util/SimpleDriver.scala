@@ -3,7 +3,7 @@ package replpp.util
 import dotty.tools.dotc.Driver
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.reporting.{ConsoleReporter, Diagnostic, Reporter}
+import dotty.tools.dotc.reporting.{Diagnostic, Reporter}
 import dotty.tools.dotc.util.SourcePosition
 import dotty.tools.io.{Directory, PlainDirectory}
 import replpp.scripting.CompilerError
@@ -45,18 +45,19 @@ class SimpleDriver(linesBeforeRunBeforeCode: Int = 0, linesBeforeScript: Int = 0
       val outDir = Files.createTempDirectory("scala-repl-pp")
 
       given ctx0: Context = {
-        val ctx = rootCtx.fresh.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
+        val ctx = rootCtx.fresh
+
         if (linesBeforeRunBeforeCode != 0 || linesBeforeScript != 0) {
           ctx.setReporter(createReporter(linesBeforeRunBeforeCode, linesBeforeScript, rootCtx.reporter))
         }
 
-        if (verbose) {
-          ctx.setSetting(rootCtx.settings.help, true)
-            .setSetting(rootCtx.settings.XshowPhases, true)
-            .setSetting(rootCtx.settings.Vhelp, true)
-            .setSetting(rootCtx.settings.Vprofile, true)
-            .setSetting(rootCtx.settings.explain, true)
-        } else ctx
+        ctx.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
+           .setSetting(rootCtx.settings.XnoEnrichErrorMessages, !verbose)
+           .setSetting(rootCtx.settings.help, verbose)
+           .setSetting(rootCtx.settings.XshowPhases, verbose)
+           .setSetting(rootCtx.settings.Vhelp, verbose)
+           .setSetting(rootCtx.settings.Vprofile, verbose)
+           .setSetting(rootCtx.settings.explain, verbose)
       }
 
       if (doCompile(newCompiler, toCompile).hasErrors) {

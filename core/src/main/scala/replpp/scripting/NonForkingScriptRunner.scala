@@ -4,6 +4,7 @@ import replpp.{Config, allPredefFiles}
 
 import java.nio.file.Files
 import scala.util.{Failure, Success}
+import scala.util.control.NoStackTrace
 
 /**
   * Main entrypoint for ScriptingDriver, i.e. it takes commandline arguments and executes a script on the current JVM. 
@@ -49,8 +50,7 @@ object NonForkingScriptRunner {
       case Success(_) => // no exception, i.e. all is good
         if (verboseEnabled) System.err.println(s"script finished successfully")
       case Failure(exception) =>
-        System.err.println(s"error during script execution: ${exception.getMessage}")
-        throw exception
+        throw new RuntimeException(s"error during script execution: ${exception.getMessage}") with NoStackTrace
     }
   }
 

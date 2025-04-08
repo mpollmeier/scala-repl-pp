@@ -247,7 +247,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
         // TODO: this isn't the case yet: note: if we intercepted the stdout/stderr, we could/should observe that the error is reported in line 1
       }
 
-      "error in imported file" in {
+      "error is in imported file" in {
         ensureErrors { () =>
           val additionalScript = os.temp()
           os.write.over(additionalScript,

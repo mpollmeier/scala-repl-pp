@@ -10,7 +10,6 @@ import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.file.{Files, Path, Paths}
 import scala.language.unsafeNulls
-import scala.util.control.NonFatal
 import scala.util.{Failure, Try}
 
 /**
@@ -43,27 +42,34 @@ class ScriptingDriver(compilerArgs: Array[String],
     println(s"compiler arguments: ${compilerArgs.mkString(",")}")
   }
 
-  def compileAndRun(): Try[Unit] = {
+  def compileAndRun(): Try[Object] = {
     assert(!executed, "scripting driver can only be used once, and this instance has already been used.")
     executed = true
     val inputFiles = (wrappedScript +: predefFiles).filter(Files.exists(_))
-    try {
-      new SimpleDriver(
-        linesBeforeRunBeforeCode = wrappingResult.linesBeforeRunBeforeCode,
-        linesBeforeScript = wrappingResult.linesBeforeScript
-      ).compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
-          given Context = ctx
-          tempFiles += outDir
+    val driver = new SimpleDriver(
+      linesBeforeRunBeforeCode = wrappingResult.linesBeforeRunBeforeCode,
+      linesBeforeScript = wrappingResult.linesBeforeScript
+    )
+    val result = driver.compile(compilerArgs, inputFiles, verbose) { (ctx, outDir) =>
+      given Context = ctx
+      tempFiles += outDir
 
-          val inheritedClasspath = ctx.settings.classpath.value
-          val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
-          val mainMethod = lookupMainMethod(outDir, classpathEntries)
-          mainMethod.invoke(null, scriptArgs)
-        }
-    } catch {
-      case NonFatal(e) => Failure(e)
-    } finally {
-      tempFiles.result().foreach(deleteRecursively)
+      val inheritedClasspath = ctx.settings.classpath.value
+      val classpathEntries = ClassPath.expandPath(inheritedClasspath, expandStar = true).map(Paths.get(_))
+      val mainMethod = lookupMainMethod(outDir, classpathEntries)
+      mainMethod.invoke(null, scriptArgs)
+    }
+    tempFiles.result().foreach(deleteRecursively)
+
+    result.recoverWith { case e =>
+      val msgAddonMaybe = if (verbose) "" else "Re-run with `--verbose` for more details"
+      Failure(CompilerError(
+        s"""Error during compilation: ${e.getMessage}
+           |Please check error output above!
+           |For given input files: ${inputFiles.mkString(", ")}
+           |$msgAddonMaybe
+           |""".stripMargin
+      ))
     }
   }
 
