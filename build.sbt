@@ -9,7 +9,9 @@ ThisBuild/scalaVersion := defaultScalaVersion
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
 
-lazy val coreX352 = project.in(file("coreX"))
+lazy val core352 = project.in(file("core"))
+  .dependsOn(shadedLibs)
+//   .enablePlugins(JavaAppPackaging)
   .settings(
     scalaVersion := "3.5.2",
     Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
@@ -17,8 +19,10 @@ lazy val coreX352 = project.in(file("coreX"))
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
     ),
     target := baseDirectory.value / "target_352",
+    commonSettings,
   )
-lazy val coreX364 = project.in(file("coreX"))
+lazy val core364 = project.in(file("core"))
+  .dependsOn(shadedLibs)
   .settings(
     scalaVersion := "3.6.4",
     Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
@@ -26,17 +30,8 @@ lazy val coreX364 = project.in(file("coreX"))
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
     ),
     target := baseDirectory.value / "target_364",
+    commonSettings,
   )
-
-// lazy val core2 = project.in(file("core2"))
-//   .settings(
-//     name := "core2",
-//     libraryDependencies ++= Seq(
-//       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-//     ),
-//     // Compile / unmanagedSourceDirectories += baseDirectory.value / "src/main/scala-3.6.4",
-//     // commonSettings
-//   )
 
 // lazy val core = project.in(file("core"))
 //   .dependsOn(shadedLibs)
@@ -52,17 +47,17 @@ lazy val coreX364 = project.in(file("coreX"))
 //     commonSettings,
 //   )
 
-// lazy val shadedLibs = project.in(file("shaded-libs"))
-//   .settings(
-//     name := "scala-repl-pp-shaded-libs",
-//     Compile/compile/scalacOptions ++= Seq(
-//       "-language:implicitConversions",
-//       "-Wconf:any:silent", // silence warnings from shaded libraries
-//       "-explain"
-//     ),
-//     Compile/doc/scalacOptions += "-nowarn",
-//     commonSettings,
-//   )
+lazy val shadedLibs = project.in(file("shaded-libs"))
+  .settings(
+    name := "scala-repl-pp-shaded-libs",
+    Compile/compile/scalacOptions ++= Seq(
+      "-language:implicitConversions",
+      "-Wconf:any:silent", // silence warnings from shaded libraries
+      "-explain"
+    ),
+    Compile/doc/scalacOptions += "-nowarn",
+    commonSettings,
+  )
 
 // lazy val server = project.in(file("server"))
 //   .dependsOn(core)
@@ -92,10 +87,10 @@ lazy val coreX364 = project.in(file("coreX"))
 //     publish/skip := true
 //   )
 
-// val commonSettings = Seq(
-//   crossVersion := CrossVersion.full,
-//   maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com",
-// )
+val commonSettings = Seq(
+  // crossVersion := CrossVersion.full,
+  maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com",
+)
 
 ThisBuild / libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % ScalaTestVersion % Test,
