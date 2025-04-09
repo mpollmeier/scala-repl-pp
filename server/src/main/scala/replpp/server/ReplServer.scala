@@ -30,7 +30,7 @@ object ReplServer {
     }))
 
     val server = new ReplServer(embeddedRepl, serverConfig.serverHost, serverConfig.serverPort, authenticationMaybe)
-    logger.info("Starting REPL server ...")
+    logger.info(s"Starting REPL server on ${serverConfig.serverHost}:${serverConfig.serverPort}")
     try {
       server.main(Array.empty)
     } catch {

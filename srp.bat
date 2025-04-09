@@ -1,1 +1,1 @@
-core/target/universal/stage/bin/srp.bat
+core/target/3.6.4/universal/stage/bin/srp.bat

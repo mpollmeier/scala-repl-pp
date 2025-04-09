@@ -14,8 +14,8 @@ import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorServic
 
 class EmbeddedRepl(
   compilerArgs: Array[String],
-  runBeforeCode: Seq[String],
-  runAfterCode: Seq[String],
+  runBeforeCode: Seq[String] = Nil,
+  runAfterCode: Seq[String] = Nil,
   verbose: Boolean = false) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 

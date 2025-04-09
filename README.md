@@ -62,10 +62,9 @@ markdown-toc --maxdepth 3 README.md|tail -n +4
 - [Contribution guidelines](#contribution-guidelines)
   * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
   * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
-  * [Updating the Scala version](#updating-the-scala-version)
+  * [Adding support for a new Scala version](#adding-support-for-a-new-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)
-
 
 ## Benefits over / comparison with
 
@@ -617,9 +616,8 @@ sbt stage
 ### How can I get a new binary (bootstrapped) release?
 While maven central jar releases are created for each commit on master (a new version tag is assigned automatically), the binary (bootstrapped) releases that end up in https://github.com/mpollmeier/scala-repl-pp/releases/latest are being triggered manually. Contributors can run the [bootstrap action](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/bootstrap.yml).
 
-### Updating the Scala version
-* bump version in [build.sbt](build.sbt)
-* get relevant diff from dotty repo
+### Adding support for a new Scala version
+First, get relevant diff from dotty repo:
 ```bash
 cd /path/to/dotty
 git fetch
@@ -628,11 +626,11 @@ OLD=3.5.2-RC2 # set to version that was used before you bumped it
 NEW=3.6.4     # set to version that you bumped it to
 git diff $OLD..$NEW compiler/src/dotty/tools/repl
 ```
-* check if any of those changes need to be reapplied to this repo
+Check if any of those changes need to be reapplied to this repo - some files have been copied and slightly adjusted, the majority of functionality is reused. 
+If there's any binary incompatible changes (which is typically the case between minor versions), you need to add new projects for `core` and `server` in [build.sbt](build.sbt), add new `core/src/main/scala-3.x.y` directories etc.
 
 ### Updating the shaded libraries
 See [import-instructions.md](shaded-libs/import-instructions.md).
-
 
 ## Fineprint
 (*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the srp classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 

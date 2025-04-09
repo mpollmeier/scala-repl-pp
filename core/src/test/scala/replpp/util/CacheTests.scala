@@ -6,12 +6,13 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.FileInputStream
 import java.net.URI
 import java.nio.file.Files
+import java.util.UUID
 
 class CacheTests extends AnyWordSpec with Matchers {
 
   "caches a file by it's key" in {
     var obtainedFunctionInvocations = 0
-    val cacheKey = "test-cacheKey1"
+    val cacheKey = newRandomCacheKey()
     Cache.remove(cacheKey)
     
     Cache.getOrObtain(
@@ -35,7 +36,7 @@ class CacheTests extends AnyWordSpec with Matchers {
   }
 
   "convenience function to download by URL" in {
-    val cacheKey = "test-cacheKey2"
+    val cacheKey = newRandomCacheKey()
     Cache.remove(cacheKey)
     
     val cachedFile = Cache.getOrDownload(cacheKey, new URI("https://raw.githubusercontent.com/mpollmeier/scala-repl-pp/main/README.md"))
@@ -43,5 +44,8 @@ class CacheTests extends AnyWordSpec with Matchers {
     Files.size(cachedFile) should be > 1024L
     Cache.remove(cacheKey) shouldBe true
   }
+
+  private def newRandomCacheKey() =
+    s"test-cacheKey-${UUID.randomUUID}".substring(0, 32)
 
 }
