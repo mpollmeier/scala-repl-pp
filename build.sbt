@@ -9,16 +9,52 @@ ThisBuild/scalaVersion := defaultScalaVersion
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
 
-lazy val core2 = projectMatrix.in(file("core2"))
-  .jvmPlatform(scalaVersions = crossScalaVersions)
-  .settings(
-    name := "core2",
-    libraryDependencies ++= Seq(
-      "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-    ),
-    // Compile / unmanagedSourceDirectories += baseDirectory.value / "src/main/scala-3.6.4",
-    // commonSettings
-  )
+lazy val config12 = ConfigAxis("Config1_2", "config1.2")
+lazy val config13 = ConfigAxis("Config1_3", "config1.3")
+
+lazy val scala212 = "2.12.10"
+lazy val scala211 = "2.11.12"
+
+lazy val coreX = projectMatrix.in(file("coreX"))
+    .customRow(
+        autoScalaLibrary = false,
+        scalaVersions = Seq(scala212, scala211),
+        axisValues = Seq(config12, VirtualAxis.jvm),
+        _.settings(
+          moduleName := name.value + "_config1.2",
+        )
+      )
+  // .customRow(
+  //   autoScalaLibrary
+  // )
+  // .jvmPlatform(scalaVersions = Nil)
+  // .jvmPlatform(scalaVersions = crossScalaVersions)
+  // .jvmPlatform( // creates only one `coreX` project...
+  //   autoScalaLibrary = false,
+  //   scalaVersions = crossScalaVersions,
+  //   settings = Nil
+  // )
+  // .jvmPlatform( // creates two projects based on the scala binary version
+  //   autoScalaLibrary = true,
+  //   scalaVersions = Seq("2.12.20", "3.6.4"),
+  //   settings = Nil
+  // )
+  // .jvmPlatform( // creates only one `coreX3` project due to the same scala binary...
+  //   autoScalaLibrary = true,
+  //   scalaVersions = crossScalaVersions,
+  //   settings = Nil
+  // )
+
+
+// lazy val core2 = project.in(file("core2"))
+//   .settings(
+//     name := "core2",
+//     libraryDependencies ++= Seq(
+//       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+//     ),
+//     // Compile / unmanagedSourceDirectories += baseDirectory.value / "src/main/scala-3.6.4",
+//     // commonSettings
+//   )
 
 // lazy val core = project.in(file("core"))
 //   .dependsOn(shadedLibs)
