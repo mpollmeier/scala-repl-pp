@@ -17,7 +17,7 @@ lazy val core352 = project.in(file("core"))
     name := s"scala-repl-pp_${scalaVersion.value}",
     Compile/mainClass := Some("replpp.Main"),
     executableScriptName := "srp",
-    Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
+    Compile / unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
@@ -34,7 +34,7 @@ lazy val core364 = project.in(file("core"))
     name := s"scala-repl-pp_${scalaVersion.value}",
     Compile/mainClass := Some("replpp.Main"),
     executableScriptName := "srp",
-    Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
+    Compile / unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
