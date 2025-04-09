@@ -2,8 +2,8 @@ name := "scala-repl-pp-root"
 ThisBuild / organization := "com.michaelpollmeier"
 publish/skip := true
 
-val defaultScalaVersion = "3.6.4"
-val crossScalaVersions = Seq(defaultScalaVersion, "3.5.2")
+val defaultScalaVersion = "3.5.2" // must be the lowest scala version, because shared projects like 'shadedLibs' use it and aren't cross-built
+val crossScalaVersions = Seq(defaultScalaVersion, "3.6.4")
 ThisBuild/scalaVersion := defaultScalaVersion
 
 lazy val ScalaTestVersion = "3.2.18"
@@ -11,23 +11,33 @@ lazy val Slf4jVersion = "2.0.16"
 
 lazy val core352 = project.in(file("core"))
   .dependsOn(shadedLibs)
-//   .enablePlugins(JavaAppPackaging)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     scalaVersion := "3.5.2",
+    name := s"scala-repl-pp_${scalaVersion.value}",
+    Compile/mainClass := Some("replpp.Main"),
+    executableScriptName := "srp",
     Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
     target := baseDirectory.value / "target_352",
     commonSettings,
   )
+
 lazy val core364 = project.in(file("core"))
   .dependsOn(shadedLibs)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     scalaVersion := "3.6.4",
+    name := s"scala-repl-pp_${scalaVersion.value}",
+    Compile/mainClass := Some("replpp.Main"),
+    executableScriptName := "srp",
     Compile / unmanagedSourceDirectories += baseDirectory.value / s"src/main/scala-${scalaVersion.value}",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+      "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
     target := baseDirectory.value / "target_364",
     commonSettings,
