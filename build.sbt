@@ -8,36 +8,30 @@ ThisBuild/scalaVersion := scalaVersions.max
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
 
-lazy val core364 = project.in(file("core"))
+lazy val core_364 = Build
+  .newProject("core", "3.6.4", "scala-repl-pp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    scalaVersion := "3.6.4",
-    name := s"scala-repl-pp_${scalaVersion.value}",
-    Compile/unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     Compile/mainClass := Some("replpp.Main"),
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
-    target := baseDirectory.value / "target_364",
     executableScriptName := "srp",
     commonSettings,
   )
 
-lazy val core352 = project.in(file("core"))
+lazy val core_352 = Build
+  .newProject("core", "3.5.2", "scala-repl-pp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    scalaVersion := "3.5.2",
-    name := s"scala-repl-pp_${scalaVersion.value}",
-    Compile/unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     Compile/mainClass := Some("replpp.Main"),
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
     ),
-    target := baseDirectory.value / "target_352",
     executableScriptName := "srp",
     commonSettings,
   )
@@ -55,46 +49,41 @@ lazy val shadedLibs = project.in(file("shaded-libs"))
     commonSettings,
   )
 
-lazy val server364 = project.in(file("server"))
-  .dependsOn(core364)
+lazy val server_364 = Build
+  .newProject("server", "3.6.4", "scala-repl-pp-server")
+  .dependsOn(core_364)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    scalaVersion := "3.6.4",
-    name := s"scala-repl-pp-server_${scalaVersion.value}",
-    Compile/unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     Compile/mainClass := Some("replpp.server.Main"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.9.5",
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
     ),
-    target := baseDirectory.value / "target_364",
     executableScriptName := "srp-server",
     fork := true, // important: otherwise we run into classloader issues
     commonSettings,
   )
 
-lazy val server352 = project.in(file("server"))
-  .dependsOn(core352)
+lazy val server_352 = Build
+  .newProject("server", "3.5.5", "scala-repl-pp-server")
+  .dependsOn(core_352)
   .enablePlugins(JavaAppPackaging)
   .settings(
-    scalaVersion := "3.5.2",
-    name := s"scala-repl-pp-server_${scalaVersion.value}",
-    Compile/unmanagedSourceDirectories += (Compile/sourceDirectory).value / s"scala-${scalaVersion.value}",
     Compile/mainClass := Some("replpp.server.Main"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"   %% "cask"         % "0.9.5",
       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
       "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
     ),
-    target := baseDirectory.value / "target_352",
     executableScriptName := "srp-server",
     fork := true, // important: otherwise we run into classloader issues
     commonSettings,
   )
+
 
 lazy val integrationTests = project.in(file("integration-tests"))
-  .dependsOn(server364)
+  .dependsOn(server_364)
   .settings(
     name := "integration-tests",
     fork := true, // important: otherwise we run into classloader issues
