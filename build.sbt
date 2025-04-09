@@ -2,9 +2,8 @@ name := "scala-repl-pp-root"
 ThisBuild / organization := "com.michaelpollmeier"
 publish/skip := true
 
-val defaultScalaVersion = "3.5.2" // must be the lowest scala version, because shared projects like 'shadedLibs' use it and aren't cross-built
-val crossScalaVersions = Seq(defaultScalaVersion, "3.6.4")
-ThisBuild/scalaVersion := defaultScalaVersion
+val scalaVersions = Seq("3.5.2", "3.6.4")
+ThisBuild/scalaVersion := scalaVersions.max
 
 lazy val ScalaTestVersion = "3.2.18"
 lazy val Slf4jVersion = "2.0.16"
@@ -43,23 +42,10 @@ lazy val core364 = project.in(file("core"))
     commonSettings,
   )
 
-// lazy val core = project.in(file("core"))
-//   .dependsOn(shadedLibs)
-//   .enablePlugins(JavaAppPackaging)
-//   .settings(
-//     name := "scala-repl-pp",
-//     Compile/mainClass := Some("replpp.Main"),
-//     executableScriptName := "srp",
-//     libraryDependencies ++= Seq(
-//       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-//       "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
-//     ),
-//     commonSettings,
-//   )
-
 lazy val shadedLibs = project.in(file("shaded-libs"))
   .settings(
     name := "scala-repl-pp-shaded-libs",
+    scalaVersion := scalaVersions.min,
     Compile/compile/scalacOptions ++= Seq(
       "-language:implicitConversions",
       "-Wconf:any:silent", // silence warnings from shaded libraries
@@ -122,7 +108,7 @@ ThisBuild / scalacOptions ++= Seq(
 
 ThisBuild/Test/fork := false
 
-// ThisBuild/publishTo := sonatypePublishToBundle.value
+ThisBuild/publishTo := sonatypePublishToBundle.value
 ThisBuild/scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
                             "scm:git@github.com:mpollmeier/scala-repl-pp.git"))
 ThisBuild/homepage := Some(url("https://github.com/mpollmeier/scala-repl-pp/"))
