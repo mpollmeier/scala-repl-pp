@@ -106,7 +106,6 @@ lazy val integrationTests = project.in(file("integration-tests"))
   )
 
 val commonSettings = Seq(
-  // crossVersion := CrossVersion.full,
   maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com",
 )
 
