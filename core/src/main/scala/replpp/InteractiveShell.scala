@@ -23,19 +23,14 @@ object InteractiveShell {
 
     if (verbose) println(s"compiler arguments: ${compilerArgs.mkString(",")}")
 
-    var state: State = replDriver.initialState
+    var state: State = replDriver.initialState.copy(quiet = !verbose)
     var expectedStateObjectIndex = 0
     Seq(DefaultRunBeforeLines, globalRunBeforeLines, config.runBefore).foreach { runBeforeLines =>
       val runBeforeCode = runBeforeLines.mkString("\n").trim
       if (runBeforeCode.nonEmpty) {
         expectedStateObjectIndex += 1
-        state =
-          if (verbose) {
-            println(s"executing runBeforeCode: $runBeforeCode")
-            replDriver.run(runBeforeCode)(using state)
-          } else {
-            replDriver.runQuietly(runBeforeCode)(using state)
-          }
+        if (verbose) println(s"executing runBeforeCode: $runBeforeCode")
+        state = replDriver.run(runBeforeCode)(using state)
       }
     }
 
@@ -44,6 +39,7 @@ object InteractiveShell {
       s"compilation error(s) for predef code - see error above ^^^"
     )
 
+    state = state.copy(quiet = false)
     replDriver.runUntilQuit(using state)()
   }
   
