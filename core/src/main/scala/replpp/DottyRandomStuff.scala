@@ -13,7 +13,10 @@ private[replpp] object DottyRandomStuff {
     new StoreReporter(null) with UniqueMessagePositions with HideNonSensicalMessages
   }
 
-  /** copied from https://github.com/lampepfl/dotty/blob/3.3.0-RC5/compiler/src/dotty/tools/repl/ParseResult.scala#L130 */
+  /** Based on https://github.com/scala/scala3/blob/3.6.4/compiler/src/dotty/tools/repl/ParseResult.scala#L135
+    * change: removed [private] classifier so we can access it...
+    * alternatively we could use reflection...
+    */
   object ParseResult {
     val commands: List[(String, String => ParseResult)] = List(
       Quit.command -> (_ => Quit),
@@ -25,6 +28,7 @@ private[replpp] object DottyRandomStuff {
       TypeOf.command -> (arg => TypeOf(arg)),
       DocOf.command -> (arg => DocOf(arg)),
       Settings.command -> (arg => Settings(arg)),
+      Silent.command -> (_ => Silent),
     )
   }
 }

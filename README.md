@@ -624,9 +624,8 @@ While maven central jar releases are created for each commit on master (a new ve
 cd /path/to/dotty
 git fetch
 
-OLD=3.4.2     # set to version that was used before you bumped it
-NEW=3.5.2-RC2 # set to version that you bumped it to
-git checkout $NEW
+OLD=3.5.2-RC2 # set to version that was used before you bumped it
+NEW=3.6.4     # set to version that you bumped it to
 git diff $OLD..$NEW compiler/src/dotty/tools/repl
 ```
 * check if any of those changes need to be reapplied to this repo

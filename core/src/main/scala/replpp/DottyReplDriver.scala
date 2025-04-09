@@ -44,7 +44,7 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.6.4/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
 class DottyReplDriver(settings: Array[String],
@@ -66,8 +66,21 @@ class DottyReplDriver(settings: Array[String],
     setupRootCtx(this.settings ++ settings, rootCtx)
   }
 
+  private val incompatibleOptions: Seq[String] = Seq(
+    initCtx.settings.YbestEffort.name,
+    initCtx.settings.YwithBestEffortTasty.name
+  )
+
   private def setupRootCtx(settings: Array[String], rootCtx: Context): Context = {
-    setup(settings, rootCtx) match
+    val incompatible = settings.intersect(incompatibleOptions)
+    val filteredSettings =
+      if !incompatible.isEmpty then
+        inContext(rootCtx) {
+          out.println(i"Options incompatible with repl will be ignored: ${incompatible.mkString(", ")}")
+        }
+        settings.filter(!incompatible.contains(_))
+      else settings
+    setup(filteredSettings, rootCtx) match
       case Some((files, ictx)) => inContext(ictx) {
         shouldStart = true
         if files.nonEmpty then out.println(i"Ignoring spurious arguments: $files%, %")
@@ -81,7 +94,11 @@ class DottyReplDriver(settings: Array[String],
 
   /** the initial, empty state of the REPL session */
   final def initialState: State =
-    State(0, 0, Map.empty, Set.empty, rootCtx)
+    val emptyState = State(0, 0, Map.empty, Set.empty, false, rootCtx)
+    val initScript = rootCtx.settings.replInitScript.value(using rootCtx)
+    initScript.trim() match
+      case "" => emptyState
+      case script => run(script)(using emptyState)
 
   /** Reset state of repl to the initial state
    *
@@ -184,11 +201,6 @@ class DottyReplDriver(settings: Array[String],
     interpret(ParseResult.complete(input))
   }
 
-  final def runQuietly(input: String)(using State): State = runBody {
-    val parsed = ParseResult(input)
-    interpret(parsed, quiet = true)
-  }
-
   protected def runBody(body: => State): State = rendering.classLoader()(using rootCtx).asContext(withRedirectedOutput(body))
 
   // TODO: i5069
@@ -256,10 +268,10 @@ class DottyReplDriver(settings: Array[String],
         .getOrElse(Nil)
   end completions
 
-  protected def interpret(res: ParseResult, quiet: Boolean = false)(using state: State): State = {
+  protected def interpret(res: ParseResult)(using state: State): State = {
     res match {
       case parsed: Parsed if parsed.trees.nonEmpty =>
-        compile(parsed, state, quiet)
+        compile(parsed, state)
 
       case SyntaxErrors(_, errs, _) =>
         displayErrors(errs)
@@ -277,7 +289,7 @@ class DottyReplDriver(settings: Array[String],
   }
 
   /** Compile `parsed` trees and evolve `state` in accordance */
-  private def compile(parsed: Parsed, istate: State, quiet: Boolean = false): State = {
+  private def compile(parsed: Parsed, istate: State): State = {
     def extractNewestWrapper(tree: untpd.Tree): Name = tree match {
       case PackageDef(_, (obj: untpd.ModuleDef) :: Nil) => obj.name.moduleClassName
       case _ => nme.NO_NAME
@@ -328,11 +340,9 @@ class DottyReplDriver(settings: Array[String],
               given Ordering[Diagnostic] =
                 Ordering[(Int, Int, Int)].on(d => (d.pos.line, -d.level, d.pos.column))
 
-              if (!quiet) {
-                (definitions ++ warnings)
-                  .sorted
-                  .foreach(printDiagnostic)
-              }
+              (if istate.quiet then warnings else definitions ++ warnings)
+                .sorted
+                .foreach(printDiagnostic)
 
               updatedState
             }
@@ -506,6 +516,8 @@ class DottyReplDriver(settings: Array[String],
       case _  =>
         rootCtx = setupRootCtx(tokenize(arg).toArray, rootCtx)
         state.copy(context = rootCtx)
+
+    case Silent => state.copy(quiet = !state.quiet)
 
     case Quit =>
       // end of the world!
