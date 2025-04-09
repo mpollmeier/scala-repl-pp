@@ -1,1 +1,1 @@
-server/target/universal/stage/bin/srp-server.bat
+server/target/3.6.4/universal/stage/bin/srp-server.bat
