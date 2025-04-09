@@ -1,5 +1,5 @@
 name := "scala-repl-pp-root"
-ThisBuild / organization := "com.michaelpollmeier"
+ThisBuild/organization := "com.michaelpollmeier"
 publish/skip := true
 
 lazy val scalaVersions = Seq("3.5.2", "3.6.4")
@@ -46,7 +46,7 @@ lazy val server_364 = Build
   .settings(serverSettings)
 
 lazy val server_352 = Build
-  .newProject("server", "3.5.5", "scala-repl-pp-server")
+  .newProject("server", "3.5.2", "scala-repl-pp-server")
   .dependsOn(core_352)
   .enablePlugins(JavaAppPackaging)
   .settings(serverSettings)
@@ -73,19 +73,19 @@ lazy val integrationTests = project.in(file("integration-tests"))
 
 lazy val commonSettings = Seq(maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com")
 
-ThisBuild / libraryDependencies ++= Seq(
+ThisBuild/libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
 )
 
-ThisBuild / versionScheme := Some("strict")
+ThisBuild/versionScheme := Some("strict")
 
-ThisBuild / javacOptions ++= Seq(
+ThisBuild/javacOptions ++= Seq(
   "-g", //debug symbols
   "--release", "11"
 )
 
-ThisBuild / scalacOptions ++= Seq(
+ThisBuild/scalacOptions ++= Seq(
   "-release", "11",
   "-deprecation",
   "-feature",
