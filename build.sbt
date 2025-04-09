@@ -93,17 +93,17 @@ lazy val server352 = project.in(file("server"))
     commonSettings,
   )
 
-// lazy val integrationTests = project.in(file("integration-tests"))
-//   .dependsOn(server)
-//   .settings(
-//     name := "integration-tests",
-//     fork := true, // important: otherwise we run into classloader issues
-//     libraryDependencies ++= Seq(
-//       "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
-//       "org.scalatest" %% "scalatest"    % ScalaTestVersion % Test,
-//     ),
-//     publish/skip := true
-//   )
+lazy val integrationTests = project.in(file("integration-tests"))
+  .dependsOn(server364)
+  .settings(
+    name := "integration-tests",
+    fork := true, // important: otherwise we run into classloader issues
+    libraryDependencies ++= Seq(
+      "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
+      "org.scalatest" %% "scalatest"    % ScalaTestVersion % Test,
+    ),
+    publish/skip := true
+  )
 
 val commonSettings = Seq(
   // crossVersion := CrossVersion.full,
