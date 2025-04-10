@@ -82,7 +82,7 @@ lazy val commonSettings = Seq(maintainer.withRank(KeyRanks.Invisible) := "michae
 
 ThisBuild/libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
-  "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.9.3" % Test,
 )
 
 ThisBuild/versionScheme := Some("strict")
