@@ -1,7 +1,7 @@
 package replpp.server
 
 import cask.model.{Request, Response}
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 import replpp.precompilePredefFiles
 import ujson.Obj
 
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 case class QueryResult(output: String, uuid: UUID, success: Boolean) extends HasUUID
 
 object ReplServer {
-  protected val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def startHttpServer(serverConfig: Config): Unit = {
     val authenticationMaybe = for {

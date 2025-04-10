@@ -3,7 +3,7 @@ package replpp.server
 import cask.model.Response.Raw
 import cask.model.{Request, Response}
 import cask.router.Result
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 import ujson.Obj
 
 import java.nio.charset.StandardCharsets
@@ -20,7 +20,7 @@ abstract class WebServiceWithWebSocket[T <: HasUUID](
   override val host: String,
   override val port: Int,
   authenticationMaybe: Option[UsernamePasswordAuth] = None) extends cask.MainRoutes {
-  protected val logger: Logger = LoggerFactory.getLogger(getClass)
+  protected val logger = LoggerFactory.getLogger(getClass)
 
   class basicAuth extends cask.RawDecorator {
     private lazy val utf8 = StandardCharsets.UTF_8

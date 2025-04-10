@@ -1,7 +1,7 @@
 package replpp.server
 
 import dotty.tools.repl.State
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 import replpp.Colors.BlackWhite
 import replpp.{ReplDriverBase, pwd}
 
@@ -17,7 +17,7 @@ class EmbeddedRepl(
   runBeforeCode: Seq[String] = Nil,
   runAfterCode: Seq[String] = Nil,
   verbose: Boolean = false) {
-  private val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /** repl and compiler output ends up in this replOutputStream */
   private val replOutputStream = new ByteArrayOutputStream()

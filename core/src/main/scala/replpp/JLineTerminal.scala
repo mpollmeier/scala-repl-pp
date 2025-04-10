@@ -17,14 +17,14 @@ import org.jline.terminal.Terminal
 import org.jline.terminal.Terminal.Signal
 import org.jline.terminal.TerminalBuilder
 import org.jline.utils.AttributedString
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
 /** Based on https://github.com/lampepfl/dotty/blob/3.4.1/compiler/src/dotty/tools/repl/JLineTerminal.scala
   * and adapted for our needs */
 class JLineTerminal extends java.io.Closeable {
-  private val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   // MP: adapted here
   // if env var TERM=dumb is defined, instantiate as 'dumb' straight away, otherwise try to instantiate as a
