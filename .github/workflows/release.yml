@@ -33,7 +33,7 @@ jobs:
           echo $GITHUB_ENV
       - name: Package core (will be uploaded to github release)
         shell: bash
-        run: sbt -v "show core/Universal/packageBin"
+        run: sbt -v releasePackage
       - name: Create github release and upload package
         uses: ncipollo/release-action@v1
         with:

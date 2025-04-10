@@ -6,6 +6,13 @@ lazy val scalaVersions = Seq("3.5.2", "3.6.4")
 ThisBuild/scalaVersion := scalaVersions.max
 lazy val Slf4jVersion = "2.0.16"
 
+lazy val releasePackage = taskKey[File]("package up a downloadable release")
+releasePackage := {
+  val releaseZip = (core_364/Universal/packageBin).value
+  streams.value.log.info(s"packaged up a release in $releaseZip")
+  releaseZip
+}
+
 lazy val core_364 = Build
   .newProject("core", "3.6.4", "scala-repl-pp")
   .dependsOn(shadedLibs)
