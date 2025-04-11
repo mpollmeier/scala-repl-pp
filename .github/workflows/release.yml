@@ -38,7 +38,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.LATEST_TAG }}
-          artifacts: "core/target/universal/*.zip"
+          artifacts: "target/srp.zip" # same as in `releasePackage` in build.sbt
+          artifactErrorsFailBuild: true
       - name: Deploy to sonatype and release to maven central
         shell: bash
         run: sbt -v ciReleaseSonatype

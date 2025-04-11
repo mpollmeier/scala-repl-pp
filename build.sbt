@@ -1,4 +1,4 @@
-name := "scala-repl-pp-root"
+name := "srp-root"
 ThisBuild/organization := "com.michaelpollmeier"
 publish/skip := true
 
@@ -8,19 +8,21 @@ lazy val Slf4jVersion = "2.0.16"
 
 lazy val releasePackage = taskKey[File]("package up a downloadable release")
 releasePackage := {
-  val releaseZip = (core_364/Universal/packageBin).value
-  streams.value.log.info(s"packaged up a release in $releaseZip")
-  releaseZip
+  // same as in `.github/workflows/release.yml`
+  val releaseFile = target.value / "srp.zip"
+  IO.copyFile((core_364/Universal/packageBin).value, releaseFile)
+  streams.value.log.info(s"packaged up a release in $releaseFile")
+  releaseFile
 }
 
 lazy val core_364 = Build
-  .newProject("core", "3.6.4", "scala-repl-pp")
+  .newProject("core", "3.6.4", "srp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
 
 lazy val core_352 = Build
-  .newProject("core", "3.5.2", "scala-repl-pp")
+  .newProject("core", "3.5.2", "srp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
@@ -28,6 +30,7 @@ lazy val core_352 = Build
 lazy val coreSettings = commonSettings ++ Seq(
   Compile/mainClass := Some("replpp.Main"),
   executableScriptName := "srp",
+  Universal/topLevelDirectory := Some("srp"),
   libraryDependencies ++= Seq(
     "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
     "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
@@ -35,7 +38,7 @@ lazy val coreSettings = commonSettings ++ Seq(
 )
 
 lazy val shadedLibs = project.in(file("shaded-libs")).settings(
-  name := "scala-repl-pp-shaded-libs",
+  name := "srp-shaded-libs",
   scalaVersion := scalaVersions.min,
   Compile/compile/scalacOptions ++= Seq(
     "-language:implicitConversions",
