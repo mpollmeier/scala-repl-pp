@@ -22,6 +22,27 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<versio
 * `srp` is published with the full scala version suffix (e.g. `_3.6.4` instead of just `_3`) because the stock Scala REPL often has binary incompatible changes between minor version changes - different Scala patch versions typically work though, e.g. if your build uses Scala 3.6.3 you can use `scala-repl-pp_3.6.4`
 * `srp` has only one direct dependency: the scala3-compiler[(*)](#fineprint)
 
+As an example take a look at the demo project ["string calculator"](src/test/resources/demo-project) in this repository:
+```bash
+cd core/src/test/resources/demo-project
+sbt stage
+./stringcalc
+
+Welcome to the magical world of string calculation!
+Type `help` for help
+
+stringcalc> add(One, Two)
+val res0: stringcalc.Number = Number(3)
+
+stringcalc> :exit  // or press Ctrl-D
+
+
+./stringcalc --script plus.sc
+executing plus.sc
+Number(3)
+```
+
+
 ## Table of contents
 <!-- generated with:
 markdown-toc --maxdepth 3 README.md|tail -n +5 
@@ -497,20 +518,6 @@ Server-specific configuration options as per `srp --help`:
 --server-port <value>    Port on which to expose the REPL server
 --server-auth-username <value> Basic auth username for the REPL server
 --server-auth-password <value> Basic auth password for the REPL server
-```
-
-## Embed into your own project
-Try out the working [string calculator example](src/test/resources/demo-project) in this repo:
-```bash
-cd core/src/test/resources/demo-project
-sbt stage
-./stringcalc
-
-Welcome to the magical world of string calculation!
-Type `help` for help
-
-stringcalc> add(One, Two)
-val res0: stringcalc.Number = Number(3)
 ```
 
 ## Verbose mode

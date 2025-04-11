@@ -292,7 +292,7 @@ object Config {
    * equality etc. differently, which breaks common case class conventions.
    */
   case class ForClasspath(additionalClasspathEntries: Seq[String] = Seq.empty,
-                          inheritClasspath: Boolean = false,
+                          inheritClasspath: Boolean = true,
                           inheritClasspathIncludes: Seq[String] = ForClasspath.DefaultInheritClasspathIncludes,
                           inheritClasspathExcludes: Seq[String] = Seq.empty,
                           dependencies: Seq[String] = Seq.empty,

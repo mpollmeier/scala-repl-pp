@@ -7,6 +7,7 @@ object One   extends Number(1)
 object Two   extends Number(2)
 object Three extends Number(3)
 
+
 object StringCalculator {
   def add(number1: Number, number2: Number): Number =
     (number1, number2) match {
