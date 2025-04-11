@@ -1,4 +1,4 @@
-name := "srp-root"
+name := "scala-repl-pp-root"
 ThisBuild/organization := "com.michaelpollmeier"
 publish/skip := true
 
@@ -16,13 +16,13 @@ releasePackage := {
 }
 
 lazy val core_364 = Build
-  .newProject("core", "3.6.4", "srp")
+  .newProject("core", "3.6.4", "scala-repl-pp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
 
 lazy val core_352 = Build
-  .newProject("core", "3.5.2", "srp")
+  .newProject("core", "3.5.2", "scala-repl-pp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
@@ -31,14 +31,11 @@ lazy val coreSettings = commonSettings ++ Seq(
   Compile/mainClass := Some("replpp.Main"),
   executableScriptName := "srp",
   Universal/topLevelDirectory := Some("srp"),
-  libraryDependencies ++= Seq(
-    "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
-    "org.slf4j"       % "slf4j-simple"    % Slf4jVersion % Optional,
-  ),
+  libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
 )
 
 lazy val shadedLibs = project.in(file("shaded-libs")).settings(
-  name := "srp-shaded-libs",
+  name := "scala-repl-pp-shaded-libs",
   scalaVersion := scalaVersions.min,
   Compile/compile/scalacOptions ++= Seq(
     "-language:implicitConversions",
@@ -65,6 +62,7 @@ lazy val serverSettings = commonSettings ++ Seq(
   Compile/mainClass := Some("replpp.server.Main"),
   libraryDependencies ++= Seq(
     "com.lihaoyi"   %% "cask"         % "0.9.5",
+    "org.slf4j"      % "slf4j-api"    % Slf4jVersion,
     "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
     "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
   ),
