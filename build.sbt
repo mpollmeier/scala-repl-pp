@@ -4,7 +4,7 @@ publish/skip := true
 
 lazy val scalaVersions = Seq("3.5.2", "3.6.4")
 ThisBuild/scalaVersion := scalaVersions.max
-lazy val Slf4jVersion = "2.0.16"
+lazy val Slf4jVersion = "2.0.17"
 
 lazy val releasePackage = taskKey[File]("package up a downloadable release")
 releasePackage := {
