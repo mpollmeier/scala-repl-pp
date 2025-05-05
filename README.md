@@ -6,14 +6,14 @@ When you read `srp` think "syrup" - full of goodness, glues things together :sli
 
 # Quick start
 
-You can either download a binary:
+You can either download a binary...
 ```bash
 curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp.zip
 unzip srp.zip
 srp/bin/srp
 ```
 
-Even better: add `srp` as a library to your project, empowering it with a customizable REPL, scripting and server mode functionality. 
+... or add `srp` as a library to your project, empowering it with a customizable REPL and scripting functionality. 
 There's a [demo project](core/src/test/resources/demo-project) to get you started.
 ```
 libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<version>"
@@ -21,17 +21,13 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<versio
 
 # Table of contents
 <!-- generated with:
-markdown-toc --maxdepth 3 README.md|tail -n +5 
+markdown-toc --maxdepth 2 README.md|tail -n +5 
 -->
 TODO regenerate
 
-# Usage
-The below features are all demonstrated using the REPL but also work when running scripts. 
-
-## run with defaults
-```bash
-./srp
-```
+# Usage / features
+> [!TIP]
+> The below features are all demonstrated using the REPL but also work in scripting and server mode. 
 
 ## execute code at the start with `--runBefore`
 ```
@@ -40,10 +36,12 @@ The below features are all demonstrated using the REPL but also work when runnin
 scala> MaxValue
 val res0: Int = 127
 ```
+...
 
-You can specify this parameter multiple times, the given statements will be executed in the given order.
+> [!TIP]
+> Can by specified multiple times, the given statements will be executed in the given order, e.g. `--runBefore "val foo = 42" --runBefore "println(foo)"`.
 
-If you want to execute some code _every single time_ you start a session, just write it to `~/.scala-repl-pp.sc`
+To run code before every session, write it to `~/.scala-repl-pp.sc`
 ```bash
 echo 'import Short.MaxValue' > ~/.scala-repl-pp.sc
 
@@ -63,7 +61,8 @@ val res0: Int = 2147483647
 ```
 
 ## `--predef`: add source files to the classpath
-Additional source files that are compiled added to the classpath, but unlike `runBefore` not executed straight away can be provided via `--predef`. 
+> [NOTE!]
+> The given file(s) are only compiled, not executed. Use `--runBefore` if you want to execute code.
 ```
 echo 'def foo = 42' > foo.sc
 
@@ -71,8 +70,8 @@ echo 'def foo = 42' > foo.sc
 scala> foo
 val res0: Int = 42
 ```
-
-You can specify this parameter multiple times (`--predef one.sc --predef two.sc`).
+> [!TIP]
+> Can by specified multiple times, e.g. `--predef one.sc --predef two.sc`.
 
 Why not use `runBefore` instead? For simple examples like the one above, you can do so. If it gets more complicated and you have multiple files referencing each others, `predef` allows you to treat it as one compilation unit, which isn't possible with `runBefore`. And as you add more code it's get's easier to manage in files rather than command line arguments. 
 
@@ -140,7 +139,8 @@ Note: the dependencies must be known at startup time, either via `--dep` paramet
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
-To add multiple dependencies, you can specify this parameter multiple times.
+> [!TIP]
+> Can by specified multiple times, e.g. `--dep a:b:0.1.0 --dep x:y:0.1.0`
 
 Alternatively, use the `//> using dep` directive in predef code or predef files:
 ```
@@ -260,15 +260,14 @@ val res0: util.Try[Int] = Success(value = 202)
 ```
 
 # Scripting
+The following additional features work in scripting mode only. 
+> [TIP!]
+> See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
 
-See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
-
-## Simple "Hello world" script
+## Execute "Hello world" script
 ```bash
 echo 'println("Hello!")' > test-simple.sc
-
 ./srp --script test-simple.sc
-cat out.txt # prints 'i was here'
 ```
 
 ## Importing other files / scripts with `using file` directive
@@ -334,7 +333,8 @@ Via `--repo` parameter on startup:
 ./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
 scala> org.gradle.tooling.GradleConnector.newConnector()
 ```
-To add multiple dependency resolvers, you can specify this parameter multiple times.
+> [!TIP]
+> Can by specified multiple times.
 
 Or via `//> using resolver` directive as part of your script or predef code:
 
