@@ -1,4 +1,4 @@
-# srp -> scala-repl-pp -> Scala REPL PlusPlus
+# srp < scala-repl-pp < Scala REPL PlusPlus
 <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" width="300" />
 
 `srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting.<br/>
@@ -408,7 +408,7 @@ If you want to debug a script, it's slightly different. Scripts are executed in 
 
 # Server mode
 > [!NOTE]
-> `srp-server` isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
+> `srp-server` isn't currently available as a bootstrapped binary, so you need to either [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage` or add it as a dependency to your project.
 
 ```bash
 ./srp-server
@@ -486,13 +486,24 @@ Server-specific configuration options as per `srp --help`:
 --server-auth-password <value> Basic auth password for the REPL server
 ```
 
+## Server mode for your project
+`build.sbt`:
+```scala
+libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp-server_3.6.4" % "<version>"
+```
+
+Then in your project's sources, execute `replpp.server.ReplServer.startHttpServer` which takes a `replpp.server.Config` as input. For a full working example check out e.g. [joern's server mode](https://github.com/joernio/joern/blob/db22aec598f10ae1b4023ff712f991cb3d817e79/console/src/main/scala/io/joern/console/BridgeBase.scala#L426).
+
+
 # FAQ
 
 ## Is this an extension of the stock REPL or a fork?
-Technically it is a fork, i.e. we copied parts of the ReplDriver to make some adjustments. 
-However, semantically, `srp` can be considered an extension of the stock repl. We don't want to create and maintain a competing REPL implementation, 
-instead the idea is to provide a space for exploring new ideas and bringing them back into the dotty codebase. 
-[When we forked](https://github.com/mpollmeier/scala-repl-pp/commit/eb2bf9a3bed681bffa945f657ada14781c6a7a14) the stock ReplDriver, we made sure to separate the commits into bitesized chunks so we can easily rebase. The changes are clearly marked, and whenever there's a new dotty version we're bringing in the relevant changes here (`git diff 3.3.0-RC5..3.3.0-RC6 compiler/src/dotty/tools/repl/`).
+Technically it is a fork because we copied parts of the ReplDriver to make some adjustments. <br/>
+However, semantically `srp` can be considered an extension of the stock repl. We don't want to create and maintain a competing REPL implementation, instead the idea is to provide a space for exploring new ideas and bringing them back into the dotty codebase. 
+[When we forked](https://github.com/mpollmeier/scala-repl-pp/commit/eb2bf9a3bed681bffa945f657ada14781c6a7a14) the stock ReplDriver, we made sure to separate the commits into bitesized chunks so we can easily rebase. The changes are clearly marked, and whenever there's a new dotty version we're bringing in the relevant changes here (for instructions see below).
+
+## Why is `srp` published with the full scala version suffix (e.g. `_3.6.4` instead of just `_3`)?
+The stock Scala REPL often has binary incompatible changes between minor version changes.  Different Scala patch versions typically work though, e.g. if your build uses Scala 3.6.3 you can use `scala-repl-pp_3.6.4`.
 
 ## Why do we ship a shaded copy of other libraries and not use dependencies?
 `srp` includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of how to (re-) import then and which versions were used are available in [import-instructions.md](shaded-libs/import-instructions.md).
@@ -597,5 +608,4 @@ See [import-instructions.md](shaded-libs/import-instructions.md).
 
 # Fineprint
 (*) To keep our codebase concise we do use libraries (mostly from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack). We want to ensure that users can freely use their own dependencies without clashing with the `srp` classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors for permissive licensing! 
-  
   
