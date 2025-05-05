@@ -25,26 +25,22 @@ markdown-toc --maxdepth 2 README.md|tail -n +5
 -->
 TODO regenerate
 
-# Usage / features
-> [!TIP]
-> The below features are all demonstrated using the REPL but also work in scripting and server mode. 
+# Features of REPL, scripting and server mode
+This section demonstrates features with the REPL, but these also work when running scripts as well as in server mode. 
 
-## execute code at the start with `--runBefore`
+## `runBefore`: execute code at startup
 ```
 ./srp --runBefore "import Byte.MaxValue"
 
 scala> MaxValue
 val res0: Int = 127
 ```
-...
-
 > [!TIP]
 > Can by specified multiple times, the given statements will be executed in the given order, e.g. `--runBefore "val foo = 42" --runBefore "println(foo)"`.
 
 To run code before every session, write it to `~/.scala-repl-pp.sc`
 ```bash
 echo 'import Short.MaxValue' > ~/.scala-repl-pp.sc
-
 ./srp
 
 scala> MaxValue
@@ -60,12 +56,9 @@ scala> MaxValue
 val res0: Int = 2147483647
 ```
 
-## `--predef`: add source files to the classpath
-> [NOTE!]
-> The given file(s) are only compiled, not executed. Use `--runBefore` if you want to execute code.
+## `predef`: add source files to the classpath
 ```
 echo 'def foo = 42' > foo.sc
-
 ./srp --predef foo.sc
 scala> foo
 val res0: Int = 42
@@ -73,12 +66,17 @@ val res0: Int = 42
 > [!TIP]
 > Can by specified multiple times, e.g. `--predef one.sc --predef two.sc`.
 
-Why not use `runBefore` instead? For simple examples like the one above, you can do so. If it gets more complicated and you have multiple files referencing each others, `predef` allows you to treat it as one compilation unit, which isn't possible with `runBefore`. And as you add more code it's get's easier to manage in files rather than command line arguments. 
+> [!NOTE]
+> The given file(s) are only compiled, not executed. Use `--runBefore` if you want to execute code.
 
-Note that predef files may not contain toplevel statements like `println("foo")` - instead, these either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
+> [!NOTE]
+> Why not use `runBefore` instead? For simple examples like the one above, you can do so. If it gets more complicated and you have multiple files referencing each others, `predef` allows you to treat it as one compilation unit, which isn't possible with `runBefore`. And as you add more code it's get's easier to manage in files rather than command line arguments. 
 
-## Operators: Redirect to file, pipe to external command
-Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
+> [!NOTE]
+> Predef files may not contain toplevel statements like `println("foo")`. These either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
+
+## `#>`, `#>>` and `#|` operators: redirect to file, pipe to external command
+Inspired by unix pipe and redirection, you can redirect output into files with `#>` (write output to file) and `#>>` (create or append to file), and use `#|` to pipe the output to an external command:
 ```scala
 ./srp
 
@@ -132,7 +130,7 @@ scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
 
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
-## Add dependencies with maven coordinates
+## `dep`: add dependencies via maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
 ./srp --dep com.michaelpollmeier:versionsort:1.0.7
@@ -163,6 +161,28 @@ colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
 
 Implementation note: `srp` uses [coursier](https://get-coursier.io/) to fetch the dependencies. We invoke it in a subprocess via the coursier java launcher, in order to give our users maximum control over the classpath.
+
+## `repo`: additional dependency resolvers
+```bash
+./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
+scala> org.gradle.tooling.GradleConnector.newConnector()
+```
+> [!TIP]
+> Can by specified multiple times.
+
+If any of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file), (`~/.config/coursier/credentials.properties` on Linux, `~/Library/Application Support/Coursier/credentials.properties` on OS X):
+```
+mycorp.realm=Artifactory Realm
+mycorp.host=shiftleft.jfrog.io
+mycorp.username=michael
+mycorp.password=secret
+
+otherone.username=j
+otherone.password=imj
+otherone.host=nexus.other.com
+```
+> [!NOTE]
+> The prefix is arbitrary and is only used to specify several credentials in a single file.
 
 ## Importing additional script files interactively
 ```
@@ -327,16 +347,8 @@ If your parameter value contains whitespace, just wrap it quotes so that your sh
 On windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
-# Additional dependency resolvers and credentials
-Via `--repo` parameter on startup:
-```bash
-./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
-scala> org.gradle.tooling.GradleConnector.newConnector()
-```
-> [!TIP]
-> Can by specified multiple times.
-
-Or via `//> using resolver` directive as part of your script or predef code:
+## `//> using resolver` additional dependency resolvers
+If your script depends on external libraries, you'd need to specify the `--repo` parameter every time. Better: declare your dependency in your script or predef files with the `//> using resolver`:
 
 ```bash
 echo '
@@ -348,18 +360,6 @@ println(org.gradle.tooling.GradleConnector.newConnector())
 ./srp --script script-with-resolver.sc
 ```
 
-If one or multiple of your resolvers require authentication, you can configure your username/passwords in a [`credentials.properties` file](https://get-coursier.io/docs/other-credentials#property-file):
-```
-mycorp.realm=Artifactory Realm
-mycorp.host=shiftleft.jfrog.io
-mycorp.username=michael
-mycorp.password=secret
-
-otherone.username=j
-otherone.password=imj
-otherone.host=nexus.other.com
-```
-The prefix is arbitrary and is only used to specify several credentials in a single file. `srp` uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
 ## Attach a debugger (remote jvm debug)
 For the REPL itself:
