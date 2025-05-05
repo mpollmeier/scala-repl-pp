@@ -215,7 +215,8 @@ scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
 ## `dep`: add dependencies via maven coordinates
-Note: the dependencies must be known at startup time, either via `--dep` parameter:
+> [!NOTE]
+> the dependencies must be known on startup
 ```
 ./srp --dep com.michaelpollmeier:versionsort:1.0.7
 scala> versionsort.VersionHelper.compare("1.0", "0.9")
@@ -408,7 +409,9 @@ If you want to debug a script, it's slightly different. Scripts are executed in 
 ```
 
 # Server mode
-Note: `srp-server` isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
+> [!NOTE]
+> `srp-server` isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
+
 ```bash
 ./srp-server
 
