@@ -21,9 +21,73 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<versio
 
 # Table of contents
 <!-- generated with:
-markdown-toc --maxdepth 2 README.md|tail -n +5 
+markdown-toc --maxdepth 2 README.md|tail -n +4 
 -->
-TODO regenerate
+- [Basic usage](#basic-usage)
+  * [Cheat sheet: the most important arguments](#cheat-sheet-the-most-important-arguments)
+- [Features of REPL, scripting and server mode](#features-of-repl-scripting-and-server-mode)
+  * [`runBefore`: execute code at startup](#runbefore-execute-code-at-startup)
+  * [`predef`: add source files to the classpath](#predef-add-source-files-to-the-classpath)
+  * [`//> using file` directive: import additional files](#-using-file-directive-import-additional-files)
+  * [`verbose` mode](#verbose-mode)
+  * [`#>`, `#>>` and `#|` operators: redirect to file, pipe to external command](#%23-%23-and-%23-operators-redirect-to-file-pipe-to-external-command)
+  * [`dep`: add dependencies via maven coordinates](#dep-add-dependencies-via-maven-coordinates)
+  * [`repo`: additional dependency resolvers](#repo-additional-dependency-resolvers)
+  * [`classpathEntry`: additional classpath entries](#classpathentry-additional-classpath-entries)
+- [REPL-only features](#repl-only-features)
+  * [Rendering of output](#rendering-of-output)
+  * [Exiting the REPL](#exiting-the-repl)
+  * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
+  * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
+- [Scripting-only features](#scripting-only-features)
+  * [@main entrypoints](#main-entrypoints)
+  * [multiple @main entrypoints](#multiple-main-entrypoints)
+  * [named parameters](#named-parameters)
+  * [`//> using resolver` additional dependency resolvers](#-using-resolver-additional-dependency-resolvers)
+  * [Attach a debugger for remote jvm debugging](#attach-a-debugger-for-remote-jvm-debugging)
+- [Server mode](#server-mode)
+- [FAQ](#faq)
+  * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
+  * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
+  * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
+  * [Why am I getting an AssertionError re `class module-info$` on first tab completion?](#why-am-i-getting-an-assertionerror-re-class-module-info-on-first-tab-completion)
+- [Comparison / alternatives](#comparison--alternatives)
+  * [Stock Scala REPL](#stock-scala-repl)
+  * [scala-cli](#scala-cli)
+  * [Ammonite](#ammonite)
+- [Contribution guidelines](#contribution-guidelines)
+  * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
+  * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
+  * [Adding support for a new Scala version](#adding-support-for-a-new-scala-version)
+  * [Updating the shaded libraries](#updating-the-shaded-libraries)
+- [Fineprint](#fineprint)
+
+
+
+
+# Basic usage
+Start the REPL...
+```
+./srp
+```
+
+or run a script:
+```bash
+echo 'println("Hello!")' > test-simple.sc
+./srp --script test-simple.sc
+```
+
+## Cheat sheet: the most important arguments
+
+| parameter     | short         | description                           
+| ------------- | ------------- | --------------------------------------
+| `--help`      |               | Show help
+| `--predef`    | `-p`          | Import additional files
+| `--runBefore` |               | Import additional files
+| `--script`    |               | Execute given script
+| `--param`     |               | key/value pair for main function in script
+| `--verbose`   | `-v`          | Verbose mode
+| `--dep`       | `-d`          | Add dependencies via maven coordinates
 
 # Features of REPL, scripting and server mode
 This section demonstrates features with the REPL, but these also work when running scripts as well as in server mode. 
@@ -74,6 +138,26 @@ val res0: Int = 42
 
 > [!NOTE]
 > Predef files may not contain toplevel statements like `println("foo")`. These either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
+
+## `//> using file` directive: import additional files
+```
+echo 'val bar = "foo"' > myScript.sc
+./srp
+
+//> using file myScript.sc
+println(bar) //foo
+```
+
+You can specify the filename with relative or absolute paths:
+```java
+//> using file scripts/myScript.sc
+//> using file ../myScript.sc
+//> using file /path/to/myScript.sc
+```
+
+## `verbose` mode
+If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
+To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
 
 ## `#>`, `#>>` and `#|` operators: redirect to file, pipe to external command
 Inspired by unix pipe and redirection, you can redirect output into files with `#>` (write output to file) and `#>>` (create or append to file), and use `#|` to pipe the output to an external command:
@@ -140,16 +224,6 @@ val res0: Int = 1
 > [!TIP]
 > Can by specified multiple times, e.g. `--dep a:b:0.1.0 --dep x:y:0.1.0`
 
-Alternatively, use the `//> using dep` directive in predef code or predef files:
-```
-echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > predef.sc
-
-./srp --predef predef.sc
-
-scala> versionsort.VersionHelper.compare("1.0", "0.9")
-val res0: Int = 1
-```
-
 For Scala dependencies use `::`:
 ```
 ./srp --dep com.michaelpollmeier::colordiff:0.36
@@ -158,9 +232,15 @@ colordiff.ColorDiff(List("a", "b"), List("a", "bb"))
 // color coded diff
 ```
 
-Note: if your dependencies are not hosted on maven central, you can [specify additional resolvers](#additional-dependency-resolvers-and-credentials) - including those that require authentication)
+If you use a file that's read on startup (e.g. a script or a file passed via `--predef`), you can also use the `//> using dep` directive:
+```bash
+echo '//> using dep com.michaelpollmeier:versionsort:1.0.7' > predef.sc
 
-Implementation note: `srp` uses [coursier](https://get-coursier.io/) to fetch the dependencies. We invoke it in a subprocess via the coursier java launcher, in order to give our users maximum control over the classpath.
+./srp --predef predef.sc
+
+scala> versionsort.VersionHelper.compare("1.0", "0.9")
+val res0: Int = 1
+```
 
 ## `repo`: additional dependency resolvers
 ```bash
@@ -184,25 +264,9 @@ otherone.host=nexus.other.com
 > [!NOTE]
 > The prefix is arbitrary and is only used to specify several credentials in a single file.
 
-## Importing additional script files interactively
-```
-echo 'val bar = "foo"' > myScript.sc
 
-./srp
-
-//> using file myScript.sc
-println(bar) //foo
-```
-
-You can specify the filename with relative or absolute paths:
-```java
-//> using file scripts/myScript.sc
-//> using file ../myScript.sc
-//> using file /path/to/myScript.sc
-```
-
-## Adding classpath entries
-Prerequisite: create some .class files:
+## `classpathEntry`: additional classpath entries
+If you have some random class files, e.g. like so:
 ```bash
 mkdir foo
 cd foo
@@ -211,7 +275,7 @@ scalac Foo.scala
 cd ..
 ```
 
-Now let's start the repl with those in the classpath:
+You can add those as follows:
 ```bash
 ./srp --classpathEntry foo
 
@@ -219,7 +283,7 @@ scala> new Foo().foo
 val res0: Int = 42
 ```
 
-For scripts you can use the `//> using classpath` directive:
+For scripts you can use the `//> using classpath` directive as well. 
 ```bash
 echo '//> using classpath foo
 println(new Foo().foo)' > myScript.sc
@@ -227,7 +291,7 @@ println(new Foo().foo)' > myScript.sc
 ./srp --script myScript.sc
 ```
 
-# REPL
+# REPL-only features
 
 ## Rendering of output
 
@@ -279,42 +343,10 @@ scala> replpp.util.terminalWidth
 val res0: util.Try[Int] = Success(value = 202)
 ```
 
-# Scripting
+# Scripting-only features
 The following additional features work in scripting mode only. 
-> [TIP!]
+> [!TIP]
 > See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
-
-## Execute "Hello world" script
-```bash
-echo 'println("Hello!")' > test-simple.sc
-./srp --script test-simple.sc
-```
-
-## Importing other files / scripts with `using file` directive
-```bash
-echo 'val foo = 42' > foo.sc
-
-echo '//> using file foo.sc
-println(foo)' > test.sc
-
-./srp --script test.sc
-```
-
-## Dependencies with `using dep` directive
-Dependencies can be added via `//> using dep` syntax (like in scala-cli).
-
-```bash
-echo '//> using dep com.michaelpollmeier:versionsort:1.0.7
-
-val compareResult = versionsort.VersionHelper.compare("1.0", "0.9")
-assert(compareResult == 1,
-       s"result of comparison should be `1`, but was `$compareResult`")
-' > test-dependencies.sc
-
-./srp --script test-dependencies.sc
-```
-
-Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
 ## @main entrypoints
 ```bash
@@ -361,7 +393,7 @@ println(org.gradle.tooling.GradleConnector.newConnector())
 ```
 
 
-## Attach a debugger (remote jvm debug)
+## Attach a debugger for remote jvm debugging
 For the REPL itself:
 ```
 export JAVA_OPTS='-Xdebug -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y'
@@ -452,25 +484,6 @@ Server-specific configuration options as per `srp --help`:
 --server-auth-username <value> Basic auth username for the REPL server
 --server-auth-password <value> Basic auth password for the REPL server
 ```
-
-# Verbose mode
-If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
-To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
-
-# Inherited classpath
-`srp` comes with it's own classpath dependencies, and depending on how you invoke it there are different requirements for controlling the inherited classpath. E.g. if you add `srp` as a dependency to your project and want to simply use all dependencies from that same project, you can configure `--cpinherit` (or programatically `replpp.Config.classpathConfig.inheritClasspath`). You can also include or exclude dependencies via regex expressions.
-
-# Parameters cheat sheet: the most important ones
-Here's only the most important ones - run `srp --help` for all parameters.
-
-| parameter     | short         | description                           
-| ------------- | ------------- | --------------------------------------
-| `--predef`    | `-p`          | Import additional files
-| `--dep`       | `-d`          | Add dependencies via maven coordinates
-| `--repo`      | `-r`          | Add repositories to resolve dependencies
-| `--script`    |               | Execute given script
-| `--param`     |               | key/value pair for main function in script
-| `--verbose`   | `-v`          | Verbose mode
 
 # FAQ
 
@@ -582,6 +595,6 @@ If there's any binary incompatible changes (which is typically the case between 
 See [import-instructions.md](shaded-libs/import-instructions.md).
 
 # Fineprint
-(*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the `srp` classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 
+(*) To keep our codebase concise we do use libraries (mostly from the [com.lihaoyi](https://github.com/com-lihaoyi/) stack). We want to ensure that users can freely use their own dependencies without clashing with the `srp` classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors for permissive licensing! 
   
   
