@@ -24,14 +24,14 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<versio
 markdown-toc --maxdepth 2 README.md|tail -n +4 
 -->
 - [Basic usage](#basic-usage)
-- [Features of REPL, scripting and server mode](#features-of-repl-scripting-and-server-mode)
+- [REPL, scripting and server mode features](#repl-scripting-and-server-mode-features)
   * [`runBefore`: execute code at startup](#runbefore-execute-code-at-startup)
   * [`predef`: add source files to the classpath](#predef-add-source-files-to-the-classpath)
-  * [`//> using file` directive: import additional files](#-using-file-directive-import-additional-files)
+  * [`using file` directive: import additional files](#using-file-directive-import-additional-files)
   * [`verbose` mode](#verbose-mode)
   * [`#>`, `#>>` and `#|` operators: redirect to file, pipe to external command](#%23-%23-and-%23-operators-redirect-to-file-pipe-to-external-command)
   * [`dep`: add dependencies via maven coordinates](#dep-add-dependencies-via-maven-coordinates)
-  * [`repo`: additional dependency resolvers](#repo-additional-dependency-resolvers)
+  * [`repo`: add dependency resolvers](#repo-add-dependency-resolvers)
   * [`classpathEntry`: additional classpath entries](#classpathentry-additional-classpath-entries)
 - [REPL-only features](#repl-only-features)
   * [Rendering of output](#rendering-of-output)
@@ -42,11 +42,14 @@ markdown-toc --maxdepth 2 README.md|tail -n +4
   * [@main entrypoints](#main-entrypoints)
   * [multiple @main entrypoints](#multiple-main-entrypoints)
   * [named parameters](#named-parameters)
-  * [`//> using resolver` additional dependency resolvers](#-using-resolver-additional-dependency-resolvers)
+  * [`using resolver` directive: add dependency resolvers](#using-resolver-directive-add-dependency-resolvers)
   * [Attach a debugger for remote jvm debugging](#attach-a-debugger-for-remote-jvm-debugging)
 - [Server mode](#server-mode)
+  * [Server mode for your project](#server-mode-for-your-project)
+- [Showcase: integrate into a project](#showcase-integrate-into-a-project)
 - [FAQ](#faq)
   * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
+  * [Why is `srp` published with the full scala version suffix (e.g. `_3.6.4` instead of just `_3`)?](#why-is-srp-published-with-the-full-scala-version-suffix-eg-_364-instead-of-just-_3)
   * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
   * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
   * [Why am I getting an AssertionError re `class module-info$` on first tab completion?](#why-am-i-getting-an-assertionerror-re-class-module-info-on-first-tab-completion)
@@ -60,6 +63,7 @@ markdown-toc --maxdepth 2 README.md|tail -n +4
   * [Adding support for a new Scala version](#adding-support-for-a-new-scala-version)
   * [Updating the shaded libraries](#updating-the-shaded-libraries)
 - [Fineprint](#fineprint)
+
 
 
 
@@ -493,6 +497,55 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp-server_3.6.4" % "
 ```
 
 Then in your project's sources, execute `replpp.server.ReplServer.startHttpServer` which takes a `replpp.server.Config` as input. For a full working example check out e.g. [joern's server mode](https://github.com/joernio/joern/blob/db22aec598f10ae1b4023ff712f991cb3d817e79/console/src/main/scala/io/joern/console/BridgeBase.scala#L426).
+
+# Showcase: integrate into a project
+
+excerpt from [build.sbt](core/src/test/resources/demo-project/build.sbt):
+```scala
+libraryDependencies += 
+  "com.michaelpollmeier" % "scala-repl-pp" % srpVersion cross CrossVersion.full
+```
+
+excerpt from [Main.scala](core/src/test/resources/demo-project/src/main/scala/stringcalc/Main.scala):
+```scala
+replpp.Main.run(
+  replpp.Config(
+    scriptFile = config.scriptFile,
+    prompt = Some("stringcalc"),
+    greeting = Some("Welcome to the magical world of string calculation! \nType `help` for help"),
+    verbose = config.verbose,
+    runBefore = Seq(
+      "import stringcalc.*",
+      "import StringCalculator.*",
+      """def help: Unit = println("try this: `add(One, Two)`")"""
+    )
+  )
+)
+```
+
+Build it:
+```bash
+cd core/src/test/resources/demo-project
+sbt stage
+```
+
+REPL usage:
+```bash
+./stringcalc
+
+stringcalc> add(One, Two)
+val res0: stringcalc.Number = Number(3)
+stringcalc> :exit  // or press Ctrl-D
+```
+
+Script usage:
+```bash
+./stringcalc --script plus.sc
+executing plus.sc
+Number(3)
+```
+
+<img src="https://github.com/user-attachments/assets/5b267ccb-07f8-4a0f-8073-39c72b23e98b" width="300" />
 
 
 # FAQ
