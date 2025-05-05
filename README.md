@@ -1,19 +1,19 @@
 # srp -> scala-repl-pp -> Scala REPL PlusPlus
 <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" width="300" />
 
-When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
-`srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting. 
+`srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting.<br/>
+When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face
 
 # Quick start
 
-You can either download a binary...
+Either download a binary...
 ```bash
 curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp.zip
 unzip srp.zip
 srp/bin/srp
 ```
 
-... or add `srp` as a library to your project, empowering it with a customizable REPL and scripting functionality. 
+... or add it as a library to your project, empowering it with a customizable REPL and scripting functionality. <br/>
 There's a [demo project](core/src/test/resources/demo-project) to get you started.
 ```
 libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<version>"
@@ -24,7 +24,6 @@ libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<versio
 markdown-toc --maxdepth 2 README.md|tail -n +4 
 -->
 - [Basic usage](#basic-usage)
-  * [Cheat sheet: the most important arguments](#cheat-sheet-the-most-important-arguments)
 - [Features of REPL, scripting and server mode](#features-of-repl-scripting-and-server-mode)
   * [`runBefore`: execute code at startup](#runbefore-execute-code-at-startup)
   * [`predef`: add source files to the classpath](#predef-add-source-files-to-the-classpath)
@@ -64,7 +63,6 @@ markdown-toc --maxdepth 2 README.md|tail -n +4
 
 
 
-
 # Basic usage
 Start the REPL...
 ```
@@ -77,7 +75,7 @@ echo 'println("Hello!")' > test-simple.sc
 ./srp --script test-simple.sc
 ```
 
-## Cheat sheet: the most important arguments
+### Cheat sheet: the most important parameters
 
 | parameter     | short         | description                           
 | ------------- | ------------- | --------------------------------------
@@ -89,7 +87,7 @@ echo 'println("Hello!")' > test-simple.sc
 | `--verbose`   | `-v`          | Verbose mode
 | `--dep`       | `-d`          | Add dependencies via maven coordinates
 
-# Features of REPL, scripting and server mode
+# REPL, scripting and server mode features
 This section demonstrates features with the REPL, but these also work when running scripts as well as in server mode. 
 
 ## `runBefore`: execute code at startup
@@ -139,7 +137,7 @@ val res0: Int = 42
 > [!NOTE]
 > Predef files may not contain toplevel statements like `println("foo")`. These either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
 
-## `//> using file` directive: import additional files
+## `using file` directive: import additional files
 ```
 echo 'val bar = "foo"' > myScript.sc
 ./srp
@@ -243,7 +241,7 @@ scala> versionsort.VersionHelper.compare("1.0", "0.9")
 val res0: Int = 1
 ```
 
-## `repo`: additional dependency resolvers
+## `repo`: add dependency resolvers
 ```bash
 ./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
 scala> org.gradle.tooling.GradleConnector.newConnector()
@@ -380,7 +378,7 @@ If your parameter value contains whitespace, just wrap it quotes so that your sh
 On windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
-## `//> using resolver` additional dependency resolvers
+## `using resolver` directive: add dependency resolvers
 If your script depends on external libraries, you'd need to specify the `--repo` parameter every time. Better: declare your dependency in your script or predef files with the `//> using resolver`:
 
 ```bash
