@@ -2,95 +2,28 @@
 <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" width="300" />
 
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
+`srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting. 
 
-`srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting. Plus: you can add it as a library dependency to your project, empowering it with a customizable REPL and scripting functionality.
+## Quick start
 
-## Use latest pre-built binary
+You can either download a binary:
 ```bash
 curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp.zip
 unzip srp.zip
 srp/bin/srp
 ```
 
-## Use as a library
+Even better: add `srp` as a library to your project, empowering it with a customizable REPL, scripting and server mode functionality. 
+There's a [demo project](core/src/test/resources/demo-project) to get you started.
 ```
-libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp" % "<version>" cross CrossVersion.full
-
-# alternatively reference the scala version manually:
 libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<version>"
 ```
-* `srp` is published with the full scala version suffix (e.g. `_3.6.4` instead of just `_3`) because the stock Scala REPL often has binary incompatible changes between minor version changes - different Scala patch versions typically work though, e.g. if your build uses Scala 3.6.3 you can use `scala-repl-pp_3.6.4`
-* `srp` has only one direct dependency: the scala3-compiler[(*)](#fineprint)
-
-As an example take a look at the demo project ["string calculator"](src/test/resources/demo-project) in this repository:
-```bash
-cd core/src/test/resources/demo-project
-sbt stage
-./stringcalc
-
-Welcome to the magical world of string calculation!
-Type `help` for help
-
-stringcalc> add(One, Two)
-val res0: stringcalc.Number = Number(3)
-
-stringcalc> :exit  // or press Ctrl-D
-
-
-./stringcalc --script plus.sc
-executing plus.sc
-Number(3)
-```
-
 
 ## Table of contents
 <!-- generated with:
 markdown-toc --maxdepth 3 README.md|tail -n +5 
 -->
-- [Usage](#usage)
-  * [run with defaults](#run-with-defaults)
-  * [execute code at the start with `--runBefore`](#execute-code-at-the-start-with---runbefore)
-  * [`--predef`: add source files to the classpath](#--predef-add-source-files-to-the-classpath)
-  * [Operators: Redirect to file, pipe to external command](#operators-redirect-to-file-pipe-to-external-command)
-  * [Add dependencies with maven coordinates](#add-dependencies-with-maven-coordinates)
-  * [Importing additional script files interactively](#importing-additional-script-files-interactively)
-  * [Adding classpath entries](#adding-classpath-entries)
-- [REPL](#repl)
-  * [Rendering of output](#rendering-of-output)
-  * [Exiting the REPL](#exiting-the-repl)
-  * [customize prompt, greeting and exit code](#customize-prompt-greeting-and-exit-code)
-  * [Looking up the current terminal width](#looking-up-the-current-terminal-width)
-- [Scripting](#scripting)
-  * [Simple "Hello world" script](#simple-hello-world-script)
-  * [Importing other files / scripts with `using file` directive](#importing-other-files--scripts-with-using-file-directive)
-  * [Dependencies with `using dep` directive](#dependencies-with-using-dep-directive)
-  * [@main entrypoints](#main-entrypoints)
-  * [multiple @main entrypoints](#multiple-main-entrypoints)
-  * [named parameters](#named-parameters)
-- [Additional dependency resolvers and credentials](#additional-dependency-resolvers-and-credentials)
-  * [Attach a debugger (remote jvm debug)](#attach-a-debugger-remote-jvm-debug)
-- [Server mode](#server-mode)
-- [Embed into your own project](#embed-into-your-own-project)
-- [Verbose mode](#verbose-mode)
-- [Inherited classpath](#inherited-classpath)
-- [Parameters cheat sheet: the most important ones](#parameters-cheat-sheet-the-most-important-ones)
-- [FAQ](#faq)
-  * [Is this an extension of the stock REPL or a fork?](#is-this-an-extension-of-the-stock-repl-or-a-fork)
-  * [Why do we ship a shaded copy of other libraries and not use dependencies?](#why-do-we-ship-a-shaded-copy-of-other-libraries-and-not-use-dependencies)
-  * [Where's the cache located on disk?](#wheres-the-cache-located-on-disk)
-  * [Why am I getting an AssertionError re `class module-info$` on first tab completion?](#why-am-i-getting-an-assertionerror-re-class-module-info-on-first-tab-completion)
-- [Comparison / alternatives](#comparison--alternatives)
-  * [Stock Scala REPL](#stock-scala-repl)
-  * [scala-cli](#scala-cli)
-  * [Ammonite](#ammonite)
-- [Contribution guidelines](#contribution-guidelines)
-  * [How can I build/stage a local version?](#how-can-i-buildstage-a-local-version)
-  * [How can I get a new binary (bootstrapped) release?](#how-can-i-get-a-new-binary-bootstrapped-release)
-  * [Adding support for a new Scala version](#adding-support-for-a-new-scala-version)
-  * [Updating the shaded libraries](#updating-the-shaded-libraries)
-- [Fineprint](#fineprint)
-
-
+TODO regenerate
 
 ## Usage
 The below features are all demonstrated using the REPL but also work when running scripts. 
