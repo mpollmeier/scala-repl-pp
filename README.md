@@ -1,10 +1,10 @@
-## srp -> scala-repl-pp -> Scala REPL PlusPlus
+# srp -> scala-repl-pp -> Scala REPL PlusPlus
 <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" width="300" />
 
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
 `srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting. 
 
-## Quick start
+# Quick start
 
 You can either download a binary:
 ```bash
@@ -19,21 +19,21 @@ There's a [demo project](core/src/test/resources/demo-project) to get you starte
 libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<version>"
 ```
 
-## Table of contents
+# Table of contents
 <!-- generated with:
 markdown-toc --maxdepth 3 README.md|tail -n +5 
 -->
 TODO regenerate
 
-## Usage
+# Usage
 The below features are all demonstrated using the REPL but also work when running scripts. 
 
-### run with defaults
+## run with defaults
 ```bash
 ./srp
 ```
 
-### execute code at the start with `--runBefore`
+## execute code at the start with `--runBefore`
 ```
 ./srp --runBefore "import Byte.MaxValue"
 
@@ -62,7 +62,7 @@ scala> MaxValue
 val res0: Int = 2147483647
 ```
 
-### `--predef`: add source files to the classpath
+## `--predef`: add source files to the classpath
 Additional source files that are compiled added to the classpath, but unlike `runBefore` not executed straight away can be provided via `--predef`. 
 ```
 echo 'def foo = 42' > foo.sc
@@ -78,7 +78,7 @@ Why not use `runBefore` instead? For simple examples like the one above, you can
 
 Note that predef files may not contain toplevel statements like `println("foo")` - instead, these either belong into your main script (if you're executing one) and/or can be passed to the repl via `runBefore`.
 
-### Operators: Redirect to file, pipe to external command
+## Operators: Redirect to file, pipe to external command
 Inspired by unix shell redirection and pipe operators (`>`, `>>` and `|`) you can redirect output into files with `#>` (overrides existing file) and `#>>` (create or append to file), and use `#|` to pipe the output to a command, such as `less`:
 ```scala
 ./srp
@@ -133,7 +133,7 @@ scala> Seq("one", Seq("two"), Seq("three", 4), 5) #> "out.txt"
 
 All operators are prefixed with `#` in order to avoid naming clashes with more basic operators like `>` for greater-than-comparisons. This naming convention is inspired by scala.sys.process.
 
-### Add dependencies with maven coordinates
+## Add dependencies with maven coordinates
 Note: the dependencies must be known at startup time, either via `--dep` parameter:
 ```
 ./srp --dep com.michaelpollmeier:versionsort:1.0.7
@@ -164,7 +164,7 @@ Note: if your dependencies are not hosted on maven central, you can [specify add
 
 Implementation note: `srp` uses [coursier](https://get-coursier.io/) to fetch the dependencies. We invoke it in a subprocess via the coursier java launcher, in order to give our users maximum control over the classpath.
 
-### Importing additional script files interactively
+## Importing additional script files interactively
 ```
 echo 'val bar = "foo"' > myScript.sc
 
@@ -181,7 +181,7 @@ You can specify the filename with relative or absolute paths:
 //> using file /path/to/myScript.sc
 ```
 
-### Adding classpath entries
+## Adding classpath entries
 Prerequisite: create some .class files:
 ```bash
 mkdir foo
@@ -207,9 +207,9 @@ println(new Foo().foo)' > myScript.sc
 ./srp --script myScript.sc
 ```
 
-## REPL
+# REPL
 
-### Rendering of output
+## Rendering of output
 
 Unlike the stock Scala REPL, `srp` does _not_ truncate the output by default. You can optionally specify the maxHeight parameter though:
 ```
@@ -222,7 +222,7 @@ val res0: scala.collection.immutable.Range.Inclusive = Range(
 ...
 ```
 
-### Exiting the REPL
+## Exiting the REPL
 Famously one of the most popular question on stackoverflow is about how to exit `vim` - fortunately you can apply the answer as-is to exit `srp` :slightly_smiling_face:
 ```
 // all of the following exit the REPL
@@ -242,7 +242,7 @@ $
 ```
 Context: we'd prefer to cancel the long-running operation, but that's not so easy on the JVM.
 
-### customize prompt, greeting and exit code
+## customize prompt, greeting and exit code
 ```
 ./srp --prompt myprompt --greeting 'hey there!' --runAfter 'println("see ya!")'
 
@@ -251,7 +251,7 @@ myprompt> :exit
 see ya!
 ```
 
-### Looking up the current terminal width
+## Looking up the current terminal width
 In case you want to adjust your output rendering to the available terminal size, you can look it up:
 
 ```
@@ -259,11 +259,11 @@ scala> replpp.util.terminalWidth
 val res0: util.Try[Int] = Success(value = 202)
 ```
 
-## Scripting
+# Scripting
 
 See [ScriptRunnerTest](core/src/test/scala/replpp/scripting/ScriptRunnerTest.scala) for a more complete and in-depth overview.
 
-### Simple "Hello world" script
+## Simple "Hello world" script
 ```bash
 echo 'println("Hello!")' > test-simple.sc
 
@@ -271,7 +271,7 @@ echo 'println("Hello!")' > test-simple.sc
 cat out.txt # prints 'i was here'
 ```
 
-### Importing other files / scripts with `using file` directive
+## Importing other files / scripts with `using file` directive
 ```bash
 echo 'val foo = 42' > foo.sc
 
@@ -281,7 +281,7 @@ println(foo)' > test.sc
 ./srp --script test.sc
 ```
 
-### Dependencies with `using dep` directive
+## Dependencies with `using dep` directive
 Dependencies can be added via `//> using dep` syntax (like in scala-cli).
 
 ```bash
@@ -297,14 +297,14 @@ assert(compareResult == 1,
 
 Note: this also works with `using` directives in your predef code - for script and REPL mode.
 
-### @main entrypoints
+## @main entrypoints
 ```bash
 echo '@main def main() = println("Hello, world!")' > test-main.sc
 
 ./srp --script test-main.sc
 ```
 
-### multiple @main entrypoints
+## multiple @main entrypoints
 ```bash
 echo '
 @main def foo() = println("foo!")
@@ -314,7 +314,7 @@ echo '
 ./srp --script test-main-multiple.sc --command foo
 ```
 
-### named parameters
+## named parameters
 ```bash
 echo '
 @main def main(first: String, last: String) = {
@@ -328,7 +328,7 @@ If your parameter value contains whitespace, just wrap it quotes so that your sh
 On windows the parameters need to be triple-quoted in any case:
 `srp.bat --script test-main-withargs.sc --param """first=Michael""" --param """last=Pollmeier"""`
 
-## Additional dependency resolvers and credentials
+# Additional dependency resolvers and credentials
 Via `--repo` parameter on startup:
 ```bash
 ./srp --repo "https://repo.gradle.org/gradle/libs-releases" --dep org.gradle:gradle-tooling-api:7.6.1
@@ -361,7 +361,7 @@ otherone.host=nexus.other.com
 ```
 The prefix is arbitrary and is only used to specify several credentials in a single file. `srp` uses [coursier](https://get-coursier.io) to resolve dependencies. 
 
-### Attach a debugger (remote jvm debug)
+## Attach a debugger (remote jvm debug)
 For the REPL itself:
 ```
 export JAVA_OPTS='-Xdebug -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y'
@@ -375,7 +375,7 @@ If you want to debug a script, it's slightly different. Scripts are executed in 
 ./srp --script myScript.sc --remoteJvmDebug
 ```
 
-## Server mode
+# Server mode
 Note: `srp-server` isn't currently available as a bootstrapped binary, so you have to [stage it locally](#how-can-i-buildstage-a-local-version) first using `sbt stage`.
 ```bash
 ./srp-server
@@ -453,14 +453,14 @@ Server-specific configuration options as per `srp --help`:
 --server-auth-password <value> Basic auth password for the REPL server
 ```
 
-## Verbose mode
+# Verbose mode
 If verbose mode is enabled, you'll get additional information about classpaths and complete scripts etc. 
 To enable it, you can either pass `--verbose` or set the environment variable `SCALA_REPL_PP_VERBOSE=true`.
 
-## Inherited classpath
+# Inherited classpath
 `srp` comes with it's own classpath dependencies, and depending on how you invoke it there are different requirements for controlling the inherited classpath. E.g. if you add `srp` as a dependency to your project and want to simply use all dependencies from that same project, you can configure `--cpinherit` (or programatically `replpp.Config.classpathConfig.inheritClasspath`). You can also include or exclude dependencies via regex expressions.
 
-## Parameters cheat sheet: the most important ones
+# Parameters cheat sheet: the most important ones
 Here's only the most important ones - run `srp --help` for all parameters.
 
 | parameter     | short         | description                           
@@ -472,22 +472,22 @@ Here's only the most important ones - run `srp --help` for all parameters.
 | `--param`     |               | key/value pair for main function in script
 | `--verbose`   | `-v`          | Verbose mode
 
-## FAQ
+# FAQ
 
-### Is this an extension of the stock REPL or a fork?
+## Is this an extension of the stock REPL or a fork?
 Technically it is a fork, i.e. we copied parts of the ReplDriver to make some adjustments. 
 However, semantically, `srp` can be considered an extension of the stock repl. We don't want to create and maintain a competing REPL implementation, 
 instead the idea is to provide a space for exploring new ideas and bringing them back into the dotty codebase. 
 [When we forked](https://github.com/mpollmeier/scala-repl-pp/commit/eb2bf9a3bed681bffa945f657ada14781c6a7a14) the stock ReplDriver, we made sure to separate the commits into bitesized chunks so we can easily rebase. The changes are clearly marked, and whenever there's a new dotty version we're bringing in the relevant changes here (`git diff 3.3.0-RC5..3.3.0-RC6 compiler/src/dotty/tools/repl/`).
 
-### Why do we ship a shaded copy of other libraries and not use dependencies?
+## Why do we ship a shaded copy of other libraries and not use dependencies?
 `srp` includes some small libraries (e.g. most of the com-haoyili universe) that have been copied as-is, but then moved into the `replpp.shaded` namespace. We didn't include them as regular dependencies, because repl users may want to use a different version of them, which may be incompatible with the version the repl uses. Thankfully their license is very permissive - a big thanks to the original authors! The instructions of how to (re-) import then and which versions were used are available in [import-instructions.md](shaded-libs/import-instructions.md).
 
-### Where's the cache located on disk?
+## Where's the cache located on disk?
 The cache? The caches you mean! :)
 There's `~/.cache/scala-repl-pp` for the repl itself. Since we use coursier (via a subprocess) there's also `~/.cache/coursier`. 
 
-### Why am I getting an AssertionError re `class module-info$` on first tab completion?
+## Why am I getting an AssertionError re `class module-info$` on first tab completion?
 ```
 exception caught when loading module class module-info$: java.lang.AssertionError: assertion failed: attempt to parse java.lang.Object from classfile
 ```
@@ -521,10 +521,10 @@ removeModuleInfoFromJars := removeModuleInfoFromJars.triggeredBy(Universal/stage
 ```
 
 
-## Comparison / alternatives
+# Comparison / alternatives
 Many features of `srp` were shaped by ammonite and scala-cli - thank you! I would have preferred to use those projects instead of creating `srp`, but they lacked certain features that I needed - most importantly I needed the relative maturity of the stock Scala REPL with the ability to include it as a library. Here's a rough overview of the differences between `srp` and other options:
 
-### Stock Scala REPL
+## Stock Scala REPL
 `srp` allows you to:
 * use it as a library with minimal dependencies in your own build
 * add runtime dependencies on startup with maven coordinates - it automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
@@ -541,12 +541,12 @@ Scala-REPL-PP:<br/>
 Stock Scala REPL:<br/>
 <img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/77d006d1-35ef-426f-a3b8-1311a36ffed5" width="700px"/>
 
-### [scala-cli](https://scala-cli.virtuslab.org/)
+## [scala-cli](https://scala-cli.virtuslab.org/)
 * `srp` allows you to use it as a library with minimal dependencies in your own build
 * scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Ammonite). It doesn't modify/fix the REPL itself, i.e. most differences between `srp` and the stock scala repl from above apply, with the exception of e.g. dependencies: scala-cli does let you add them on startup as well.
 * `srp` has a 66.6% shorter name :slightly_smiling_face:
 
-### [Ammonite](http://ammonite.io)
+## [Ammonite](http://ammonite.io)
 * `srp` allows you to use it as a library with minimal dependencies in your own build
 * Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: `srp` uses the regular Scala3/dotty ReplDriver. 
 * Ammonite has some Scala2 dependencies intermixed, leading to downstream build problems like [this](https://github.com/com-lihaoyi/Ammonite/issues/1241). It's no longer easy to embed Ammonite into your own build.
@@ -554,18 +554,18 @@ Stock Scala REPL:<br/>
 
 
 
-## Contribution guidelines
+# Contribution guidelines
 
-### How can I build/stage a local version?
+## How can I build/stage a local version?
 ```bash
 sbt stage
 ./srp
 ```
 
-### How can I get a new binary (bootstrapped) release?
+## How can I get a new binary (bootstrapped) release?
 While maven central jar releases are created for each commit on master (a new version tag is assigned automatically), the binary (bootstrapped) releases that end up in https://github.com/mpollmeier/scala-repl-pp/releases/latest are being triggered manually. Contributors can run the [bootstrap action](https://github.com/mpollmeier/scala-repl-pp/actions/workflows/bootstrap.yml).
 
-### Adding support for a new Scala version
+## Adding support for a new Scala version
 First, get relevant diff from dotty repo:
 ```bash
 cd /path/to/dotty
@@ -578,10 +578,10 @@ git diff $OLD..$NEW compiler/src/dotty/tools/repl
 Check if any of those changes need to be reapplied to this repo - some files have been copied and slightly adjusted, the majority of functionality is reused. 
 If there's any binary incompatible changes (which is typically the case between minor versions), you need to add new projects for `core` and `server` in [build.sbt](build.sbt), add new `core/src/main/scala-3.x.y` directories etc.
 
-### Updating the shaded libraries
+## Updating the shaded libraries
 See [import-instructions.md](shaded-libs/import-instructions.md).
 
-## Fineprint
+# Fineprint
 (*) To keep our codebase concise we do use libraries, most importantly the [com.lihaoyi](https://github.com/com-lihaoyi/) stack. We want to ensure that users can freely use their own dependencies without clashing with the `srp` classpath though, so we [copied them into our build](shaded-libs/src/main/scala/replpp/shaded) and [changed the namespace](shaded-libs/import-instructions) to `replpp.shaded`. Many thanks to the original authors, also for choosing permissive licenses. 
   
   
