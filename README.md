@@ -1,5 +1,5 @@
 # srp < scala-repl-pp < Scala REPL PlusPlus
-<img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" width="300" />
+<img src="demo.gif" height="300" /> <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" height="300" />
 
 `srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting.<br/>
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face
