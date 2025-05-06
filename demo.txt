@@ -1,0 +1,34 @@
+asciinema rec --idle-time-limit 2 --title scala-repl-pp demo.cast
+
+
+1.to(10).map(i => Seq("foo", "bar", i))
+
+val tuples = 1.to(1000).map(i => Seq("foo", "bar", i))
+tuples #> "out.txt"
+cat out.txt
+
+val tuples = 1.to(1000).map(i => Seq("foo", "bar", i))
+#|^ "less"
+#| ("grep", "2") #|^ "less"
+#| ("grep", "2")
+
+./srp --dep com.michaelpollmeier:versionsort:1.0.7
+versionsort.VersionHelper.compare("1.0", "0.9")
+
+cat test-simple.sc
+./srp --script test-simple.sc
+
+simple script with args:
+cat test-main-withargs.sc
+./srp --script test-main-withargs.sc --param first=Foo --param last=Bar
+
+demo project:
+cd core/src/test/resources/demo-project
+./stringcalc
+stringcalc> add(One, Two)
+
+cat plus.sc
+./stringcalc --script plus.sc
+
+
+agg demo.cast demo.gif
