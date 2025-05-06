@@ -1,9 +1,7 @@
 name: release
 concurrency: release
 on:
-  push:
-    branches: [main]
-    tags: ["*"]
+  workflow_dispatch:  # manually trigger this workflow
 jobs:
   release:
     runs-on: ubuntu-latest
