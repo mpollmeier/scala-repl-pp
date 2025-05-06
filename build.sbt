@@ -61,7 +61,7 @@ lazy val server_352 = Build
 lazy val serverSettings = commonSettings ++ Seq(
   Compile/mainClass := Some("replpp.server.Main"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi"   %% "cask"         % "0.9.5",
+    "com.lihaoyi"   %% "cask"         % "0.9.7",
     "org.slf4j"      % "slf4j-api"    % Slf4jVersion,
     "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
     "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
