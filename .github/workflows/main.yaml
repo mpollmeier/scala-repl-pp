@@ -1,0 +1,22 @@
+name: main
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+      - name: Build and test
+        shell: bash
+        run: sbt -v clean test
