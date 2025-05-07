@@ -64,7 +64,7 @@ lazy val serverSettings = commonSettings ++ Seq(
     "com.lihaoyi"   %% "cask"         % "0.9.5",
     "org.slf4j"      % "slf4j-api"    % Slf4jVersion,
     "org.slf4j"      % "slf4j-simple" % Slf4jVersion % Optional,
-    "com.lihaoyi"   %% "requests"     % "0.8.2" % Test,
+    "com.lihaoyi"   %% "requests"     % "0.8.3" % Test,
   ),
   executableScriptName := "srp-server",
   fork := true, // important: otherwise we run into classloader issues
