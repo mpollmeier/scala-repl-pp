@@ -600,18 +600,17 @@ removeModuleInfoFromJars := removeModuleInfoFromJars.triggeredBy(Universal/stage
 
 
 # Comparison / alternatives
-Many features of `srp` were shaped by ammonite and scala-cli - thank you! I would have preferred to use those projects instead of creating `srp`, but they lacked certain features that I needed - most importantly I needed the relative maturity of the stock Scala REPL with the ability to include it as a library. Here's a rough overview of the differences between `srp` and other options:
 
-## Stock Scala REPL
+`srp` wouldn't exist if we could have just used scala-cli (which has now become the stock Scala REPL) or ammonite. 
+
+## [scala-cli](https://scala-cli.virtuslab.org/) / stock Scala REPL
 `srp` allows you to:
-* use it as a library with minimal dependencies in your own build
-* add runtime dependencies on startup with maven coordinates - it automatically handles all downstream dependencies via [coursier](https://get-coursier.io/)
+* use it as a library in your own build with *minimal* dependencies
 * use `#>`, `#>>` and `#|` operators to redirect output to file and pipe to external command
-* customize the greeting, prompt and shutdown code
-* multiple @main with named arguments (regular Scala REPL only allows an argument list)
-* import additional files with directives and parameters
-* run code on startup and shutdown
-* server mode: REPL runs embedded
+* run custom code on startup as well as on shutdown
+* import additional files, which may include `using` directives
+* customize the greeting and prompt
+* server mode
 * structured rendering including product labels and type information:<br/>
 Scala-REPL-PP:<br/>
 <img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/2e24831e-3c0d-4b07-8453-1fa267a6a6bf" width="700px"/>
@@ -619,17 +618,12 @@ Scala-REPL-PP:<br/>
 Stock Scala REPL:<br/>
 <img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/77d006d1-35ef-426f-a3b8-1311a36ffed5" width="700px"/>
 
-## [scala-cli](https://scala-cli.virtuslab.org/)
-* `srp` allows you to use it as a library with minimal dependencies in your own build
-* scala-cli wraps and invokes the regular Scala REPL (by default; or optionally Ammonite). It doesn't modify/fix the REPL itself, i.e. most differences between `srp` and the stock scala repl from above apply, with the exception of e.g. dependencies: scala-cli does let you add them on startup as well.
-* `srp` has a 66.6% shorter name :slightly_smiling_face:
-
 ## [Ammonite](http://ammonite.io)
-* `srp` allows you to use it as a library with minimal dependencies in your own build
-* Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: `srp` uses the regular Scala3/dotty ReplDriver. 
-* Ammonite has some Scala2 dependencies intermixed, leading to downstream build problems like [this](https://github.com/com-lihaoyi/Ammonite/issues/1241). It's no longer easy to embed Ammonite into your own build.
-* Note: Ammonite allows to add dependencies dynamically even in the middle of the REPL session - that's not supported by `srp` currently. You need to know which dependencies you want on startup. 
+Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: `srp` uses the regular Scala3 ReplDriver rather than re-implementing it. 
 
+`srp` allows you to use it as a library in your own build with *minimal* dependencies. Ammonite has some Scala2 dependencies intermixed, leading to downstream build problems like [this](https://github.com/com-lihaoyi/Ammonite/issues/1241). Therefor it's no longer easy to embed Ammonite into your own build (something we used to do when we used Scala 2.13). 
+
+To be fair: Ammonite allows to add dependencies dynamically even in the middle of the REPL session which is nice. In `srp` you need to know which dependencies you want on startup. 
 
 
 # Contribution guidelines
