@@ -8,7 +8,7 @@ When you read `srp` think "syrup" - full of goodness, glues things together :sli
 
 Either download a binary...
 ```bash
-curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp.zip
+curl -fL https://github.com/mpollmeier/scala-repl-pp/releases/latest/download/srp.zip > srp.zip
 unzip srp.zip
 srp/bin/srp
 ```
