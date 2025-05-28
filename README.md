@@ -1,7 +1,7 @@
 # srp < scala-repl-pp < Scala REPL PlusPlus
 <img src="demo.gif" height="300" /> <img src="https://github.com/user-attachments/assets/04bbb50b-dd9a-4aa4-b3dd-f9e21f5d6ead" height="300" />
 
-`srp` enhances the stock Scala 3 REPL with features such as adding dependencies via maven coordinates and scripting. \
+`srp` enhances the stock Scala 3 REPL with pretty rendering, dependency handling, better scripting, runBefore code etc., makes it more customizable and let's you embed it into your project as a regular library dependency. \
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
 
 # Quick start
@@ -16,7 +16,7 @@ srp/bin/srp
 ... or add it as a library to your project, empowering it with a customizable REPL and scripting functionality. <br/>
 There's a [demo project](core/src/test/resources/demo-project) to get you started.
 ```
-libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.6.4" % "<version>"
+libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.7.0" % "0.5.5"
 ```
 
 # Table of contents
