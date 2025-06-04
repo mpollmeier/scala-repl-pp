@@ -44,7 +44,7 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 import scala.util.Using
 
-/** Based on https://github.com/lampepfl/dotty/blob/3.4.2/compiler/src/dotty/tools/repl/ReplDriver.scala
+/** Based on https://github.com/lampepfl/dotty/blob/3.3.6/compiler/src/dotty/tools/repl/ReplDriver.scala
  * Main REPL instance, orchestrating input, compilation and presentation
  * */
 class DottyReplDriver(settings: Array[String],
@@ -61,8 +61,8 @@ class DottyReplDriver(settings: Array[String],
   /** Create a fresh and initialized context with IDE mode enabled */
   private def initialCtx(settings: List[String]): Context = {
     val rootCtx = initCtx.fresh.addMode(Mode.ReadPositions | Mode.Interactive)
-    rootCtx.setSetting(rootCtx.settings.XcookComments, true)
-    rootCtx.setSetting(rootCtx.settings.XreadComments, true)
+    rootCtx.setSetting(rootCtx.settings.YcookComments, true)
+    rootCtx.setSetting(rootCtx.settings.YreadComments, true)
     setupRootCtx(this.settings ++ settings, rootCtx)
   }
 
@@ -81,7 +81,7 @@ class DottyReplDriver(settings: Array[String],
 
   /** the initial, empty state of the REPL session */
   final def initialState: State =
-    State(0, 0, Map.empty, Set.empty, rootCtx)
+    State(0, 0, Map.empty, Set.empty, false, rootCtx)
 
   /** Reset state of repl to the initial state
    *
@@ -507,6 +507,8 @@ class DottyReplDriver(settings: Array[String],
         rootCtx = setupRootCtx(tokenize(arg).toArray, rootCtx)
         state.copy(context = rootCtx)
 
+    case Silent => state.copy(quiet = !state.quiet)
+
     case Quit =>
       // end of the world!
       // MP: slight variation from original DottyReplDriver to support exiting via the Quit command
@@ -524,7 +526,6 @@ class DottyReplDriver(settings: Array[String],
   private object ReplConsoleReporter extends ConsoleReporter.AbstractConsoleReporter {
     override def posFileStr(pos: SourcePosition) = "" // omit file paths
     override def printMessage(msg: String): Unit = out.println(msg)
-    override def echoMessage(msg: String): Unit  = printMessage(msg)
     override def flush()(using Context): Unit    = out.flush()
   }
 
