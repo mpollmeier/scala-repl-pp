@@ -2,7 +2,8 @@ name := "scala-repl-pp-root"
 ThisBuild/organization := "com.michaelpollmeier"
 publish/skip := true
 
-lazy val scalaVersions = Seq("3.5.2", "3.6.4", "3.7.0")
+val scalaLTSVersion = "3.3.6"
+val scalaVersions = Seq(scalaLTSVersion, "3.6.4", "3.7.0")
 ThisBuild/scalaVersion := scalaVersions.max
 lazy val Slf4jVersion = "2.0.16"
 
@@ -27,8 +28,9 @@ lazy val core_364 = Build
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
 
-lazy val core_352 = Build
-  .newProject("core", "3.5.2", "scala-repl-pp")
+// Scala LTS version, only replace with next LTS release
+lazy val core_336 = Build
+  .newProject("core", "3.3.6", "scala-repl-pp")
   .dependsOn(shadedLibs)
   .enablePlugins(JavaAppPackaging)
   .settings(coreSettings)
@@ -64,9 +66,9 @@ lazy val server_364 = Build
   .enablePlugins(JavaAppPackaging)
   .settings(serverSettings)
 
-lazy val server_352 = Build
-  .newProject("server", "3.5.2", "scala-repl-pp-server")
-  .dependsOn(core_352)
+lazy val server_336 = Build
+  .newProject("server", "3.3.6", "scala-repl-pp-server")
+  .dependsOn(core_336)
   .enablePlugins(JavaAppPackaging)
   .settings(serverSettings)
 

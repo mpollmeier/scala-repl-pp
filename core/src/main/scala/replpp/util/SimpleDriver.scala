@@ -1,6 +1,7 @@
 package replpp.util
 
 import dotty.tools.dotc.Driver
+import dotty.tools.dotc.config.Settings
 import dotty.tools.dotc.core.Contexts
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.reporting.{Diagnostic, Reporter}
@@ -52,12 +53,25 @@ class SimpleDriver(linesBeforeRunBeforeCode: Int = 0, linesBeforeScript: Int = 0
         }
 
         ctx.setSetting(rootCtx.settings.outputDir, new PlainDirectory(Directory(outDir)))
-           .setSetting(rootCtx.settings.XnoEnrichErrorMessages, !verbose)
            .setSetting(rootCtx.settings.help, verbose)
            .setSetting(rootCtx.settings.XshowPhases, verbose)
            .setSetting(rootCtx.settings.Vhelp, verbose)
            .setSetting(rootCtx.settings.Vprofile, verbose)
            .setSetting(rootCtx.settings.explain, verbose)
+
+        // Scala 3.3.6 has `YnoEnrichErrorMessages` rather than `XnoEnrichErrorMessages`
+        // So as long as we still support 3.3.6 (i.e. until the next LTS release) we need the
+        // following section.
+        val noEnrichErrorMessagesRegex = "-[XY]no-enrich-error-messages".r
+        rootCtx.settings.allSettings
+          .find(setting => noEnrichErrorMessagesRegex.matches(setting.name))
+          .foreach { noEnrichErrorMessagesSetting =>
+//            println(s"setting $noEnrichErrorMessagesSetting to ${!verbose}")
+            ctx.setSetting(noEnrichErrorMessagesSetting.asInstanceOf[Settings.Setting[Boolean]], !verbose)
+          }
+        // Once that's not required any longer, replace the above with this:
+        // ctx.setSetting(rootCtx.settings.XnoEnrichErrorMessages, !verbose)
+        ctx
       }
 
       if (doCompile(newCompiler, toCompile).hasErrors) {
