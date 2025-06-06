@@ -13,7 +13,7 @@ private[replpp] object DottyRandomStuff {
     new StoreReporter(null) with UniqueMessagePositions with HideNonSensicalMessages
   }
 
-  /** copied from https://github.com/scala/scala3/blob/3.7.0/compiler/src/dotty/tools/repl/ParseResult.scala#L162
+  /** copied from https://github.com/scala/scala3/blob/3.7.1/compiler/src/dotty/tools/repl/ParseResult.scala#L162
     * only change: removed [private] classifier so we can access it...
     * alternatively we could use reflection...
     */
