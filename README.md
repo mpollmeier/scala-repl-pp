@@ -4,6 +4,9 @@
 `srp` enhances the stock Scala 3 REPL with pretty rendering, dependency handling, better scripting, runBefore code etc., makes it more customizable and let's you embed it into your project as a regular library dependency. \
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
 
+Comparing pretty printing of `srp` and regular `scala` REPL side by side:
+<img src="pretty-printing.png" height="200"/>
+
 # Quick start
 
 Either download a binary...
