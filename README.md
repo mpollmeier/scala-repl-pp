@@ -4,7 +4,7 @@
 `srp` enhances the stock Scala 3 REPL with pretty rendering, dependency handling, better scripting, runBefore code etc., makes it more customizable and let's you embed it into your project as a regular library dependency. \
 When you read `srp` think "syrup" - full of goodness, glues things together :slightly_smiling_face:
 
-Comparing pretty printing of `srp` and regular `scala` REPL side by side:
+Comparing `srp` and regular `scala` REPL side by side - `srp` uses pprint for pretty structured rendering including product labels. 
 <img src="pretty-printing.png" height="200"/>
 
 # Quick start
@@ -614,19 +614,15 @@ removeModuleInfoFromJars := removeModuleInfoFromJars.triggeredBy(Universal/stage
 * import additional files, which may include `using` directives
 * customize the greeting and prompt
 * server mode
-* structured rendering including product labels and type information:<br/>
-Scala-REPL-PP:<br/>
-<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/2e24831e-3c0d-4b07-8453-1fa267a6a6bf" width="700px"/>
-<br/>
-Stock Scala REPL:<br/>
-<img src="https://github.com/mpollmeier/scala-repl-pp/assets/506752/77d006d1-35ef-426f-a3b8-1311a36ffed5" width="700px"/>
+* structured rendering including product labels and type information
+<img src="pretty-printing.png" height="200"/>
 
 ## [Ammonite](http://ammonite.io)
 Ammonite's Scala 3 support is far from complete - e.g. autocompletion for extension methods has [many shortcomings](https://github.com/com-lihaoyi/Ammonite/issues/1297). In comparison: `srp` uses the regular Scala3 ReplDriver rather than re-implementing it. 
 
 `srp` allows you to use it as a library in your own build with *minimal* dependencies. Ammonite has some Scala2 dependencies intermixed, leading to downstream build problems like [this](https://github.com/com-lihaoyi/Ammonite/issues/1241). Therefor it's no longer easy to embed Ammonite into your own build (something we used to do when we used Scala 2.13). 
 
-To be fair: Ammonite allows to add dependencies dynamically even in the middle of the REPL session which is nice. In `srp` you need to know which dependencies you want on startup. 
+Ammonite allows to add dependencies dynamically even in the middle of the REPL session which is nice. In `srp` you need to know which dependencies you want on startup. 
 
 
 # Contribution guidelines
