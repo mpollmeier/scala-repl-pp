@@ -642,8 +642,8 @@ First, get relevant diff from dotty repo:
 cd /path/to/dotty
 git fetch
 
-OLD=3.6.4 # set to version that was used before you bumped it
-NEW=3.7.0 # set to version that you bumped it to
+OLD=3.7.0 # set to version that was used before you bumped it
+NEW=3.7.1 # set to version that you bumped it to
 tig $OLD..$NEW compiler/src/dotty/tools/repl
 git diff $OLD..$NEW compiler/src/dotty/tools/repl
 ```
