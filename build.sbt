@@ -115,6 +115,7 @@ ThisBuild/scalacOptions ++= Seq(
 
 ThisBuild/Test/fork := false
 
+ThisBuild/sonatypeCredentialHost := "central.sonatype.com"
 ThisBuild/publishTo := sonatypePublishToBundle.value
 ThisBuild/scmInfo := Some(ScmInfo(url("https://github.com/mpollmeier/scala-repl-pp"),
                             "scm:git@github.com:mpollmeier/scala-repl-pp.git"))
