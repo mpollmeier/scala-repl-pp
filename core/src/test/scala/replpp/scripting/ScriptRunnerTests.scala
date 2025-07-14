@@ -10,10 +10,19 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
   if (scala.util.Properties.isWin) {
     info("tests were cancelled currently fail on windows - not sure why - I'm testing the `--script` mode manually for now and will replace these tests in the future")
   } else {
-    "execute simple single-statement script" in {
+    "execute a simple script" in {
       execTest { testOutputPath =>
-        TestSetup(s"""java.nio.file.Files.writeString(java.nio.file.Path.of("$testOutputPath"), "iwashere-simple")""")
-      }.get shouldBe "iwashere-simple"
+        TestSetup(
+          s"""
+             |Seq("aa", "bb", "cc") #> "$testOutputPath"
+             |"dd" #>>  "$testOutputPath"
+             |""".stripMargin)
+      }.get shouldBe
+        """aa
+          |bb
+          |cc
+          |dd
+          |""".stripMargin
     }
 
     "main entry point" in {
@@ -330,9 +339,10 @@ object ScriptRunnerTests {
     val scriptSrc =
       s"""val i = 2 + 10
          |println("in main/script: i=" + i)
+         |"foo" #> "out.txt"
          |""".stripMargin
     val scriptFile = os.temp(scriptSrc).toNIO
-    val config = Config(scriptFile = Some(scriptFile), verbose = true)
+    val config = Config(scriptFile = Some(scriptFile))// , verbose = true)
     ScriptRunner.exec(config)
   }
 }

@@ -4,6 +4,7 @@ import cask.util.Logger.Console.*
 import castor.Context.Simple.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import replpp.{Colors, DefaultRunBeforeLines, globalRunBeforeLines}
 import replpp.util.{ClasspathHelper, SimpleDriver, pathAsString}
 import requests.RequestFailedException
 import ujson.Value.Value
@@ -97,7 +98,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           val getResultResponse = getResponse(url, queryUUID)
           getResultResponse.obj.keySet should contain("success")
           getResultResponse("uuid").str shouldBe queryResultWSMessage
-          getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
+          getResultResponse("stdout").str should include("val res0: Int = 1")
         }
 
         "use predefined code" in Fixture("val foo = 40") { url =>
@@ -120,7 +121,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           val getResultResponse = getResponse(url, queryUUID)
           getResultResponse.obj.keySet should contain("success")
           getResultResponse("uuid").str shouldBe queryResultWSMessage
-          getResultResponse("stdout").str shouldBe "val bar: Int = 42\n"
+          getResultResponse("stdout").str should include("val bar: Int = 42")
         }
 
         "use runBefore code" in Fixture(runBeforeCode = Seq("import Int.MaxValue")) { url =>
@@ -143,20 +144,20 @@ class ReplServerTests extends AnyWordSpec with Matchers {
           val getResultResponse = getResponse(url, queryUUID)
           getResultResponse.obj.keySet should contain("success")
           getResultResponse("uuid").str shouldBe queryResultWSMessage
-          getResultResponse("stdout").str shouldBe "val bar: Int = 2147483647\n"
+          getResultResponse("stdout").str should include("val bar: Int = 2147483647")
         }
 
         "use runAfter code" in {
-          val expectedFileContent = "this should be written to the test output file"
           val testOutputFile = os.temp(deleteOnExit = false)
           val testOutputPath = replpp.util.pathAsString(testOutputFile.toNIO)
           Fixture(runAfterCode = Seq(
-            "import java.nio.file.*",
-            s"""Files.writeString(Path.of("$testOutputPath"), "$expectedFileContent")""",
-          )) { _ =>
-            // no need to execute anything, we only want to verify the `runAfter` code
+            s"""definedInTest #> "$testOutputPath"""",
+          )) { url =>
+            val response = postQuerySync(url, "val definedInTest = 123456")
+            response.obj.keySet should contain("success")
+            response("stdout").str should include("val definedInTest: Int = 123456")
           }
-          os.read(testOutputFile) shouldBe expectedFileContent
+          os.read(testOutputFile).trim shouldBe "123456"
         }
 
         "disallow fetching the result of a completed query with an invalid auth header" in Fixture() { url =>
@@ -205,7 +206,7 @@ class ReplServerTests extends AnyWordSpec with Matchers {
             getResultResponse.obj.keySet should contain("stdout")
             getResultResponse.obj.keySet should not contain "err"
             getResultResponse("uuid").str shouldBe queryResultWSMessage
-            getResultResponse("stdout").str shouldBe "val res0: Int = 1\n"
+            getResultResponse("stdout").str should include("val res0: Int = 1")
         }
       }
 
@@ -363,13 +364,13 @@ class ReplServerTests extends AnyWordSpec with Matchers {
         "work for simple case" in Fixture() { url =>
           val response = postQuerySync(url, "1")
           response.obj.keySet should contain("success")
-          response("stdout").str shouldBe "val res0: Int = 1\n"
+          response("stdout").str should include("val res0: Int = 1")
         }
 
         "using predef code" in Fixture("val predefCode = 2") { url =>
           val response = postQuerySync(url, "val foo = predefCode + 40")
           response.obj.keySet should contain("success")
-          response("stdout").str shouldBe "val foo: Int = 42\n"
+          response("stdout").str should include("val foo: Int = 42")
         }
 
         "fail for invalid auth" in Fixture() { url =>
@@ -430,6 +431,8 @@ object Fixture {
     predefCode: String = "",
     runBeforeCode: Seq[String] = Seq.empty,
     runAfterCode: Seq[String] = Seq.empty)(urlToResult: String => T): T = {
+
+    val runBeforeCode0 = DefaultRunBeforeLines(using Colors.BlackWhite) ++ globalRunBeforeLines ++ runBeforeCode
     val additionalClasspathEntryMaybe: Option[Path] =
       if (predefCode.trim.isEmpty) None
       else {
@@ -440,7 +443,8 @@ object Fixture {
         Files.delete(predefFile)
         predefClassfiles.toOption
       }
-    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe), runBeforeCode, runAfterCode)
+
+    val embeddedRepl = new EmbeddedRepl(compilerArgs(additionalClasspathEntryMaybe), runBeforeCode0, runAfterCode, verbose = true)
 
     val host = "localhost"
     val port = 8081

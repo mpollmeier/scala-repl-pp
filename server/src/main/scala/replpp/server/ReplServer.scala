@@ -1,8 +1,8 @@
 package replpp.server
 
-import cask.model.{Request, Response}
+import cask.model.Response
 import org.slf4j.LoggerFactory
-import replpp.precompilePredefFiles
+import replpp.{Colors, DefaultRunBeforeLines, globalRunBeforeLines, precompilePredefFiles}
 import ujson.Obj
 
 import java.io.{PrintWriter, StringWriter}
@@ -23,7 +23,8 @@ object ReplServer {
 
     val baseConfig = precompilePredefFiles(serverConfig.baseConfig)
     val compilerArgs = replpp.compilerArgs(baseConfig)
-    val embeddedRepl = new EmbeddedRepl(compilerArgs, baseConfig.runBefore, baseConfig.runAfter, baseConfig.verbose)
+    val runBeforeCode = DefaultRunBeforeLines(using Colors.BlackWhite) ++ globalRunBeforeLines ++ baseConfig.runBefore
+    val embeddedRepl = new EmbeddedRepl(compilerArgs, runBeforeCode, baseConfig.runAfter, baseConfig.verbose)
     Runtime.getRuntime.addShutdownHook(new Thread(() => {
       logger.info("Shutting down embedded repl...")
       embeddedRepl.shutdown()

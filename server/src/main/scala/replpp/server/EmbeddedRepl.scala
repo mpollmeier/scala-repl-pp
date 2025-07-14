@@ -25,9 +25,10 @@ class EmbeddedRepl(
   private val replDriver = ReplDriver(compilerArgs, new PrintStream(replOutputStream), classLoader = None)
 
   private var state: State = {
-    if (runBeforeCode.nonEmpty)
+    if (runBeforeCode.nonEmpty) {
+      if (verbose) logger.info(s"executing runBeforeCode: \n${runBeforeCode.mkString("\n")}")
       replDriver.execute(runBeforeCode)
-    else 
+    } else
       replDriver.initialState
   }
 
@@ -42,7 +43,9 @@ class EmbeddedRepl(
   def queryAsync(inputLines: IterableOnce[String]): (UUID, Future[String]) = {
     val uuid = UUID.randomUUID()
     val future = Future {
-      state = replDriver.execute(inputLines)(using state)
+      val lines = inputLines.iterator.toSeq
+      if (verbose) logger.info(s"executing: \n${lines.mkString("\n")}")
+      state = replDriver.execute(lines)(using state)
       readAndResetReplOutputStream()
     } (using singleThreadedJobExecutor)
 
@@ -72,7 +75,9 @@ class EmbeddedRepl(
     logger.info("shutting down")
     if (runAfterCode.nonEmpty) {
       if (verbose) logger.info(s"executing: $runAfterCode")
-      replDriver.execute(runAfterCode)
+      state = replDriver.execute(runAfterCode)(using state)
+      val output = readAndResetReplOutputStream()
+      logger.info(output)
     }
     singleThreadedJobExecutor.shutdown()
   }
@@ -80,6 +85,7 @@ class EmbeddedRepl(
 
 class ReplDriver(args: Array[String], out: PrintStream, classLoader: Option[ClassLoader])
   extends ReplDriverBase(args, out, maxHeight = None, classLoader)(using BlackWhite) {
-  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State =
+  def execute(inputLines: IterableOnce[String])(using state: State = initialState): State = {
     interpretInput(inputLines, state, pwd)
+  }
 }

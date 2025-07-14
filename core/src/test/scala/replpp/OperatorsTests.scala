@@ -17,6 +17,8 @@ import System.lineSeparator
   import scala.jdk.CollectionConverters.*
   Seq("this is a test", "another one").asJava #|^ "less"
   ```
+
+  Note: additional tests are in 'ScriptRunnerTests'
 */
 class OperatorsTests extends AnyWordSpec with Matchers {
   given Colors = Colors.BlackWhite

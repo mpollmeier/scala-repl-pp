@@ -1,6 +1,6 @@
 package replpp.scripting
 
-import replpp.{Config, verboseEnabled}
+import replpp.{Colors, Config, DefaultRunBeforeLines, globalRunBeforeLines, verboseEnabled}
 import replpp.util.ClasspathHelper
 
 import scala.util.{Failure, Success, Try}
@@ -18,16 +18,18 @@ object ScriptRunner {
   def exec(config: Config): Try[Unit] = {
     val classpath = ClasspathHelper.create(config, quiet = true)
     val mainClass = "replpp.scripting.NonForkingScriptRunner"
+    val defaultRunBeforeLines = DefaultRunBeforeLines(using Colors.BlackWhite) ++ globalRunBeforeLines
+    val config0 = config.copy(runBefore = defaultRunBeforeLines ++ config.runBefore)
     val args = {
       val builder = Seq.newBuilder[String]
       if (config.remoteJvmDebugEnabled) builder += RemoteJvmDebugConfig
       builder ++= Seq("-classpath", classpath)
       builder += mainClass
-      builder ++= config.asJavaArgs
+      builder ++= config0.asJavaArgs
 
       builder.result()
     }
-    if (replpp.verboseEnabled(config))
+    if (replpp.verboseEnabled(config0))
       println(s"executing `java ${args.mkString(" ")}`")
 
     Process("java", args).run().exitValue() match {
