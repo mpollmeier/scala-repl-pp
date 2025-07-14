@@ -2,8 +2,6 @@ package replpp
 
 import dotty.tools.repl.State
 
-import scala.util.control.NoStackTrace
-
 object InteractiveShell {
 
   def run(config: Config): Unit = {
