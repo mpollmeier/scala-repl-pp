@@ -15,6 +15,7 @@ case class Config(
   verbose: Boolean = false,
   classpathConfig: Config.ForClasspath = Config.ForClasspath(),
   remoteJvmDebugEnabled: Boolean = false,
+  scalacOptions: Seq[String] = Nil,
 
   // repl only
   prompt: Option[String] = None,
@@ -81,6 +82,10 @@ case class Config(
       add("--maxHeight", s"$value")
     }
 
+    scalacOptions.foreach { option =>
+      add("--scalacOption", option)
+    }
+
     scriptFile.foreach(file => add("--script", file.toString))
     command.foreach(cmd => add("--command", cmd))
 
@@ -123,6 +128,7 @@ object Config {
       opts.dependency((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(dependencies = c.classpathConfig.dependencies :+ x))),
       opts.repo((x, c) => c.copy(classpathConfig = c.classpathConfig.copy(resolvers = c.classpathConfig.resolvers :+ x))),
       opts.remoteJvmDebug((_, c) => c.copy(remoteJvmDebugEnabled = true)),
+      opts.scalacOption((x, c) => c.copy(scalacOptions = c.scalacOptions :+ x)),
 
       note("REPL options"),
       opts.prompt((x, c) => c.copy(prompt = Option(x))),
@@ -236,6 +242,15 @@ object Config {
       builder.opt[Unit]("remoteJvmDebug")
         .action(action)
         .text(s"enable remote jvm debugging: '${ScriptRunner.RemoteJvmDebugConfig}'")
+    }
+
+    def scalacOption[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
+      builder.opt[String]("scalacOption")
+        .valueName("-Xfatal-warnings")
+        .unbounded()
+        .optional()
+        .action(action)
+        .text("additional scalac option passed to the underlying compiler - may be passed multiple times")
     }
 
     def prompt[C](using builder: OParserBuilder[C])(action: Action[String, C]) = {
