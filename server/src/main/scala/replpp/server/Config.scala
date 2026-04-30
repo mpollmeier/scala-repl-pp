@@ -33,6 +33,7 @@ object Config {
       replpp.Config.opts.dependency((x, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(dependencies = c.baseConfig.classpathConfig.dependencies :+ x)))),
       replpp.Config.opts.repo((x, c) => c.copy(baseConfig = c.baseConfig.copy(classpathConfig = c.baseConfig.classpathConfig.copy(resolvers = c.baseConfig.classpathConfig.resolvers :+ x)))),
       replpp.Config.opts.remoteJvmDebug((_, c) => c.copy(baseConfig = c.baseConfig.copy(remoteJvmDebugEnabled = true))),
+      replpp.Config.opts.scalacOption((x, c) => c.copy(baseConfig = c.baseConfig.copy(scalacOptions = c.baseConfig.scalacOptions :+ x))),
 
       note("Server mode"),
       opt[Unit]("colors")
