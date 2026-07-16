@@ -106,6 +106,7 @@ lazy val integrationTests = project.in(file("integration-tests"))
     libraryDependencies += "org.slf4j" % "slf4j-simple" % Slf4jVersion % Optional,
     publish/skip := true
   )
+  .settings(java17Settings)
 
 lazy val commonSettings = Seq(maintainer.withRank(KeyRanks.Invisible) := "michael@michaelpollmeier.com")
 
