@@ -126,7 +126,7 @@ def removeRelease(opts: Seq[String]): Seq[String] = opts match {
 
 ThisBuild/libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
-  "com.lihaoyi"   %% "os-lib"    % "0.9.1" % Test,
+  "com.lihaoyi"   %% "os-lib"    % "0.9.3" % Test,
 )
 
 ThisBuild/versionScheme := Some("strict")
