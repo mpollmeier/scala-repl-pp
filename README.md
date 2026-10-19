@@ -19,7 +19,7 @@ srp/bin/srp
 ... or add it as a library to your project, empowering it with a customizable REPL and scripting functionality. <br/>
 There's a [demo project](core/src/test/resources/demo-project) to get you started.
 ```
-libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.8.3" % "0.5.5"
+libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp_3.9.0" % "0.5.5"
 ```
 
 # Table of contents
@@ -496,7 +496,7 @@ Server-specific configuration options as per `srp --help`:
 ## Server mode for your project
 `build.sbt`:
 ```scala
-libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp-server_3.8.3" % "<version>"
+libraryDependencies += "com.michaelpollmeier" % "scala-repl-pp-server_3.9.0" % "<version>"
 ```
 
 Then in your project's sources, execute `replpp.server.ReplServer.startHttpServer` which takes a `replpp.server.Config` as input. For a full working example check out e.g. [joern's server mode](https://github.com/joernio/joern/blob/db22aec598f10ae1b4023ff712f991cb3d817e79/console/src/main/scala/io/joern/console/BridgeBase.scala#L426).
