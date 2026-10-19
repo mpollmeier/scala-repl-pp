@@ -3,7 +3,7 @@ ThisBuild/organization := "com.michaelpollmeier"
 publish/skip := true
 
 val scalaLTSVersion = "3.3.6"
-val scalaVersions = Seq(scalaLTSVersion, "3.6.4", "3.7.4", "3.8.3")
+val scalaVersions = Seq(scalaLTSVersion, "3.6.4", "3.7.4", "3.8.3", "3.9.0")
 ThisBuild/scalaVersion := scalaVersions.max
 lazy val Slf4jVersion = "2.0.16"
 
@@ -11,10 +11,17 @@ lazy val releasePackage = taskKey[File]("package up a downloadable release")
 releasePackage := {
   // same as in `.github/workflows/release.yml`
   val releaseFile = target.value / "srp.zip"
-  IO.copyFile((core_383/Universal/packageBin).value, releaseFile)
+  IO.copyFile((core_390/Universal/packageBin).value, releaseFile)
   streams.value.log.info(s"packaged up a release in $releaseFile")
   releaseFile
 }
+
+lazy val core_390 = Build
+  .newProject("core", "3.9.0", "scala-repl-pp")
+  .dependsOn(shadedLibs)
+  .enablePlugins(JavaAppPackaging)
+  .settings(coreSettings)
+  .settings(java17Settings)
 
 lazy val core_383 = Build
   .newProject("core", "3.8.3", "scala-repl-pp")
@@ -61,6 +68,13 @@ lazy val shadedLibs = project.in(file("shaded-libs")).settings(
   commonSettings,
 )
 
+lazy val server_390 = Build
+  .newProject("server", "3.9.0", "scala-repl-pp-server")
+  .dependsOn(core_390)
+  .enablePlugins(JavaAppPackaging)
+  .settings(serverSettings)
+  .settings(java17Settings)
+
 lazy val server_383 = Build
   .newProject("server", "3.8.3", "scala-repl-pp-server")
   .dependsOn(core_383)
@@ -99,7 +113,7 @@ lazy val serverSettings = commonSettings ++ Seq(
 )
 
 lazy val integrationTests = project.in(file("integration-tests"))
-  .dependsOn(server_383)
+  .dependsOn(server_390)
   .settings(
     name := "integration-tests",
     fork := true, // important: otherwise we run into classloader issues
