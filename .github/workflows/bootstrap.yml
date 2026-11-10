@@ -12,13 +12,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: coursier/setup-action@039f736548afa5411c1382f40a5bd9c2d30e0383 # v1
+      - uses: coursier/setup-action@d5a17f9aaeb260f9ba336a5b582fb49f79c64ac4 # v3.1.0
         with:
           jvm: temurin:19
       - name: cs bootstrap
         run: cs bootstrap com.michaelpollmeier::scala-repl-pp:${{ inputs.version }} -o srp
       - name: Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           name: ${{ inputs.version }}
           tag_name: ${{ inputs.version }}
