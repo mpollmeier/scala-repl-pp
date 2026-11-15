@@ -3,6 +3,7 @@ package replpp.scripting
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import replpp.Config
+import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 
 class ScriptRunnerTests extends AnyWordSpec with Matchers {
@@ -87,6 +88,20 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
           ))
         )
       }.get shouldBe "127;iwashere-runBeforeCode"
+    }
+
+    "run the script with this JVM's Java and options" in {
+      def javaAndOptions = {
+        val jvmArgs = java.lang.management.ManagementFactory.getRuntimeMXBean.getInputArguments.asScala
+        (System.getProperty("java.home") +: jvmArgs.filterNot(_.startsWith("-agentlib:jdwp"))).mkString("\n")
+      }
+      execTest { testOutputPath =>
+        TestSetup(
+          s"""import scala.jdk.CollectionConverters.*
+             |val jvmArgs = java.lang.management.ManagementFactory.getRuntimeMXBean.getInputArguments.asScala
+             |(System.getProperty("java.home") +: jvmArgs).mkString("\\n") #> "$testOutputPath"
+             |""".stripMargin)
+      }.get.trim shouldBe javaAndOptions
     }
 
     "predefFiles and runBeforeCode" in {

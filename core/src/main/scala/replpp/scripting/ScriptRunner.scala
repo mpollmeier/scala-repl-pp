@@ -3,6 +3,9 @@ package replpp.scripting
 import replpp.{Colors, Config, DefaultRunBeforeLines, globalRunBeforeLines, verboseEnabled}
 import replpp.util.ClasspathHelper
 
+import java.lang.management.ManagementFactory
+import java.nio.file.Paths
+import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Success, Try}
 import sys.process.Process
 
@@ -22,6 +25,9 @@ object ScriptRunner {
     val config0 = config.copy(runBefore = defaultRunBeforeLines ++ config.runBefore)
     val args = {
       val builder = Seq.newBuilder[String]
+      // the script JVM gets this JVM's options (heap, GC, system properties), except a debug agent, which would claim
+      // the same port
+      builder ++= ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.filterNot(_.startsWith("-agentlib:jdwp"))
       if (config.remoteJvmDebugEnabled) builder += RemoteJvmDebugConfig
       builder ++= Seq("-classpath", classpath)
       builder += mainClass
@@ -29,10 +35,12 @@ object ScriptRunner {
 
       builder.result()
     }
+    // the same Java as this JVM, not whichever `java` is first on the PATH
+    val java = Paths.get(System.getProperty("java.home"), "bin", "java").toString
     if (replpp.verboseEnabled(config0))
-      println(s"executing `java ${args.mkString(" ")}`")
+      println(s"executing `$java ${args.mkString(" ")}`")
 
-    Process("java", args).run().exitValue() match {
+    Process(java, args).run().exitValue() match {
       case 0 => Success(())
       case nonZeroExitValue =>
         Failure(new AssertionError(
