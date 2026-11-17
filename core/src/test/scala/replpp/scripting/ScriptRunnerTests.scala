@@ -93,7 +93,7 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
     "run the script with this JVM's Java and options" in {
       def javaAndOptions = {
         val jvmArgs = java.lang.management.ManagementFactory.getRuntimeMXBean.getInputArguments.asScala
-        (System.getProperty("java.home") +: jvmArgs.filterNot(_.startsWith("-agentlib:jdwp"))).mkString("\n")
+        (System.getProperty("java.home") +: ScriptRunner.inheritedJvmOptions(jvmArgs.toSeq)).mkString("\n")
       }
       execTest { testOutputPath =>
         TestSetup(
@@ -102,6 +102,22 @@ class ScriptRunnerTests extends AnyWordSpec with Matchers {
              |(System.getProperty("java.home") +: jvmArgs).mkString("\\n") #> "$testOutputPath"
              |""".stripMargin)
       }.get.trim shouldBe javaAndOptions
+    }
+
+    "not pass on the JVM options that claim a fixed port or file" in {
+      ScriptRunner.inheritedJvmOptions(Seq(
+        "-Xmx2g",
+        "-XX:+UseG1GC",
+        "-Dfoo=bar",
+        "--add-modules=jdk.incubator.vector",
+        "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+        "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5006",
+        "-agentpath:/opt/profiler/libagent.so=port=10001",
+        "-javaagent:/opt/exporter.jar=9404:config.yaml",
+        "-Dcom.sun.management.jmxremote.port=9010",
+        "-Dcom.sun.management.config.file=management.properties",
+        "-XX:StartFlightRecording=filename=recording.jfr"
+      )) shouldBe Seq("-Xmx2g", "-XX:+UseG1GC", "-Dfoo=bar", "--add-modules=jdk.incubator.vector")
     }
 
     "predefFiles and runBeforeCode" in {

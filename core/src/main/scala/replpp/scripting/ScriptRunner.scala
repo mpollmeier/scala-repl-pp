@@ -25,9 +25,7 @@ object ScriptRunner {
     val config0 = config.copy(runBefore = defaultRunBeforeLines ++ config.runBefore)
     val args = {
       val builder = Seq.newBuilder[String]
-      // the script JVM gets this JVM's options (heap, GC, system properties), except a debug agent, which would claim
-      // the same port
-      builder ++= ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.filterNot(_.startsWith("-agentlib:jdwp"))
+      builder ++= inheritedJvmOptions(ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.toSeq)
       if (config.remoteJvmDebugEnabled) builder += RemoteJvmDebugConfig
       builder ++= Seq("-classpath", classpath)
       builder += mainClass
@@ -48,6 +46,15 @@ object ScriptRunner {
         ))
     }
   }
+
+  /** The options the script JVM takes from this JVM: heap, GC, system properties and the like. Not the ones that claim
+    * a fixed port or file, which this JVM already holds, so that the script JVM would fail to start or overwrite it:
+    * agents (the debugger, profilers, `-javaagent` exporters), JMX remote management and a JFR recording. */
+  private[scripting] def inheritedJvmOptions(options: Seq[String]): Seq[String] =
+    options.filterNot(option => NotInheritedPrefixes.exists(option.startsWith))
+
+  private val NotInheritedPrefixes =
+    Seq("-agentlib:", "-agentpath:", "-javaagent:", "-Xrunjdwp", "-Dcom.sun.management.", "-XX:StartFlightRecording")
 
   def main(args: Array[String]): Unit = {
     val config = Config.parse(args)
